@@ -1,0 +1,127 @@
+class Level{
+      constructor(areas){
+            this.areas = areas;
+            if(this.areas == undefined){this.areas = [];}
+            this.setDims();
+            this.overview = new Area(this.width,this.height);
+            this.refresh;
+      }
+      checkTile(x,y){
+            /*var i;
+            var occupants = [];
+            for(i=0;i<this.areas.length;i++){
+                  if(!this.areas[i].visible){continue;}
+                  var thisTile = this.areas[i].getTile(x,y);
+                  if(thisTile!=null){occupants.push(thisTile);}
+            }
+            return occupants;*/
+            return this.overview.getTile(x,y);
+      }
+      setDims(){
+            var max = {w: 0, h: 0};
+            var i;
+            for(i=0;i<this.areas.length;i++){
+                  if(this.areas[i].w > max.w){max.w = this.areas[i].w;}
+                  if(this.areas[i].h > max.h){max.h = this.areas[i].h;}
+            }
+            this.width = max.w;
+            this.height = max.h;
+      }
+      addArea(area){
+            this.areas.push(area);
+            this.setDims();
+      }
+      reset(){
+            var i;
+            for(i=0;i<this.areas.length;i++){
+                  this.areas[i].clear();
+            }
+      }
+      refresh(){
+            this.overview = new Area(this.width,this.height);
+            var i;
+            var j;
+            var k;
+            for(i=0;i<this.areas.length;i++){
+                  if(!this.areas[i].visible){continue;}
+                  for(j=0;j<this.areas[i].w;j++){
+                        for(k=0;k<this.areas[i].h;k++){
+                              var thisTile = this.areas[i].getTile(j,k);
+                              if(thisTile!=null){this.overview.setTile(j,k,thisTile);}
+                        }
+                  }
+            }
+      }
+
+}
+class Area{
+      constructor(w,h){
+            this.w = w;
+            this.h = h;
+            this.visible = true;
+            this.clear();
+            
+      }
+      getTile(x,y){
+            if(x>=this.w||y>=this.height){return null;}
+            return this.grid[x][y];
+      }
+      isOccupied(x,y){
+            if(x>=this.w||y>=this.height){return true;}
+            return this.grid[x][y] != null;
+      }
+      setTile(x,y,n){
+            if(x>=this.w||y>=this.height){return;}
+            this.grid[x][y] = n;
+            if(x>=this.w){console.log('AA'+x+' v '+this.w);this.w=x+1;}
+            if(y>=this.h){this.h=y+1;}
+      }
+      clearTile(x,y){
+            if(x>=this.w||y>=this.height){return;}
+            this.grid[x][y] = null;
+      }
+      clear(){
+            var i;
+            var j;
+            this.grid = [];
+            for(i=0;i<this.w;i++){
+                  this.grid[i] = [];
+                  for(j=0;j<this.h;j++){
+                        this.grid[i][j] = null;
+                  }
+            }
+      }
+      setVisibility(v){
+            this.visible = v;
+      }
+}
+
+class Instructions{
+      constructor(){
+            this.paths = [];
+      }
+      addPath(path){
+            this.paths.push(path);
+      }
+}
+
+class Path{
+      constructor(x1,y1,x2,y2){
+            this.sx = x1;
+            this.sy = y1;
+            this.ex = x2;
+            this.ey = y2;
+      }
+      getXLength(){
+            return Math.abs(this.ex-this.sx);
+      }
+      getYLength(){
+            return Math.abs(this.ey-this.sy);
+      }
+      isRight(){
+            return this.ey-this.sy >= 0;
+      }
+      isUp(){
+            return this.ey-this.sy >= 0;
+      }
+}

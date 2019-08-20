@@ -1,0 +1,41 @@
+<html>
+     <head>
+          <title>Super Mario Maestro</title>
+          <meta charset="utf-8"/>
+     </head>
+     <body style="background-color:white;">
+          <p style='text-align: center'>Super Mario Maestro v1.0</p>
+
+          <div style="float: center; width: 95%; margin: 0 auto">
+               <div id="displaycontainer" style="overflow:auto;">
+                    <canvas id="canvas" width="3840" height="432"></canvas>
+               </div>
+               <button id="playbtn" type="button" onclick="playBtn()" style="float:left; display:none">Play</button>
+               <button id="stopbtn" type="button" onclick="stopBtn()" style="display:none">Stop</button>
+               <p id="tempop" style="font-size:12px; display:none">0 BPM</p> <!-- inline after -->
+               <p id="fstxt" style='font-size:12px; margin-bottom:0px; display:none'>File Scrubber</p>
+               <div id="minimapcontainer" style="overflow:auto; display:none">
+                    <canvas id="minimap" width="100px" height="64" style="border:1px solid black"></canvas>
+               </div>
+               <label for="respicker" id="labrs" style="font-size:12px; display:none">Precision</label>
+               <input id="respicker" type="number" name="respicker" value="0" min = "1" max = "8" onchange="changeRes()" style="width:50px; display:none" min="-48" max="54" disabled>
+               <label for="yofspicker" id="labys" style="font-size:12px; display:none">y-offset</label>
+               <input id="yofspicker" type="number" name="yofspicker" value="0" onchange="nudgeY()" style="width:50px; display:none" min="-48" max="54" disabled>
+               <p id="ELtext" style="font-size:12px; display:none">Notes in Area: 0</p> <!-- inline after -->
+               <div class="container" id="trkcontainer" style="border:1px solid black; width:100px; height: 100px; overflow-y: scroll; display:none">
+                    <!-- To be populated with track checkboxes -->
+               </div>
+               <p id="filetext" style="font-size:12px; float:left">MIDI File:</p>
+               <input id ="fileinput" type="file" onchange="loadFile()" style="margin-top:5px; margin-left:5px"></input>
+          </div>
+
+          <script src="./lib/Tone.js"></script> 
+          
+          <script src="display.js"></script> 
+          <script src="level.js"></script> 
+          <script src="midi.js"></script> 
+          <script src="playback.js"></script> 
+          <script src="maestro.js"></script> 
+     </body>
+</html>
+
