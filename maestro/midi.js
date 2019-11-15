@@ -35,23 +35,22 @@ class MIDIfile{
                   this.error = 1;
                   return;
             }
-            if(this.parseBytes(4)!=6){
+            if(this.fetchBytes(4)!=6){
                   console.log('ERROR: File header is not 6 bytes long.');
                   this.error = 2;
                   return;
             }
-            this.fmt = this.parseBytes(2);
+            this.fmt = this.fetchBytes(2);
             if(this.fmt > 2){
                   console.log('ERROR: Unrecognized format number.');
                   this.error = 3;
             }
-            this.ntrks = this.parseBytes(2);
+            this.ntrks = this.fetchBytes(2);
             //console.log('Format '+this.fmt+', '+this.ntrks+' tracks');
 
             // Parse timing division
-            var tdiv = this.parseBytes(2);
-            var tdivstr = decToBin(tdiv,16);
-            if(tdivstr.charAt(0)=='0'){
+            var tdiv = this.fetchBytes(2);
+            if(!(tdiv >> 16)){
                   //console.log(tdiv+' ticks per quarter note');
                   this.timing = tdiv;
             }
@@ -70,7 +69,7 @@ class MIDIfile{
                   return;
             }
             this.tracks.push([]);
-            var len = this.parseBytes(4);
+            var len = this.fetchBytes(4);
             //console.log('len = '+len);
             while(!done){
                   done = this.parseEvent();
@@ -85,7 +84,7 @@ class MIDIfile{
       parseEvent(){
             var delta = this.parseDeltaTime();
             this.trackDuration += delta;
-            var statusByte = this.parseBytes(1)[0];
+            var statusByte = this.fetchBytes(1);
             var data = [];
             var rs = false;
             var EOT = false;
@@ -97,33 +96,32 @@ class MIDIfile{
             else{
                   this.runningStatus = statusByte;
             }
-            var bstring = decToBin(statusByte,8);
-            var eventType = binToDec(bstring.substring(0,4));
-            var channel = binToDec(bstring.substring(4,8));
+            var eventType = statusByte >> 4;
+            var channel = statusByte & 0x0F;
             if(eventType == 15){ // System events and meta events 
                   switch(channel){ // System message types are stored in the last nibble instead of a channel
                         // Don't really need these and probably nobody uses them but we'll keep them for completeness.
 
                         case 0: // System exclusive message -- wait for exit sequence
                               //console.log('sysex');
-                              var cbyte = this.parseBytes(1)[0];
+                              var cbyte = this.fetchBytes(1);
                               while(cbyte!=247){
                                     data.push(cbyte);
-                                    cbyte = this.parseBytes(1)[0];
+                                    cbyte = this.fetchBytes(1);
                               }
                         break;
 
                         case 2:
-                              data.push(this.parseBytes(1)[0]);
-                              data.push(this.parseBytes(1)[0]);
+                              data.push(this.fetchBytes(1));
+                              data.push(this.fetchBytes(1));
                               break;
 
                         case 3:
-                              data.push(this.parseBytes(1)[0]);
+                              data.push(this.fetchBytes(1));
                               break;
 
                         case 15: // Meta events: where some actually important non-music stuff happens
-                              var metaType = this.parseBytes(1)[0];
+                              var metaType = this.fetchBytes(1);
                               var i;
                               switch(metaType){
                                     case 47: // End of track
@@ -133,14 +131,14 @@ class MIDIfile{
                                           break;
 
                                     case 81:
-                                          var len = this.parseBytes(1)[0];
-                                          data.push(this.parseBytes(len)); // All one value
+                                          var len = this.fetchBytes(1);
+                                          data.push(this.fetchBytes(len)); // All one value
                                           break;
                                     default:
-                                          var len = this.parseBytes(1)[0];
+                                          var len = this.fetchBytes(1);
                                           //console.log('Mlen = '+len);
                                           for(i=0;i<len;i++){
-                                                data.push(this.parseBytes(1)[0]);
+                                                data.push(this.fetchBytes(1));
                                           }
                               }
                               eventType = getIntFromBytes([255,metaType]);
@@ -151,14 +149,14 @@ class MIDIfile{
             else{
                   switch(eventType){
                         case 12:
-                              if(!rs){data.push(this.parseBytes(1)[0]);}
+                              if(!rs){data.push(this.fetchBytes(1));}
                               break;
                         case 13:
-                              if(!rs){data.push(this.parseBytes(1)[0]);}
+                              if(!rs){data.push(this.fetchBytes(1));}
                               break;
                         default:
-                              if(!rs){data.push(this.parseBytes(1)[0]);}
-                              data.push(this.parseBytes(1)[0]);
+                              if(!rs){data.push(this.fetchBytes(1));}
+                              data.push(this.fetchBytes(1));
                   }
                   var i;
                   for(i=0;i<this.noteDelta.length;i++){
@@ -181,14 +179,14 @@ class MIDIfile{
       }
 
       // Helper parsing functions
-      parseBytes(n){
+      fetchBytes(n){
             var i;
             var byteArr = [];
             for(i=0;i<n;i++){
                   byteArr[i] = this.bytes[this.ppos+i];
             }
             this.ppos += n;
-            if(n==1){return byteArr;}
+            if(n==1){return byteArr[0];}
             else{return getIntFromBytes(byteArr);}
       }
       parseString(n){
@@ -212,7 +210,7 @@ class MIDIfile{
                         this.debug = 1;
                         break;
                   }
-                  var byte = this.parseBytes(1)[0];
+                  var byte = this.fetchBytes(1);
                   if(byte<128){
                         reading = false;
                         arr.push(byte);
@@ -241,37 +239,14 @@ function ASCII(n){
       return String.fromCharCode(n);
 }
 
-function reverseBits(num){
-      var reverse_num = 0; 
-      var i; 
-      for (i = 0; i < 8; i++){ 
-            if((num & (1 << i))){reverse_num |= 1 << (7 - i);}
-      }
-      return reverse_num; 
-}
-
-function getIntFromBytes(arr,pad){ // Gets a signed integer value from an arbitrary number of bytes -- up to four
+function getIntFromBytes(arr,pad){ // Gets an integer value from an arbitrary number of bytes
       if(pad==undefined){pad=8;}
-      var str = '';
+      var n = 0;
       var i;
       for(i=0;i<arr.length;i++){
-            str += decToBin(arr[i],pad);
+            n = n << pad | arr[i]
       }
-      return binToDec(str);
-}
-
-function decToBin(n,padTo){
-      var str = (n >>> 0).toString(2);
-      if(padTo == undefined){return str;}
-      var i;
-      for(i=str.length;i<padTo;i++){
-            str = '0'+str;
-      }
-      return str;
-}
-
-function binToDec(str){
-      return parseInt(str,2);
+      return n;
 }
 
 function getThisRes(delta,qnTime){
