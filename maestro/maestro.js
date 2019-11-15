@@ -1,3 +1,15 @@
+/* TODO:
+
+ - y-offsets for individual tracks
+ - Highlight enemies that don't have much room, maybe overlay exclamation point
+ - Bug fixes
+ - Better error messages to alleviate confusion and allow for better debugging
+ - Player line optionally drags the scrollbar with it (maybe a play all button)
+ - Dropdown menu for tempos, gets automatically set to best match
+ - A small info button that shows how to use everything and shows patch notes
+
+*/
+
 var reader = new FileReader;
 var midi;
 var bpms = [
@@ -84,7 +96,9 @@ function loadFile(){ // Load file from the file input element
             }
             if(!fileLoaded){showEverything();}
             midi = new MIDIfile(new Uint8Array(reader.result));
+            resetOffsets();
             miniClear();
+            miniBox(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
             document.getElementById('trkcontainer').innerHTML = '';
             resolution = midi.resolution;
             document.getElementById('respicker').value = midi.precision;
@@ -246,6 +260,12 @@ function nudgeY(){
       var relativeOfs = parseInt(document.getElementById('yofspicker').value);
       //console.log(relativeOfs+48);
       moveOffsetTo(null,(relativeOfs+48)/127);
+}
+
+function resetOffsets(){
+      ofsX = 0;
+      ofsY = 48;
+      document.getElementById('yofspicker').value = 0;
 }
 
 function bpmIDtoStr(id){

@@ -58,26 +58,28 @@ class Area{
       constructor(w,h){
             this.w = w;
             this.h = h;
+            this.ofsX = 0;
+            this.ofsY = 0;
             this.visible = true;
             this.clear();
-            
       }
-      getTile(x,y){
-            if(x>=this.w||y>=this.height){return null;}
-            return this.grid[x][y];
+      getTile(x,y,useOfs){
+            if(!this.isInBounds(x,y)){/*console.log(x+', '+y+' rejected')*/;return null;}
+            if(useOfs){return this.grid[x+ofsX][y+ofsY];}
+            else{return this.grid[x][y];}
       }
       isOccupied(x,y){
-            if(x>=this.w||y>=this.height){return true;}
+            if(!this.isInBounds(x,y)){return true;}
             return this.grid[x][y] != null;
       }
       setTile(x,y,n){
-            if(x>=this.w||y>=this.height){return;}
+            if(!this.isInBounds(x,y)){return;}
             this.grid[x][y] = n;
             if(x>=this.w){console.log('AA'+x+' v '+this.w);this.w=x+1;}
             if(y>=this.h){this.h=y+1;}
       }
       clearTile(x,y){
-            if(x>=this.w||y>=this.height){return;}
+            if(!this.isInBounds(x,y)){return;}
             this.grid[x][y] = null;
       }
       clear(){
@@ -93,6 +95,9 @@ class Area{
       }
       setVisibility(v){
             this.visible = v;
+      }
+      isInBounds(x,y){
+            return x < this.w + this.ofsX && x >= this.ofsX && y < this.h + this.ofsY && y >= this.ofsY;
       }
 }
 
