@@ -110,7 +110,7 @@ function loadFile(){ // Load file from the file input element
       }
 }
 
-function placeNoteBlocks(noRecBPM){
+function placeNoteBlocks(noRecBPM){ // TODO: Fix long load times that occur for seemingly no reason
       var i;
       var j;
       var x;
@@ -121,7 +121,7 @@ function placeNoteBlocks(noRecBPM){
       var currentProgram = new Array(16);
       currentProgram.fill(0);
       var uspqn = 500000; // Assumed
-      level = new Level();
+      level = new Level(); // TODO: Optionally preserve the visibility of different tracks
             for(i=0;i<midi.tracks.length;i++){
                   // Add checkbox with label for each track
                   if(!noRecBPM){
@@ -134,9 +134,15 @@ function placeNoteBlocks(noRecBPM){
                         var labl = document.createElement('label');
                         labl.for = 'chk'+i;
                         labl.style = 'font-size:12px';
-                        labl.innerHTML = 'Track '+i;
+                        labl.innerHTML = midi.trkLabels[i];
+                        if(!midi.hasNotes[i]){ // Patch this in without breaking anything
+                              chkbox.style = 'display: none'
+                              labl.style = labl.style + '; display: none'
+                        }
                         document.getElementById('trkcontainer').appendChild(labl);
-                        document.getElementById('trkcontainer').appendChild(document.createElement('br'));
+                        if(midi.hasNotes[i]){
+                              document.getElementById('trkcontainer').appendChild(document.createElement('br'));
+                        }
                   }
 
                   level.addArea(new Area(width,height));
@@ -514,5 +520,5 @@ function showEverything(){ // Bad code that was rushed and stuff
       document.getElementById('respicker').style = 'width:50px;';
       document.getElementById('labys').style = 'font-size:12px';
       document.getElementById('yofspicker').style = 'width:50px;';
-      document.getElementById('trkcontainer').style = 'border:1px solid black; width:100px; height: 100px; overflow-y: scroll';
+      document.getElementById('trkcontainer').style = 'border:1px solid black; width:300px; height: 100px; overflow-y: scroll';
 }

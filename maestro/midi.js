@@ -5,6 +5,8 @@ class MIDIfile{
             this.tpos = 0;
             this.runningStatus = null;
             this.tracks = []; // Each track is filled with an array of events
+            this.trkLabels = [];
+            this.hasNotes = [];
             this.error = 0;
             this.debug = 0;
             this.timingFormat = 0;
@@ -24,8 +26,10 @@ class MIDIfile{
             this.parseHeader();
             for(this.tpos=0;this.tpos<this.ntrks;this.tpos++){
                   this.parseTrack();
+                  //console.log(this.tracks[this.tpos]);
             }
-            if(this.error!=0){alert('The file was parsed unsuccessfully.');}
+            console.log();
+            if(this.error!=0){alert('The file was parsed unsuccessfully. Check the browser console for details.');}
             //console.log(this.noteCount+' notes');
       }
       parseHeader(){
@@ -69,6 +73,7 @@ class MIDIfile{
                   return;
             }
             this.tracks.push([]);
+            this.trkLabels.push('Track '+this.tpos);
             var len = this.fetchBytes(4);
             //console.log('len = '+len);
             while(!done){
@@ -98,11 +103,11 @@ class MIDIfile{
             }
             var eventType = statusByte >> 4;
             var channel = statusByte & 0x0F;
-            if(eventType == 15){ // System events and meta events 
+            if(eventType == 0xF){ // System events and meta events 
                   switch(channel){ // System message types are stored in the last nibble instead of a channel
                         // Don't really need these and probably nobody uses them but we'll keep them for completeness.
 
-                        case 0: // System exclusive message -- wait for exit sequence
+                        case 0x0: // System exclusive message -- wait for exit sequence
                               //console.log('sysex');
                               var cbyte = this.fetchBytes(1);
                               while(cbyte!=247){
@@ -111,28 +116,35 @@ class MIDIfile{
                               }
                         break;
 
-                        case 2:
+                        case 0x2:
                               data.push(this.fetchBytes(1));
                               data.push(this.fetchBytes(1));
                               break;
 
-                        case 3:
+                        case 0x3:
                               data.push(this.fetchBytes(1));
                               break;
 
-                        case 15: // Meta events: where some actually important non-music stuff happens
+                        case 0xF: // Meta events: where some actually important non-music stuff happens
                               var metaType = this.fetchBytes(1);
                               var i;
                               switch(metaType){
-                                    case 47: // End of track
+                                    case 0x2F: // End of track
                                           this.skip(1);
                                           EOT = true;
                                           //console.log('EOT');
                                           break;
 
-                                    case 81:
+                                    case 0x51:
                                           var len = this.fetchBytes(1);
                                           data.push(this.fetchBytes(len)); // All one value
+                                          break;
+                                    case 0x03:
+                                          var len = this.fetchBytes(1);
+                                          for(i=0;i<len;i++){
+                                                data.push(this.fetchBytes(1));
+                                          }
+                                          this.trkLabels[this.tpos] = arrToASCII(data);
                                           break;
                                     default:
                                           var len = this.fetchBytes(1);
@@ -148,10 +160,10 @@ class MIDIfile{
             }
             else{
                   switch(eventType){
-                        case 12:
+                        case 0xC:
                               if(!rs){data.push(this.fetchBytes(1));}
                               break;
-                        case 13:
+                        case 0xD:
                               if(!rs){data.push(this.fetchBytes(1));}
                               break;
                         default:
@@ -162,7 +174,8 @@ class MIDIfile{
                   for(i=0;i<this.noteDelta.length;i++){
                         this.noteDelta[i] += delta;
                   }
-                  if(eventType==9 && data[1]!=0){
+                  if(eventType==0x9 && data[1]!=0){
+                        this.hasNotes[this.tpos] = true;
                         var resStuff = getThisRes(this.noteDelta[channel],this.timing);
                         var thisRes = resStuff.res;
                         if(thisRes > this.resolution){this.resolution = thisRes; this.precision = resStuff.prc;}
@@ -237,6 +250,15 @@ class MIDIevent{
 
 function ASCII(n){
       return String.fromCharCode(n);
+}
+
+function arrToASCII(arr){
+      var i;
+      var str = '';
+      for(i=0;i<arr.length;i++){
+            str += ASCII(arr[i]);
+      }
+      return str;
 }
 
 function getIntFromBytes(arr,pad){ // Gets an integer value from an arbitrary number of bytes

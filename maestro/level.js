@@ -58,13 +58,13 @@ class Area{
       constructor(w,h){
             this.w = w;
             this.h = h;
-            this.ofsX = 0;
+            this.ofsX = 0; // TODO: Use these to implement custom track offsets
             this.ofsY = 0;
             this.visible = true;
             this.clear();
       }
       getTile(x,y,useOfs){
-            if(!this.isInBounds(x,y)){/*console.log(x+', '+y+' rejected')*/;return null;}
+            if(!this.isInBounds(x,y)){return null;}
             if(useOfs){return this.grid[x+ofsX][y+ofsY];}
             else{return this.grid[x][y];}
       }
