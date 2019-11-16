@@ -7,6 +7,11 @@
  - Player line optionally drags the scrollbar with it (maybe a play all button)
  - Dropdown menu for tempos, gets automatically set to best match
  - A small info button that shows how to use everything and shows patch notes
+ - GM Drum Kit Support
+ - Changing/replacing instruments in tracks
+ - Prompting instrument changes if the entity limit runs out
+ - Handle dynamic tempo changes
+ - x-offset number input or other way to nudge x-offset
 
 */
 
@@ -102,15 +107,15 @@ function loadFile(){ // Load file from the file input element
             document.getElementById('trkcontainer').innerHTML = '';
             resolution = midi.resolution;
             document.getElementById('respicker').value = midi.precision;
-            fileLoaded = true;
             placeNoteBlocks(false);
+            fileLoaded = true;
             document.getElementById('yofspicker').disabled = false;
             document.getElementById('respicker').disabled = false;
             //console.log(midi.noteCount+' notes total');
       }
 }
 
-function placeNoteBlocks(noRecBPM){ // TODO: Fix long load times that occur for seemingly no reason
+function placeNoteBlocks(noRecBPM){
       var i;
       var j;
       var x;
@@ -121,7 +126,8 @@ function placeNoteBlocks(noRecBPM){ // TODO: Fix long load times that occur for 
       var currentProgram = new Array(16);
       currentProgram.fill(0);
       var uspqn = 500000; // Assumed
-      level = new Level(); // TODO: Optionally preserve the visibility of different tracks
+      var haveTempo = false; // TODO: Get rid of this when adding dynamic tempo
+      level = new Level();
             for(i=0;i<midi.tracks.length;i++){
                   // Add checkbox with label for each track
                   if(!noRecBPM){
@@ -152,7 +158,7 @@ function placeNoteBlocks(noRecBPM){ // TODO: Fix long load times that occur for 
                         x += (midi.tracks[i][j].deltaTime/midi.timing)*resolution;
                         //console.log('x += '+Math.round((midi.tracks[i][j].deltaTime/midi.timing)*4));
                         //error += Math.abs(Math.round((midi.tracks[i][j].deltaTime/midi.timing)*4)-((midi.tracks[i][j].deltaTime/midi.timing)*4));
-                        if(midi.tracks[i][j].type == 65361){ // Tempo Change
+                        if(midi.tracks[i][j].type == 65361 && !haveTempo){ // Tempo Change
                               uspqn = midi.tracks[i][j].data[0];
                               //console.log(midi.tracks[i][j].data[0]+' uspqn');
                               //console.log((60000000/uspqn)+' bpm');
@@ -160,6 +166,7 @@ function placeNoteBlocks(noRecBPM){ // TODO: Fix long load times that occur for 
                               songBPM = 60000000/uspqn;
                               bpm = reccomendTempo(songBPM,resolution,true);
                               if(!noRecBPM){reccomendRes();}
+                              haveTempo = true;
                               //console.log('tempo = '+uspqn+' / '+midi.timing+' = '+uspqn/midi.timing+' microseconds per tick');
                               //tempo = (uspqn/midi.timing)*bpus[speed];
                               //console.log(tempo+' blocks per tick');
@@ -191,8 +198,13 @@ function placeNoteBlocks(noRecBPM){ // TODO: Fix long load times that occur for 
                   //console.log('error = '+error);
             }
             //console.log(resolution+' bpqn chosen');
-            level.refresh();
-            drawLevel(true);
+            if(fileLoaded){
+                  chkRefresh();
+            }
+            else{
+                  level.refresh();
+                  drawLevel(true);
+            }
 }
 
 function drawLevel(redrawMini,noDOM){
