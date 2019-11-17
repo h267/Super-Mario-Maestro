@@ -12,7 +12,9 @@
                </div>
                <button id="playbtn" type="button" onclick="playBtn()" style="float:left; display:none">Play</button>
                <button id="stopbtn" type="button" onclick="stopBtn()" style="display:none">Stop</button>
-               <p id="tempop" style="font-size:12px; display:none">0 BPM</p> <!-- inline after -->
+               <select id="temposelect" style="display:none" onchange="selectTempo()">
+                    <!-- To be populated with tempo options -->
+               </select>
                <p id="fstxt" style='font-size:12px; margin-bottom:0px; display:none'>File Scrubber</p>
                <div id="minimapcontainer" style="overflow:auto; display:none">
                     <canvas id="minimap" width="100px" height="64" style="border:1px solid black"></canvas>

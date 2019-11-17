@@ -5,7 +5,6 @@
  - Bug fixes
  - Better error messages to alleviate confusion and allow for better debugging
  - Player line optionally drags the scrollbar with it (maybe a play all button)
- - Dropdown menu for tempos, gets automatically set to best match
  - A small info button that shows how to use everything and shows patch notes
  - GM Drum Kit Support
  - Changing/replacing instruments in tracks
@@ -18,21 +17,21 @@
 var reader = new FileReader;
 var midi;
 var bpms = [
-      85, // Walking
-      175, // Running
       28, // Slow Autoscroll
-      57, // Medium Autoscroll
-      115, // Fast Autoscroll
+      // 28, // Backwards Normal Conveyor, Walking
       56, // Normal Conveyor, Idle
-      143, // Normal Conveyor, Walking
-      231, // Normal Conveyor, Running
+      57, // Medium Autoscroll
+      // 57, // Backwards Fast Conveyor, Running
+      85, // Walking
       113, // Fast Conveyor, Idle
-      203, // Fast Conveyor, Walking
-      286, // Fast Conveyor, Running
-      //28, // Backwards Normal Conveyor, Walking
       114, // Backwards Normal Conveyor, Running
-      //57, // Backwards Fast Conveyor, Running
+      115, // Fast Autoscroll
+      143, // Normal Conveyor, Walking
       //143 // Blue Skull Ride, Idle
+      175, // Running
+      203, // Fast Conveyor, Walking  
+      231, // Normal Conveyor, Running
+      286, // Fast Conveyor, Running
 ];
 var tiles;
 var bgs;
@@ -107,7 +106,9 @@ function loadFile(){ // Load file from the file input element
             document.getElementById('trkcontainer').innerHTML = '';
             resolution = midi.resolution;
             document.getElementById('respicker').value = midi.precision;
+            isNewFile = true;
             placeNoteBlocks(false);
+            isNewFile = false;
             fileLoaded = true;
             document.getElementById('yofspicker').disabled = false;
             document.getElementById('respicker').disabled = false;
@@ -164,6 +165,7 @@ function placeNoteBlocks(noRecBPM){
                               //console.log((60000000/uspqn)+' bpm');
                               //setTempoText(Math.round(60000000/uspqn)+' bpm');
                               songBPM = 60000000/uspqn;
+                              refreshTempos(resolution);
                               bpm = reccomendTempo(songBPM,resolution,true);
                               if(!noRecBPM){reccomendRes();}
                               haveTempo = true;
@@ -198,7 +200,7 @@ function placeNoteBlocks(noRecBPM){
                   //console.log('error = '+error);
             }
             //console.log(resolution+' bpqn chosen');
-            if(fileLoaded){
+            if(fileLoaded && !isNewFile){
                   chkRefresh();
             }
             else{
@@ -288,18 +290,18 @@ function resetOffsets(){
 
 function bpmIDtoStr(id){
       switch(id){
-            case 0: return 'Walking';
-            case 1: return 'Running';
-            case 2: return 'Slow Autoscroll OR Backwards Normal Conveyor - Walking';
-            case 3: return 'Medium Autoscroll OR Backwards Fast Conveyor - Running';
-            case 4: return 'Fast Autoscroll';
-            case 5: return 'Normal Conveyor - Idle';
-            case 6: return 'Normal Conveyor - Walking OR Blue Skulls'
-            case 7: return 'Normal Conveyor - Running';
-            case 8: return 'Fast Conveyor - Idle';
+            case 0: return 'Slow Autoscroll OR Backwards Normal Conveyor - Walking';
+            case 1: return 'Normal Conveyor - Idle';
+            case 2: return 'Medium Autoscroll OR Backwards Fast Conveyor - Running';
+            case 3: return 'Walking';
+            case 4: return 'Fast Conveyor - Idle';
+            case 5: return 'Backwards Normal Conveyor - Running';
+            case 6: return 'Fast Autoscroll';
+            case 7: return 'Blue Skulls OR Normal Conveyor - Walking';
+            case 8: return 'Running';
             case 9: return 'Fast Conveyor - Walking';
-            case 10: return 'Fast Conveyor - Running';
-            case 11: return 'Backwards Normal Conveyor - Running';
+            case 10: return 'Normal Conveyor - Running';
+            case 11: return 'Fast Conveyor - Running';
       }
 }
 
@@ -316,7 +318,7 @@ function reccomendTempo(songBPM,res,print){
       }
       //console.log(bpmIDtoStr(recc));
       //console.log(songBPM+' -> '+bpms[recc]*(4/res));
-      if(print){setTempoText(bpmIDtoStr(recc)+' ('+Math.round(songBPM)+' bpm -> '+Math.round(bpms[recc]*(4/res))+' bpm)');}
+      if(print){document.getElementById('temposelect').selectedIndex = recc;}
       return bpms[recc]*(4/res);
 }
 
@@ -525,7 +527,6 @@ function handleOut(){
 function showEverything(){ // Bad code that was rushed and stuff
       document.getElementById('playbtn').style = 'float:left';
       document.getElementById('stopbtn').style = '';
-      document.getElementById('tempop').style = 'font-size:12px; display: inline';
       document.getElementById('fstxt').style = 'font-size:12px;  margin-bottom:0px;';
       document.getElementById('minimapcontainer').style = 'overflow: auto';
       document.getElementById('labrs').style = 'font-size:12px';
@@ -533,4 +534,23 @@ function showEverything(){ // Bad code that was rushed and stuff
       document.getElementById('labys').style = 'font-size:12px';
       document.getElementById('yofspicker').style = 'width:50px;';
       document.getElementById('trkcontainer').style = 'border:1px solid black; width:300px; height: 100px; overflow-y: scroll';
+      document.getElementById('temposelect').style = '';
+}
+
+function refreshTempos(){
+      var i;
+      var sel = document.getElementById('temposelect');
+      sel.innerHTML = '';
+      for(i=0;i<bpms.length;i++){
+            var opt = document.createElement('option');
+            opt.value = i;
+            opt.innerHTML = bpmIDtoStr(i)+' ('+Math.round(bpms[i]*(4/resolution))+' bpm)';
+            sel.appendChild(opt);        
+      }
+}
+
+function selectTempo(){
+      var sel = document.getElementById('temposelect');
+      var selected = sel.selectedIndex;
+      bpm = bpms[selected]*(4/resolution)
 }

@@ -271,7 +271,7 @@ function getIntFromBytes(arr,pad){ // Gets an integer value from an arbitrary nu
       return n;
 }
 
-function getThisRes(delta,qnTime){
+function getThisRes(delta,qnTime){ // TODO: Fix too much recursion bug that prevents some MIDIs from loading
       if(delta==0){return 1;}
       //console.log(delta/qnTime);
       var i;
