@@ -248,6 +248,8 @@ class MIDIevent{
       }
 }
 
+var recurse = 0;
+
 function ASCII(n){
       return String.fromCharCode(n);
 }
@@ -271,20 +273,25 @@ function getIntFromBytes(arr,pad){ // Gets an integer value from an arbitrary nu
       return n;
 }
 
-function getThisRes(delta,qnTime){ // TODO: Fix too much recursion bug that prevents some MIDIs from loading
+function getThisRes(delta,qnTime){
+      recurse++;
       if(delta==0){return 1;}
       //console.log(delta/qnTime);
       var i;
       for(i=0;i<8;i++){
             var power = Math.pow(2,(7-i)-5);
             var quotient = (delta/qnTime)/power;
-            if(Math.floor(quotient)==quotient){
+            //console.log(quotient);
+            if(Math.floor(quotient)==quotient){ // Recursion until the quotient becomes a whole number
                   //console.log('Y '+(delta/qnTime)+' -> '+(1/power));
+                  recurse = 0;
                   return {res: (1/power), prc: i+1};
             }
+            if(recurse>50){return {res: 32, prc: 8};} // Give up
       }
       //console.log(delta+' / '+qnTime+' = '+(delta/qnTime)+' WEIRD');
       //console.log('Rounded to '+Math.round(quotient/resolution)*resolution);
+      // /console.log(recurse);
       return getThisRes(Math.round(quotient/resolution)*resolution,qnTime);
 }
 
