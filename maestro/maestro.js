@@ -1,18 +1,24 @@
 /* TODO:
 
- - y-offsets for individual tracks
- - Highlight enemies that don't have much room, maybe overlay exclamation point
+ - y-offsets for individual tracks [New UI]
+ - Highlight enemies that don't have much room, maybe overlay exclamation point [New UI]
  - Bug fixes
  - Better error messages to alleviate confusion and allow for better debugging
  - Player line optionally drags the scrollbar with it (maybe a play all button)
- - A small info button that shows how to use everything and shows patch notes
- - GM Drum Kit Support
- - Changing/replacing instruments in tracks
- - Prompting instrument changes if the entity limit runs out
- - Handle dynamic tempo changes
- - x-offset number input or other way to nudge x-offset
+ - A small info button that shows how to use everything and shows patch notes [New UI]
+ - GM Drum Kit Support / More Instruments [Before instrument changes]
+ - Changing/replacing instruments in tracks [New UI]
+ - Prompting instrument changes if the entity limit runs out [New UI]
+ - Handle dynamic tempo changes [New UI]
+ - x-offset number input or other way to nudge x-offset [New UI]
+ - Track naming based on enemy types, not metadata
+ - Music levels on tracks: Loup's Algorithms, then Ren's once acceleration is known
+ - More/All instrument options
 
 */
+
+// TODO: Finalize 1.1, add "by h267" signature in the lower right-hand corner
+
 
 var reader = new FileReader;
 var midi;
@@ -51,6 +57,7 @@ var bbar = 1;
 var noMouse = false;
 var cursor;
 var noteCount;
+var isNewFile;
 
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
 
@@ -107,9 +114,9 @@ function loadFile(){ // Load file from the file input element
             resolution = midi.resolution;
             document.getElementById('respicker').value = midi.precision;
             isNewFile = true;
+            fileLoaded = true;
             placeNoteBlocks(false);
             isNewFile = false;
-            fileLoaded = true;
             document.getElementById('yofspicker').disabled = false;
             document.getElementById('respicker').disabled = false;
             //console.log(midi.noteCount+' notes total');
@@ -125,7 +132,6 @@ function placeNoteBlocks(noRecBPM){
       setMiniWidth(width/2);
       var height = 128;
       var currentProgram = new Array(16);
-      currentProgram.fill(0);
       var uspqn = 500000; // Assumed
       var haveTempo = false; // TODO: Get rid of this when adding dynamic tempo
       level = new Level();
@@ -533,7 +539,7 @@ function showEverything(){ // Bad code that was rushed and stuff
       document.getElementById('respicker').style = 'width:50px;';
       document.getElementById('labys').style = 'font-size:12px';
       document.getElementById('yofspicker').style = 'width:50px;';
-      document.getElementById('trkcontainer').style = 'border:1px solid black; width:300px; height: 100px; overflow-y: scroll';
+      document.getElementById('trkcontainer').style = 'border:1px solid black; width:220px; height: 100px; overflow-y: scroll';
       document.getElementById('temposelect').style = '';
 }
 

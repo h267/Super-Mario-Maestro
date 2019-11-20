@@ -1,10 +1,17 @@
 <html>
-     <head>
+     <head><!-- Global site tag (gtag.js) - Google Analytics -->
+          <script async src="https://www.googletagmanager.com/gtag/js?id=UA-152821049-1"></script>
+          <script>
+               window.dataLayer = window.dataLayer || [];
+               function gtag(){dataLayer.push(arguments);}
+               gtag('js', new Date());
+               gtag('config', 'UA-152821049-1');
+          </script>
           <title>Super Mario Maestro</title>
-          <meta charset="utf-8"/>
+          <meta charset="utf-8"/>          
      </head>
      <body style="background-color:white;">
-          <p style='text-align: center'>Super Mario Maestro v1.0</p>
+          <p style='text-align: center'>Super Mario Maestro v1.1</p>
 
           <div style="float: center; width: 95%; margin: 0 auto">
                <div id="displaycontainer" style="overflow:auto;">
@@ -15,6 +22,7 @@
                <select id="temposelect" style="display:none" onchange="selectTempo()">
                     <!-- To be populated with tempo options -->
                </select>
+               <p id="ELtext" style="font-size:12px; display:none">Notes in Area: 0</p>
                <p id="fstxt" style='font-size:12px; margin-bottom:0px; display:none'>File Scrubber</p>
                <div id="minimapcontainer" style="overflow:auto; display:none">
                     <canvas id="minimap" width="100px" height="64" style="border:1px solid black"></canvas>
@@ -23,8 +31,7 @@
                <input id="respicker" type="number" name="respicker" value="0" min = "1" max = "8" onchange="changeRes()" style="width:50px; display:none" min="-48" max="54" disabled>
                <label for="yofspicker" id="labys" style="font-size:12px; display:none">y-offset</label>
                <input id="yofspicker" type="number" name="yofspicker" value="0" onchange="nudgeY()" style="width:50px; display:none" min="-48" max="54" disabled>
-               <p id="ELtext" style="font-size:12px; display:none">Notes in Area: 0</p> <!-- inline after -->
-               <div class="container" id="trkcontainer" style="border:1px solid black; width:300px; height: 100px; overflow-y: scroll; display:none">
+               <div class="container" id="trkcontainer" style="border:1px solid black; width:220px; height: 100px; overflow-y: scroll; display:none">
                     <!-- To be populated with track checkboxes -->
                </div>
                <p id="filetext" style="font-size:12px; float:left">MIDI File:</p>

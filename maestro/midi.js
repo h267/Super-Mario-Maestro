@@ -17,6 +17,8 @@ class MIDIfile{
             this.noteDelta = Array(16).fill(0);
             this.resolution = 1; // The smallest present unit of a note/rest is expressed as being 1/resolution quarter notes long.
             this.precision = 3;
+            this.isNewTrack = true;
+            this.currentLabel = 'Goomba'
             this.parse();
       }
 
@@ -25,6 +27,7 @@ class MIDIfile{
             //console.log('Started parsing');
             this.parseHeader();
             for(this.tpos=0;this.tpos<this.ntrks;this.tpos++){
+                  this.isNewTrack = true;
                   this.parseTrack();
                   //console.log(this.tracks[this.tpos]);
             }
@@ -73,7 +76,7 @@ class MIDIfile{
                   return;
             }
             this.tracks.push([]);
-            this.trkLabels.push('Track '+this.tpos);
+            this.trkLabels.push('[Labeling Error]'); // Not intended to be seen in use
             var len = this.fetchBytes(4);
             //console.log('len = '+len);
             while(!done){
@@ -139,13 +142,6 @@ class MIDIfile{
                                           var len = this.fetchBytes(1);
                                           data.push(this.fetchBytes(len)); // All one value
                                           break;
-                                    case 0x03:
-                                          var len = this.fetchBytes(1);
-                                          for(i=0;i<len;i++){
-                                                data.push(this.fetchBytes(1));
-                                          }
-                                          this.trkLabels[this.tpos] = arrToASCII(data);
-                                          break;
                                     default:
                                           var len = this.fetchBytes(1);
                                           //console.log('Mlen = '+len);
@@ -160,8 +156,18 @@ class MIDIfile{
             }
             else{
                   switch(eventType){
+                        case 0x9:
+                              if(this.isNewTrack){ // Only properly label tracks with notes in them
+                                    this.trkLabels[this.tpos] = this.currentLabel+' '+this.getLabelNumber(this.currentLabel);
+                                    this.isNewTrack = false;                     
+                              }
+                              if(!rs){data.push(this.fetchBytes(1));}
+                              data.push(this.fetchBytes(1));
+                              break;
                         case 0xC:
                               if(!rs){data.push(this.fetchBytes(1));}
+                              //console.log(this.tpos+': '+data[0]);
+                              this.currentLabel = getInstrumentLabel(data[0]);
                               break;
                         case 0xD:
                               if(!rs){data.push(this.fetchBytes(1));}
@@ -179,6 +185,8 @@ class MIDIfile{
                         var resStuff = getThisRes(this.noteDelta[channel],this.timing);
                         var thisRes = resStuff.res;
                         if(thisRes > this.resolution){this.resolution = thisRes; this.precision = resStuff.prc;}
+                        // TODO: Drum kit
+                        // if(channel==10){console.log(data[0]);}
                         this.noteDelta[channel] = 0;
                         this.noteCount++;
                   }
@@ -237,6 +245,21 @@ class MIDIfile{
       skip(n){
             this.ppos += n;
       }
+      getLabelNumber(label){ // Check for duplicates
+            var iteration = 0;
+            var pass = false;
+            while(!pass){
+                  iteration++;
+                  pass = true;
+                  var thisLabel = label+' '+iteration.toString();
+                  //console.log(thisLabel);
+                  var i = 0;
+                  for(i=0;i<this.trkLabels.length;i++){
+                        if(thisLabel == this.trkLabels[i]){pass = false;}
+                  }
+            }
+            return iteration;
+      }
 }
 
 class MIDIevent{
@@ -287,12 +310,33 @@ function getThisRes(delta,qnTime){
                   recurse = 0;
                   return {res: (1/power), prc: i+1};
             }
-            if(recurse>50){return {res: 32, prc: 8};} // Give up
+            if(recurse>20){return {res: 4, prc: 5};} // Give up
       }
       //console.log(delta+' / '+qnTime+' = '+(delta/qnTime)+' WEIRD');
       //console.log('Rounded to '+Math.round(quotient/resolution)*resolution);
       // /console.log(recurse);
       return getThisRes(Math.round(quotient/resolution)*resolution,qnTime);
+}
+
+function getInstrumentLabel(program){ // Return a label name for the track based on the instrument
+      program++;
+      if(program<=8){return 'Goomba';} // Piano
+      if(program>=9 && program<=16){return 'Shellmet';} // Chromatic Percussion
+      if(program>=17 && program<=24){return '1-Up';} // Organ
+      if(program>=25 && program<=32){return 'Spike Top';} // Guitar
+      if(program>=33 && program<=40){return 'Sledge Bro';} // Bass
+      if(program>=41 && program<=48){return 'Piranha Plant';} // Strings
+      if(program>=49 && program<=56){return 'Bob-Omb';} // Ensemble
+      if(program>=57 && program<=72){return 'Spiny Shellmet';} // Brass, Lead
+      if(program>=73 && program<=80){return 'Dry Bones Shell';} // Pipe
+      if(program>=81 && program<=88){return 'Mushroom';} // Synth Lead
+      if(program>=89 && program<=96){return 'Rotton Mushroom';} // Synth Pad
+      if(program>=97 && program<=104){return 'Green No-Shell Koopa';} // Synth Effects
+      if(program>=105 && program<=112){return 'Monty Mole';} // Ethnic
+      if(program>=113 && program<=120){return 'P-Switch';} // Percussive
+      if(program>=121 && program<=128){return 'Red No-Shell Koopa';} // Sound Effects
+      
+      return 'Unintentional Goomba'; // You should not see this in regular use
 }
 
 // https://www.cs.cmu.edu/~music/cmsip/readings/Standard-MIDI-file-format-updated.pdf
