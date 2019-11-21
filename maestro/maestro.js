@@ -1,8 +1,8 @@
 /* TODO:
 
+ - More bug fixes
  - y-offsets for individual tracks [New UI]
  - Highlight enemies that don't have much room, maybe overlay exclamation point [New UI]
- - Bug fixes
  - Better error messages to alleviate confusion and allow for better debugging
  - Player line optionally drags the scrollbar with it (maybe a play all button)
  - A small info button that shows how to use everything and shows patch notes [New UI]
@@ -11,13 +11,11 @@
  - Prompting instrument changes if the entity limit runs out [New UI]
  - Handle dynamic tempo changes [New UI]
  - x-offset number input or other way to nudge x-offset [New UI]
- - Track naming based on enemy types, not metadata
  - Music levels on tracks: Loup's Algorithms, then Ren's once acceleration is known
  - More/All instrument options
 
 */
 
-// TODO: Finalize 1.1, add "by h267" signature in the lower right-hand corner
 
 
 var reader = new FileReader;
