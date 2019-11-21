@@ -1,3 +1,6 @@
+// Super Mario Maestro
+// made by h267
+
 /* TODO:
 
  - More bug fixes
@@ -15,8 +18,6 @@
  - More/All instrument options
 
 */
-
-
 
 var reader = new FileReader;
 var midi;
