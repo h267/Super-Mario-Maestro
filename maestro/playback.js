@@ -87,10 +87,10 @@ function playLvl(level,bpm,resolution,ofsX,ofsY){
       stopAudio();
       var i;
       var j;
-      for(i=ofsX;i<ofsX+240-27;i++){
+      for(i=ofsX;i<ofsX+240-27;/*i<level.width;*/i++){
             if(i>=level.width){break;} // Plays extra music otherwise. Probably should come back to this
             notes.push([]);
-            for(j=ofsY+1;j<ofsY+27;j++){
+            for(j=ofsY+1;j<ofsY+27;/*j=0;j<level.height;*/j++){
                   if(j>=level.height || j<0){continue;}
                   if(level.checkTile(i,j) == 1){
                         addNote((j-ofsY)+48,level.checkTile(i,j+1)-2);

@@ -8,6 +8,7 @@
                gtag('config', 'UA-152821049-1');
           </script>
           <title>Super Mario Maestro</title>
+          <link rel="stylesheet" href="style.css">
           <meta charset="utf-8"/>          
      </head>
      <body style="background-color:white;">
@@ -15,34 +16,46 @@
           <div style="width:100%">
                <div style="display: table;margin: 0 auto;">
                     <img src="icon/logo.png" alt="Maestro Logo" style="height:35px; margin-bottom: 5px;"></img>
-                    <p style="float:right; position: relative; left: 5px; top: 7px; font-size: 12px;">v1.1</p>
+                    <p style="float:right; position: relative; left: 5px; top: 7px;">v1.2</p>
                </div>
           </div>
 
-          <div style="float: center; width: 95%; margin: 0 auto">
+          <div style="width: 95%; margin: 0 auto">
                <div id="displaycontainer" style="overflow:auto;">
                     <canvas id="canvas" width="3840" height="432"></canvas>
                </div>
-               <button id="playbtn" type="button" onclick="playBtn()" style="float:left; display:none">Play</button>
-               <button id="stopbtn" type="button" onclick="stopBtn()" style="display:none">Stop</button>
-               <select id="temposelect" style="display:none" onchange="selectTempo()">
-                    <!-- To be populated with tempo options -->
-               </select>
-               <p id="ELtext" style="font-size:12px; display:none">Notes in Area: 0</p>
-               <p id="fstxt" style='font-size:12px; margin-bottom:0px; display:none'>File Scrubber</p>
-               <div id="minimapcontainer" style="overflow:auto; display:none">
-                    <canvas id="minimap" width="100px" height="64" style="border:1px solid black"></canvas>
+               <div id="toolbox" style="display: none;">
+                    <button id="playbtn" type="button" onclick="playBtn()" style="float:left;">Play</button>
+                    <button id="stopbtn" type="button" onclick="stopBtn()">Stop</button>
+                    <select id="temposelect" onchange="selectTempo()">
+                         <!-- To be populated with tempo options -->
+                    </select>
+                    <p id="ELtext">Notes in Area: 0</p>
+                    <p id="fstxt" style='margin-bottom:0px;'>File Scrubber</p>
+                    <div id="minimapcontainer" style="overflow:auto;">
+                         <canvas id="minimap" width="100px" height="64" style="border:1px solid black"></canvas>
+                    </div>
+                    <div style="display: grid; grid-template-columns: auto auto;">
+                         <div id="lefttools" style="float:left">
+                              <label for="respicker" id="labrs">Precision</label>
+                              <input id="respicker" type="number" name="respicker" value="0" min = "1" max = "8" onchange="changeRes()" style="width:50px;" min="-48" max="54" disabled>
+                              <label for="yofspicker" id="labys">y-offset</label>
+                              <input id="yofspicker" type="number" name="yofspicker" value="0" onchange="nudgeY()" style="width:50px;" min="-48" max="54" disabled>
+                              <label for="noiseslider" id="nslabl">Noise Threshold</label>
+                              <input id="noiseslider" type="range" min="0" max="127" value="0" onchange="changeNoiseThreshold()" style='display: none; position: relative; top: 5px;'>
+                              <div class="container" id="trkcontainer" style="border:1px solid black; width:220px; height: 150px; overflow-y: scroll;">
+                                   <!-- To be populated with track checkboxes -->
+                              </div>
+                         </div>
+                         <div id="righttools">
+                              <label for="octaveshift">Octave Shift</label>
+                              <input id="octaveshift" type="number" min="-10" max="10" value="0" style="width: 50px;" onchange="shiftTrackOctave()">
+                         </div>
+                    </div>
                </div>
-               <label for="respicker" id="labrs" style="font-size:12px; display:none">Precision</label>
-               <input id="respicker" type="number" name="respicker" value="0" min = "1" max = "8" onchange="changeRes()" style="width:50px; display:none" min="-48" max="54" disabled>
-               <label for="yofspicker" id="labys" style="font-size:12px; display:none">y-offset</label>
-               <input id="yofspicker" type="number" name="yofspicker" value="0" onchange="nudgeY()" style="width:50px; display:none" min="-48" max="54" disabled>
-               <div class="container" id="trkcontainer" style="border:1px solid black; width:220px; height: 100px; overflow-y: scroll; display:none">
-                    <!-- To be populated with track checkboxes -->
-               </div>
-               <p id="filetext" style="font-size:12px; float:left">MIDI File:</p>
+               <p id="filetext" style="float:left">MIDI File:</p>
                <input id ="fileinput" type="file" onchange="loadFile()" style="margin-top:5px; margin-left:5px"></input>
-               <p style="position: absolute; bottom: 1em; right: 1em; text-align: right; font-size:12px; margin-bottom: 0px;">made by h267</p>
+               <p style="position: absolute; bottom: 1em; right: 1em; text-align: right; margin-bottom: 0px;">made by h267</p>
           </div>
 
           <script src="./lib/Tone.js"></script> 
