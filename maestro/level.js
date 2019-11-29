@@ -58,7 +58,7 @@ class Area{
       constructor(w,h){
             this.w = w;
             this.h = h;
-            this.ofsX = 0; // TODO: Use these to implement custom track offsets
+            this.ofsX = 0;
             this.ofsY = 0;
             this.visible = true;
             this.clear();

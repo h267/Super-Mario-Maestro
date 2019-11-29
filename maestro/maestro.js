@@ -157,7 +157,6 @@ function placeNoteBlocks(noRecBPM){
       var width = Math.ceil((midi.duration/midi.timing)*resolution);
       setMiniWidth(width/2);
       var height = 128;
-      var currentProgram = new Array(16);
       var uspqn = 500000; // Assumed
       var haveTempo = false; // TODO: Get rid of this when adding dynamic tempo
       level = new Level();
@@ -207,15 +206,24 @@ function placeNoteBlocks(noRecBPM){
                         //document.getElementById('trkselect').appendChild(opt);
                   }
             }
-
             level.addArea(new Area(width,height));
-            x = 0;
-            for(j=0;j<midi.tracks[i].length;j++){
+            //x = 0;
+            if(midi.firstTempo != 0){songBPM = 60000000/midi.firstTempo;}
+            refreshTempos(resolution);
+            bpm = reccomendTempo(songBPM,resolution,true);
+            if(!noRecBPM){reccomendRes();}
+            haveTempo = true;
+
+            bbar = midi.firstBbar
+
+
+            for(j=0;j<midi.tracks[i].length;j++){ // This code is still here for if I add dynamic tempo/time signature options
+                  break;
                   //x+=tempo*midi.tracks[i][j].deltaTime;
-                  x += (midi.tracks[i][j].deltaTime/midi.timing)*resolution;
+                  //x += (midi.tracks[i][j].deltaTime/midi.timing)*resolution;
                   //console.log('x += '+Math.round((midi.tracks[i][j].deltaTime/midi.timing)*4));
                   //error += Math.abs(Math.round((midi.tracks[i][j].deltaTime/midi.timing)*4)-((midi.tracks[i][j].deltaTime/midi.timing)*4));
-                  if(midi.tracks[i][j].type == 65361 && !haveTempo){ // Tempo Change
+                  if(midi.tracks[i][j].type == 0xFF51 && !haveTempo){ // Tempo Change
                         uspqn = midi.tracks[i][j].data[0];
                         //console.log(midi.tracks[i][j].data[0]+' uspqn');
                         //console.log((60000000/uspqn)+' bpm');
@@ -229,29 +237,39 @@ function placeNoteBlocks(noRecBPM){
                         //tempo = (uspqn/midi.timing)*bpus[speed];
                         //console.log(tempo+' blocks per tick');
                   }
-                  else if(midi.tracks[i][j].type == 65368){ // Time Signature
+                  else if(midi.tracks[i][j].type == 0xFF58){ // Time Signature
                         //console.log('Time Signature');
                         //console.log(midi.tracks[i][j].data[0]+'/'+Math.pow(2,midi.tracks[i][j].data[1]));
                         bbar = midi.tracks[i][j].data[0]/Math.pow(2,midi.tracks[i][j].data[1]);
                         //console.log(midi.tracks[i][j].data[2]+' clocks per beat, '+midi.tracks[i][j].data[3]+' 32nd notes per qn');
                   }
-                  else if(midi.tracks[i][j].type == 12){ // Program Change
+                  /*else if(midi.tracks[i][j].type == 12){ // Program Change
                         //console.log('Program Change: #'+midi.tracks[i][j].data[0]+' on channel '+midi.tracks[i][j].channel);
-                        currentProgram[midi.tracks[i][j].channel] = midi.tracks[i][j].data[0];
+                        currentInstrument[midi.tracks[i][j].channel] = midi.tracks[i][j].data[0];
                   }
                   else if(midi.tracks[i][j].type == 9&&midi.tracks[i][j].data[1]>0){ // Music Note
                         if(midi.tracks[i][j].data[1]<=noiseThreshold){continue;} // Skip notes with volume below noise threshold
                         y = midi.tracks[i][j].data[0];
                         level.areas[i].setTile(Math.round(x),y,1);
                         if(y+1<level.height && level.checkTile(Math.round(x),y+1)==null){
-                              level.areas[i].setTile(Math.round(x),y+1,getInstrument(currentProgram[midi.tracks[i][j].channel]));
+                              level.areas[i].setTile(Math.round(x),y+1,getInstrument(currentInstrument[midi.tracks[i][j].channel]));
                         }
 
                         //miniPlot(x/2,y/2);
                         //drawCircle(x,(y*0.5)+200,1,'black');
                         //drawTile(tiles[1],Math.round(x)*16,y*16);
-                  }
+                  }*/
                   //console.log(advance+' '+tempo+' '+midi.tracks[i][j].deltaTime);
+            }
+            for(j=0;j<midi.notes[i].length;j++){
+                  var note = midi.notes[i][j];
+                  if(note.volume<=noiseThreshold){continue;} // Skip notes with volume below noise threshold
+                  x = (note.time/midi.timing)*resolution
+                  y = note.pitch;
+                  level.areas[i].setTile(Math.round(x),y,1);
+                  if(y+1<level.height && level.checkTile(Math.round(x),y+1)==null){
+                        level.areas[i].setTile(Math.round(x),y+1,getInstrument(note.instrument));
+                  }
             }
             level.areas[i].ofsY = octaveShifts[i]*-13;
             //console.log('error = '+error);
@@ -629,11 +647,8 @@ function moveTrackOfs(){
 function shiftTrackOctave(){
       octaveShifts[selectedTrack] = document.getElementById('octaveshift').value;
       level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*-13;
+      //changeInstrument(selectedTrack,0,2,13);
       softRefresh();
-}
-
-function handleRadio(rad){
-      console.log(rad.value);
 }
 
 function selectTrack(trkID){
@@ -660,8 +675,18 @@ function selectTrack(trkID){
       }
 }
 
-function loadTrackSettings(){ // TODO: Use this for instrument swaps, etc
+function loadTrackSettings(){ // TODO: Also use this for instrument swaps, etc
       document.getElementById('octaveshift').value = octaveShifts[selectedTrack];
 }
 
 // TODO: Reset new UI elements on file change
+
+function changeInstrument(trk, ch, oldIns, newIns){ // TODO: Change this: go through notes array, modify current instruments based on the originals, then hard refresh.
+      var i;
+      var j;
+      for(i=0;i<level.areas[trk].w;i++){
+            for(j=0;j<level.areas[trk].h;j++){
+                  if(level.areas[trk].getTile(i,j) == oldIns){level.areas[trk].setTile(i,j,newIns)}
+            }
+      }
+}
