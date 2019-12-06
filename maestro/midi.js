@@ -1,11 +1,11 @@
-currentInstrument = new Array(16);
-ppos = 0;
-tpos = 0;
-runningStatus = null;
-trackDuration = 0;
-noteDelta = Array(16).fill(0);
-isNewTrack = true;
-currentLabel = 'Goomba'
+var currentInstrument = new Array(16).fill(0);
+var ppos = 0;
+var tpos = 0;
+var runningStatus = null;
+var trackDuration = 0;
+var noteDelta = Array(16).fill(0);
+var isNewTrack = true;
+var currentLabel = 'Goomba'
 
 class MIDIfile{
       constructor(file){
@@ -23,9 +23,9 @@ class MIDIfile{
             this.precision = 3;
             this.usedInstruments = [];
             this.notes;
-            this.firstBbar = 0;
+            this.firstBbar = 1;
             this.firstTempo = 0;
-            currentInstrument = new Array(16);
+            currentInstrument = new Array(16).fill(0);
             ppos = 0;
             tpos = 0;
             runningStatus = null;
@@ -44,13 +44,14 @@ class MIDIfile{
             for(tpos=0;tpos<this.ntrks;tpos++){
                   isNewTrack = true;
                   this.usedInstruments.push([]);
+                  this.usedInstruments[tpos].push();
                   this.parseTrack();
                   //console.log(this.tracks[tpos]);
             }
             console.log(this);
             if(this.error!=0){alert('The file was parsed unsuccessfully. Check the browser console for details.');}
             //console.log(this.noteCount+' notes');
-            console.log(this.notes);
+            //console.log(this.notes);
       }
       parseHeader(){
             if(this.parseString(4) == 'MThd'){/*console.log('MThd');*/}
@@ -94,7 +95,7 @@ class MIDIfile{
             }
             this.tracks.push([]);
             this.notes[tpos] = [];
-            this.trkLabels.push('[Labeling Error]'); // Not intended to be seen in use
+            this.trkLabels.push('empty'); // Not intended to be seen in use
             var len = this.fetchBytes(4);
             //console.log('len = '+len);
             while(!done){
@@ -184,12 +185,13 @@ class MIDIfile{
                   switch(eventType){
                         case 0x9:
                               if(isNewTrack){ // Only properly label tracks with notes in them
-                                    this.trkLabels[tpos] = currentLabel+' '+this.getLabelNumber(currentLabel);
+                                    this.trkLabels[tpos] = currentLabel+' '+this.getLabelNumber(currentLabel); // TODO: Redo now that instrument detection is a thing
                                     isNewTrack = false;                     
                               }
                               if(!rs){data.push(this.fetchBytes(1));}
                               data.push(this.fetchBytes(1));
-                              this.notes[tpos].push(new Note(trackDuration,data[0],data[1],currentInstrument[channel],channel)); // TODO: Find current instrument
+                              this.notes[tpos].push(new Note(trackDuration,data[0],data[1],currentInstrument[channel],channel));
+                              if(notInArr(this.usedInstruments[tpos],currentInstrument[channel])){this.usedInstruments[tpos].push(currentInstrument[channel]);}
                               break;
                         case 0xC:
                               if(!rs){data.push(this.fetchBytes(1));}

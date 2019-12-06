@@ -5,10 +5,10 @@
 
 1.2:
  - Bug fixes
- - y-offsets for individual tracks [New UI]
- - Changing/replacing instruments in tracks [New UI]
+ - y-offsets for individual tracks [New UI] 🗹
+ - Changing/replacing instruments in tracks [New UI] 🗹
  - Add all instruments that can be reused more than a few times
- - Display both limit separately, prompt instrument changes if the entity limit or powerup limit runs out [New UI]
+ - Display both limits separately, add warning system to notify the user of conflicts [New UI]
 
  - Highlight enemies that don't have much room, maybe overlay exclamation point [New UI]
  - Better error messages to alleviate confusion and allow for better debugging
@@ -30,6 +30,8 @@
 
 // TODO: Finish level, noise threshold 31. Use monitor expressions debugger to restore threshold
 
+// TODO: MP3 MIDIs broke
+
 var reader = new FileReader;
 var midi;
 var bpms = [
@@ -48,6 +50,23 @@ var bpms = [
       203, // Fast Conveyor, Walking  
       231, // Normal Conveyor, Running
       286, // Fast Conveyor, Running
+];
+var instrumentNames = [
+      'Goomba',
+      'Shellmet',
+      '1-Up',
+      'Spike Top',
+      'Sledge Bro',
+      'Piranha Plant',
+      'Bob-Omb',
+      'Spiny Shellmet',
+      'Dry Bones Shell',
+      'Mushroom',
+      'Rotton Mushroom',
+      'Green No-Shell Koopa',
+      'Monty Mole',
+      'P-Switch',
+      'Red No-Shell Koopa'
 ];
 var tiles;
 var bgs;
@@ -71,6 +90,7 @@ var isNewFile;
 var noiseThreshold = 0;
 var selectedTrack = 0;
 var octaveShifts = [];
+var instrumentChanges;
 
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
 
@@ -134,14 +154,23 @@ function loadFile(){ // Load file from the file input element
             miniBox(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
             document.getElementById('trkcontainer').innerHTML = '';
             //document.getElementById('trkselect').innerHTML = '';
-            octaveShifts = new Array(midi.tracks.length);
-            octaveShifts.fill(0);
+            selectedTrack = 0;
+            octaveShifts = new Array(midi.tracks.length).fill(0);
+            instrumentChanges = new Array(midi.tracks.length);
+            var i;
+            var j;
+            for(i=0;i<instrumentChanges.length;i++){
+                  instrumentChanges[i] = new Array();
+                  for(j=0;j<midi.usedInstruments[i].length;j++){
+                        instrumentChanges[i][j] = getMM2Instrument(midi.usedInstruments[i][j])-2;
+                  }
+            }
             document.getElementById('octaveshift').value = 0;
             resolution = midi.resolution;
             document.getElementById('respicker').value = midi.precision;
             isNewFile = true;
             fileLoaded = true;
-            placeNoteBlocks(false);
+            placeNoteBlocks(false, true);
             isNewFile = false;
             document.getElementById('yofspicker').disabled = false;
             document.getElementById('respicker').disabled = false;
@@ -149,7 +178,7 @@ function loadFile(){ // Load file from the file input element
       }
 }
 
-function placeNoteBlocks(noRecBPM){
+function placeNoteBlocks(limitedUpdate, reccTempo){
       var i;
       var j;
       var x;
@@ -162,7 +191,7 @@ function placeNoteBlocks(noRecBPM){
       level = new Level();
       for(i=0;i<midi.tracks.length;i++){
             // Add checkbox with label for each track
-            if(!noRecBPM){
+            if(!limitedUpdate){
                   var div = document.createElement('div');
                   div.id = 'item'+i;
                   div.setAttribute('onclick','selectTrack('+i+');');
@@ -209,13 +238,16 @@ function placeNoteBlocks(noRecBPM){
             level.addArea(new Area(width,height));
             //x = 0;
             if(midi.firstTempo != 0){songBPM = 60000000/midi.firstTempo;}
-            refreshTempos(resolution);
-            bpm = reccomendTempo(songBPM,resolution,true);
-            if(!noRecBPM){reccomendRes();}
-            haveTempo = true;
-
+            if(reccTempo){
+                  refreshTempos(resolution);
+                  bpm = reccomendTempo(songBPM,resolution,true);
+                  haveTempo = true;
+            }
+            if(!limitedUpdate){
+                  reccomendRes();
+                  updateInstrumentContainer();
+            }
             bbar = midi.firstBbar
-
 
             for(j=0;j<midi.tracks[i].length;j++){ // This code is still here for if I add dynamic tempo/time signature options
                   break;
@@ -231,7 +263,7 @@ function placeNoteBlocks(noRecBPM){
                         songBPM = 60000000/uspqn;
                         refreshTempos(resolution);
                         bpm = reccomendTempo(songBPM,resolution,true);
-                        if(!noRecBPM){reccomendRes();}
+                        if(!limitedUpdate){reccomendRes();}
                         haveTempo = true;
                         //console.log('tempo = '+uspqn+' / '+midi.timing+' = '+uspqn/midi.timing+' microseconds per tick');
                         //tempo = (uspqn/midi.timing)*bpus[speed];
@@ -268,20 +300,20 @@ function placeNoteBlocks(noRecBPM){
                   y = note.pitch;
                   level.areas[i].setTile(Math.round(x),y,1);
                   if(y+1<level.height && level.checkTile(Math.round(x),y+1)==null){
-                        level.areas[i].setTile(Math.round(x),y+1,getInstrument(note.instrument));
+                        level.areas[i].setTile(Math.round(x),y+1,getMM2Instrument(note.instrument));
                   }
             }
             level.areas[i].ofsY = octaveShifts[i]*-13;
             //console.log('error = '+error);
       }
       //console.log(resolution+' bpqn chosen');
-      if(!haveTempo){ // Use default tempo if none was found
+      if(!haveTempo && reccTempo){ // Use default tempo if none was found
             refreshTempos(resolution);
-            bpm = reccomendTempo(songBPM,resolution,true);
-            if(!noRecBPM){reccomendRes();}
-            haveTempo = true;
+            bpm = reccomendTempo(songBPM,resolution,true); // TODO: Add a checkmark or asterisk next to the reccomended tempo
+            if(!limitedUpdate){reccomendRes();}
       }
-      if(!noRecBPM){selectTrack(-1);}
+      haveTempo = true;
+      if(!limitedUpdate){selectTrack(-1);}
       if(fileLoaded && !isNewFile){
             chkRefresh();
       }
@@ -413,30 +445,51 @@ function chkRefresh(){
       softRefresh();
 }
 
-function getInstrument(program){
-      program++;
+function getMM2Instrument(midiInstrument){
+      midiInstrument++;
       // 1. Specific MIDI Instruments
       // To be added in 1.1
 
       // 2. General Category Instruments
-      if(program<=8){return 2;} // Piano
-      if(program>=9 && program<=16){return 3;} // Chromatic Percussion
-      if(program>=17 && program<=24){return 4;} // Organ
-      if(program>=25 && program<=32){return 5;} // Guitar
-      if(program>=33 && program<=40){return 6;} // Bass
-      if(program>=41 && program<=48){return 7;} // Strings
-      if(program>=49 && program<=56){return 8;} // Ensemble
-      if(program>=57 && program<=72){return 9;} // Brass, Lead
-      if(program>=73 && program<=80){return 10;} // Pipe
-      if(program>=81 && program<=88){return 11;} // Synth Lead
-      if(program>=89 && program<=96){return 12;} // Synth Pad
-      if(program>=97 && program<=104){return 13;} // Synth Effects
-      if(program>=105 && program<=112){return 14;} // Ethnic
-      if(program>=113 && program<=120){return 15;} // Percussive
-      if(program>=121 && program<=128){return 16;} // Sound Effects
+      if(midiInstrument<=8){return 2;} // Piano
+      if(midiInstrument>=9 && midiInstrument<=16){return 3;} // Chromatic Percussion
+      if(midiInstrument>=17 && midiInstrument<=24){return 4;} // Organ
+      if(midiInstrument>=25 && midiInstrument<=32){return 5;} // Guitar
+      if(midiInstrument>=33 && midiInstrument<=40){return 6;} // Bass
+      if(midiInstrument>=41 && midiInstrument<=48){return 7;} // Strings
+      if(midiInstrument>=49 && midiInstrument<=56){return 8;} // Ensemble
+      if(midiInstrument>=57 && midiInstrument<=72){return 9;} // Brass, Lead
+      if(midiInstrument>=73 && midiInstrument<=80){return 10;} // Pipe
+      if(midiInstrument>=81 && midiInstrument<=88){return 11;} // Synth Lead
+      if(midiInstrument>=89 && midiInstrument<=96){return 12;} // Synth Pad
+      if(midiInstrument>=97 && midiInstrument<=104){return 13;} // Synth Effects
+      if(midiInstrument>=105 && midiInstrument<=112){return 14;} // Ethnic
+      if(midiInstrument>=113 && midiInstrument<=120){return 15;} // Percussive
+      if(midiInstrument>=121 && midiInstrument<=128){return 16;} // Sound Effects
 
       // 3. Goomba by Default
       return 2;
+}
+
+function getMidiInstrument(mm2Instrument){
+      switch(mm2Instrument){
+            case 2: return 0;
+            case 3: return 9;
+            case 4: return 17;
+            case 5: return 25;
+            case 6: return 33;
+            case 7: return 41;
+            case 8: return 49;
+            case 9: return 57;
+            case 10: return 73;
+            case 11: return 81;
+            case 12: return 89;
+            case 13: return 97;
+            case 14: return 105;
+            case 15: return 113;
+            case 16: return 121;
+            default: return 0;
+      }
 }
 
 function handleClick(e){
@@ -550,7 +603,7 @@ function changeRes(){
       resolution = newRes;
       //console.log('chose res of '+resolution);
       //document.getElementById('trkcontainer').innerHTML = '';
-      hardRefresh();
+      hardRefresh(true);
       //console.log('ratio = '+ratio);
       moveOffsetTo(ratio,null);
       miniBox(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
@@ -631,13 +684,13 @@ function softRefresh(){ // Refresh changes to track layers
       drawLevel(true);
 }
 
-function hardRefresh(){ // Refresh changes to the entire MIDI
-      placeNoteBlocks(true);
+function hardRefresh(reccTempo){ // Refresh changes to the entire MIDI
+      placeNoteBlocks(true, reccTempo);
 }
 
 function changeNoiseThreshold(){
       noiseThreshold = document.getElementById('noiseslider').value;
-      hardRefresh();
+      hardRefresh(false);
 }
 
 function moveTrackOfs(){
@@ -647,7 +700,6 @@ function moveTrackOfs(){
 function shiftTrackOctave(){
       octaveShifts[selectedTrack] = document.getElementById('octaveshift').value;
       level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*-13;
-      //changeInstrument(selectedTrack,0,2,13);
       softRefresh();
 }
 
@@ -662,7 +714,7 @@ function selectTrack(trkID){
       }
       if(document.getElementById('chk'+trkID).checked != level.areas[trkID].visible && !initSelect){return;} // Check to see if the checkbox is about to update. If yes, return
       selectedTrack = trkID;
-      loadTrackSettings();
+      document.getElementById('octaveshift').value = octaveShifts[selectedTrack];
       //console.log(trkID);
       var i;
       for(i=0;i<midi.tracks.length;i++){
@@ -673,20 +725,48 @@ function selectTrack(trkID){
                   document.getElementById('item'+i).style.backgroundColor = '#c3c3ff';
             }
       }
+      updateInstrumentContainer();
 }
 
-function loadTrackSettings(){ // TODO: Also use this for instrument swaps, etc
-      document.getElementById('octaveshift').value = octaveShifts[selectedTrack];
-}
+// TODO: Reset all new UI elements on file change
 
-// TODO: Reset new UI elements on file change
-
-function changeInstrument(trk, ch, oldIns, newIns){ // TODO: Change this: go through notes array, modify current instruments based on the originals, then hard refresh.
+function changeInstrument(trk, ins, newIns){
       var i;
-      var j;
-      for(i=0;i<level.areas[trk].w;i++){
-            for(j=0;j<level.areas[trk].h;j++){
-                  if(level.areas[trk].getTile(i,j) == oldIns){level.areas[trk].setTile(i,j,newIns)}
-            }
+      for(i=0;i<midi.notes[trk].length;i++){
+            if(getMM2Instrument(midi.notes[trk][i].originalInstrument) == ins){midi.notes[trk][i].instrument = getMidiInstrument(newIns);}
       }
+      hardRefresh(false);
+}
+
+function updateInstrumentContainer(){
+      var container = document.getElementById('instrumentcontainer');
+      container.innerHTML = '';
+      var i;
+      for(i=0;i<midi.usedInstruments[selectedTrack].length;i++){
+            var div = document.createElement('div');
+            div.id = 'inscontainer'+i;
+            var picker = document.createElement('select');
+            picker.id = 'inspicker'+i;
+            picker.setAttribute('onchange','triggerInstrChange('+i+');');
+            var j;
+            for(j=0;j<instrumentNames.length;j++){
+                  var opt = document.createElement('option');
+                  opt.value = j+2;
+                  opt.innerHTML = instrumentNames[j];
+                  picker.appendChild(opt);
+            }
+            picker.selectedIndex = instrumentChanges[selectedTrack][i];
+            var labl = document.createElement('label');
+            labl.id = 'inspickerlabl'+i;
+            labl.for = 'inspicker'+i;
+            labl.innerHTML = instrumentNames[getMM2Instrument(midi.usedInstruments[selectedTrack][i])-2]+' ➞ ';
+            div.appendChild(labl);
+            div.appendChild(picker);
+            container.appendChild(div);
+      }
+}
+
+function triggerInstrChange(selectedInstrument){
+      changeInstrument(selectedTrack,getMM2Instrument(midi.usedInstruments[selectedTrack][selectedInstrument]),document.getElementById('inspicker'+selectedInstrument).selectedIndex+2);
+      instrumentChanges[selectedTrack][selectedInstrument] = document.getElementById('inspicker'+selectedInstrument).selectedIndex;
 }
