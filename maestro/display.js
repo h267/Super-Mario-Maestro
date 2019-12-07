@@ -213,6 +213,11 @@ function decorateBG(){
       drawTile(bgs[1],(240-10)*16,17*16);
 }
 
+function drawLimitLine(x){
+      x++;
+      drawLine(x*16,0,x*16,27*16,'rgba(255,0,0,1)',3);
+}
+
 function loadBGs(){
       return new Promise(function(resolve,reject){
             Promise.all([

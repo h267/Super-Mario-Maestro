@@ -22,15 +22,9 @@
 
 */
 
-// TODO: Bug fixes
-// - Fix mislabeling, including the below issue and labeling tracks with multiple instruments
-// - Track tempos will sometimes not display when certains files are loaded
-
 // TODO: Mislabeling with indirect instruments (see Megalovania.mid)
 
 // TODO: Finish level, noise threshold 31. Use monitor expressions debugger to restore threshold
-
-// TODO: MP3 MIDIs broke
 
 var reader = new FileReader;
 var midi;
@@ -98,6 +92,7 @@ var instrumentNames = [
       'Master Sword'/*,
       'Toad'*/ // If you uncomment this, only pain and suffering awaits
 ];
+var powerups = [4, 11, 12, 17, 26, 36, 37, 45]; // The only objects that count towards the powerup limit, not the entity limit
 var tiles;
 var bgs;
 var speed = 10;
@@ -115,7 +110,9 @@ var minimapData = null;
 var bbar = 1;
 var noMouse = false;
 var cursor;
-var noteCount;
+var limitLine = null;
+var entityCount = 0;
+var powerupCount = 0;
 var isNewFile;
 var noiseThreshold = 0;
 var selectedTrack = 0;
@@ -393,38 +390,49 @@ function drawLevel(redrawMini,noDOM){
       for(i=0;i<240;i++){
             drawTile(tiles[0],i*16,canvas.height-16);
       }
-      noteCount = 0;
+      entityCount = 0;
+      powerupCount = 0;
       var j;
       var x;
       var y;
+      if(!noDOM){limitLine = null;}
       for(i=27;i<level.width+27;i++){
-            for(j=0;j<level.height;j++){
+            for(j=0;j<level.height;j++){ // This code is very confusing... probably should fix it later
                   if(!redrawMini && i>ofsX+240){break;}
                   x = ofsX + i - 27;
                   y = ofsY + j;
                   var tile = level.checkTile(x,y);
                   if(tile != null && isVisible(x,y,ofsX,ofsY)){drawTile(tiles[tile],i*16,((27-j)*16));}
-                  if(level.checkTile(i-27,j) == 1){
+                  var ijtile = level.checkTile(i-27,j);
+                  if(ijtile == 1){
                         if(redrawMini){miniPlot((i-27)/2,j/2);}
-                        if(i<ofsX+240 && i>=ofsX+27 && j<=ofsY+27 && j>ofsY){
-                              noteCount++;
+                  }
+                  if(!noDOM){
+                        if(i<ofsX+240 && i>=ofsX+27 && j<=ofsY+27 && j>ofsY && ijtile >= 2){
+                              if(notInArr(powerups,ijtile)){
+                                    entityCount++;
+                              }
+                              else{
+                                    powerupCount++;
+                              }
+                              if((entityCount == 100 || powerupCount == 100) && limitLine == null){
+                                    limitLine = i-ofsX;
+                              }
                         }
                   }
             }
             if(!redrawMini && i>ofsX+240){break;}
       }
+      if(limitLine != null){drawLimitLine(limitLine);}
       decorateBG();
       if(!noDOM){
-            document.getElementById('ELtext').innerHTML = "Notes in Area: "+noteCount;
-            if(noteCount<=100){
-                  document.getElementById('ELtext').style = 'display:inline';
-            }
-            else if(noteCount>100&&noteCount<=200){
-                  document.getElementById('ELtext').style = 'color:blue; display:inline';
-            }
-            else if(noteCount>200){
-                  document.getElementById('ELtext').style = 'color:red; display:inline';
-            }
+            document.getElementById('ELtext').innerHTML = "Entities in Area: "+entityCount;
+            document.getElementById('PLtext').innerHTML = "Powerups in Area: "+powerupCount;
+            if(entityCount>100){document.getElementById('ELtext').style.color = 'red';}
+            else{document.getElementById('ELtext').style.color = '';}
+
+            if(powerupCount>100){document.getElementById('PLtext').style.color = 'red';}
+            else{document.getElementById('PLtext').style.color = '';}
       }
       if(redrawMini){minimapData = captureMini();}
       else{setMiniData(minimapData);}

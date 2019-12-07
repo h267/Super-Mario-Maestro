@@ -135,12 +135,12 @@ class MIDIfile{
             }
             this.tracks.push([]);
             this.notes[tpos] = [];
-            this.trkLabels.push('empty'); // Not intended to be seen in use
             var len = this.fetchBytes(4);
             //console.log('len = '+len);
             while(!done){
                   done = this.parseEvent();
             }
+            this.trkLabels.push(this.labelCurrentTrack());
             //console.log('Track '+tpos);
             //console.log(this.tracks[tpos]);
             //console.log(trackDuration);
@@ -224,10 +224,6 @@ class MIDIfile{
             else{
                   switch(eventType){
                         case 0x9:
-                              if(isNewTrack){ // Only properly label tracks with notes in them
-                                    this.trkLabels[tpos] = currentLabel+' '+this.getLabelNumber(currentLabel); // TODO: Redo now that instrument detection is a thing
-                                    isNewTrack = false;                     
-                              }
                               if(!rs){data.push(this.fetchBytes(1));}
                               data.push(this.fetchBytes(1));
                               this.notes[tpos].push(new Note(trackDuration,data[0],data[1],currentInstrument[channel],channel));
@@ -317,6 +313,16 @@ class MIDIfile{
       }
       skip(n){
             ppos += n;
+      }
+      labelCurrentTrack(){
+            var labl = 'empty';
+            if(this.usedInstruments[tpos].length == 1){
+                  labl = getInstrumentLabel(this.usedInstruments[tpos][0]);
+            }
+            else if(this.usedInstruments[tpos].length > 1){
+                  labl = 'Mixed Track';
+            }
+            this.trkLabels[tpos] = labl+' '+this.getLabelNumber(labl);
       }
       getLabelNumber(label){ // Check for duplicates
             var iteration = 0;
@@ -414,7 +420,7 @@ function getInstrumentLabel(program){ // Return a label name for the track based
       if(program>=57 && program<=72){return 'Spiny Shellmet';} // Brass, Lead
       if(program>=73 && program<=80){return 'Dry Bones Shell';} // Pipe
       if(program>=81 && program<=88){return 'Mushroom';} // Synth Lead
-      if(program>=89 && program<=96){return 'Rotton Mushroom';} // Synth Pad
+      if(program>=89 && program<=96){return 'Rotten Mushroom';} // Synth Pad
       if(program>=97 && program<=104){return 'Green No-Shell Koopa';} // Synth Effects
       if(program>=105 && program<=112){return 'Monty Mole';} // Ethnic
       if(program>=113 && program<=120){return 'P-Switch';} // Percussive
