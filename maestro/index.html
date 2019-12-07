@@ -37,13 +37,13 @@
                     </div>
                     <div style="display: grid; grid-template-columns: auto auto;">
                          <div id="lefttools" style="float:left">
-                              <label for="respicker" id="labrs">Precision</label>
+                              <label for="respicker" id="labrs">Resolution</label>
                               <input id="respicker" type="number" name="respicker" value="0" min = "1" max = "8" onchange="changeRes()" style="width:50px;" min="-48" max="54" disabled>
-                              <label for="yofspicker" id="labys">y-offset</label>
+                              <label for="yofspicker" id="labys">Vertical Shift</label>
                               <input id="yofspicker" type="number" name="yofspicker" value="0" onchange="nudgeY()" style="width:50px;" min="-48" max="54" disabled>
                               <label for="noiseslider" id="nslabl">Noise Threshold</label>
                               <input id="noiseslider" type="range" min="0" max="127" value="0" onchange="changeNoiseThreshold()" style='display: none; position: relative; top: 5px;'>
-                              <div class="container" id="trkcontainer" style="border:1px solid black; width:220px; height: 150px; overflow-y: scroll;">
+                              <div class="container" id="trkcontainer" style="border:1px solid black; width:220px; height: 150px; overflow-y: auto;">
                                    <!-- To be populated with track checkboxes -->
                               </div>
                          </div>
@@ -51,7 +51,7 @@
                               <p style='font-size: 15px; margin-top: 4px; margin-bottom: 8px;'>Track Settings:</p>
                               <label for="octaveshift">Octave Shift</label>
                               <input id="octaveshift" type="number" min="-10" max="10" value="0" style="width: 50px;" onchange="shiftTrackOctave()">
-                              <div id="instrumentcontainer">
+                              <div id="instrumentcontainer" style="width: 400px; height: 150px; overflow-y: auto;">
                                    <!-- To be populated with track instrument changes -->
                               </div>
                          </div>

@@ -62,11 +62,41 @@ var instrumentNames = [
       'Spiny Shellmet',
       'Dry Bones Shell',
       'Mushroom',
-      'Rotton Mushroom',
-      'Green No-Shell Koopa',
+      'Rotten Mushroom',
+      'Green Beach Koopa',
       'Monty Mole',
       'P-Switch',
-      'Red No-Shell Koopa'
+      'Red Beach Koopa',
+      'Big Mushroom',
+      'Bill Blaster',
+      'Shoe Goomba',
+      'Stiletto Goomba',
+      'Cannon',
+      'Unchained Chomp',
+      'Chain Chomp Post',
+      'Coin',
+      'Fire Piranha Plant',
+      'Fire Flower',
+      'Goombrat',
+      'Green Koopa',
+      'Red Koopa',
+      'Hammer Bro',
+      'Magikoopa',
+      'Muncher',
+      'POW Block',
+      'Trampoline',
+      'Sideways Trampoline',
+      'Super Star',
+      'Superball Flower',
+      'Thwomp',
+      'Wiggler',
+      'Spike',
+      'Spike Ball',
+      'Snowball',
+      'Pokey',
+      'Snow Pokey',
+      'Master Sword'/*,
+      'Toad'*/ // If you uncomment this, only pain and suffering awaits
 ];
 var tiles;
 var bgs;
@@ -121,7 +151,37 @@ function loadTiles(){
                   getImg('tiles/woof.png'),
                   getImg('tiles/monty-mole.png'),
                   getImg('tiles/p-switch.png'),
-                  getImg('tiles/mew.png')
+                  getImg('tiles/mew.png'),
+                  getImg('tiles/big-mushroom.png'),
+                  getImg('tiles/bill-blaster.png'),
+                  getImg('tiles/goomba-shoe.png'),
+                  getImg('tiles/goomba-stiletto.png'),
+                  getImg('tiles/cannon.png'),
+                  getImg('tiles/chain-chomp.png'),
+                  getImg('tiles/peg.png'),
+                  getImg('tiles/coin.png'),
+                  getImg('tiles/fire-piranha.png'),
+                  getImg('tiles/flower.png'),
+                  getImg('tiles/goombud.png'),
+                  getImg('tiles/green-koopa.png'),
+                  getImg('tiles/red-koopa.png'),
+                  getImg('tiles/hammer-bro.png'),
+                  getImg('tiles/magikoopa.png'),
+                  getImg('tiles/muncher.png'),
+                  getImg('tiles/pow.png'),
+                  getImg('tiles/spring.png'),
+                  getImg('tiles/sideways-spring.png'),
+                  getImg('tiles/star.png'),
+                  getImg('tiles/superball.png'),
+                  getImg('tiles/thwomp.png'),
+                  getImg('tiles/wiggler.png'),
+                  getImg('tiles/spike.png'),
+                  getImg('tiles/spikeball.png'),
+                  getImg('tiles/snowball.png'),
+                  getImg('tiles/pokey.png'),
+                  getImg('tiles/snow-pokey.png'),
+                  getImg('tiles/sword.png'),
+                  getImg('tiles/toad.png')
                   ]
             ).then(function(loaded){
                   //console.log('All tiles loaded');
@@ -448,7 +508,7 @@ function chkRefresh(){
 function getMM2Instrument(midiInstrument){
       midiInstrument++;
       // 1. Specific MIDI Instruments
-      // To be added in 1.1
+      // TODO: Add these in
 
       // 2. General Category Instruments
       if(midiInstrument<=8){return 2;} // Piano
@@ -465,10 +525,8 @@ function getMM2Instrument(midiInstrument){
       if(midiInstrument>=97 && midiInstrument<=104){return 13;} // Synth Effects
       if(midiInstrument>=105 && midiInstrument<=112){return 14;} // Ethnic
       if(midiInstrument>=113 && midiInstrument<=120){return 15;} // Percussive
-      if(midiInstrument>=121 && midiInstrument<=128){return 16;} // Sound Effects
-
-      // 3. Goomba by Default
-      return 2;
+      if(midiInstrument>=121 && midiInstrument<=127){return 16;} // Sound Effects
+      else{return midiInstrument - 127 + 16;} // For new instruments
 }
 
 function getMidiInstrument(mm2Instrument){
@@ -488,7 +546,9 @@ function getMidiInstrument(mm2Instrument){
             case 14: return 105;
             case 15: return 113;
             case 16: return 121;
-            default: return 0;
+            default: return mm2Instrument + 127 - 17
+            //case 17: return 128;
+            //default: return mm2Instrument + 127 - 16;
       }
 }
 
@@ -590,7 +650,7 @@ function handleMove(e){
       //}
 }
 
-function changeRes(){
+function changeRes(){ // TODO: Change the resolution slider to a proper blocks per beat dropdown
       if(!fileLoaded){return;}
       noMouse = false;
       stopAudio();
@@ -728,8 +788,6 @@ function selectTrack(trkID){
       updateInstrumentContainer();
 }
 
-// TODO: Reset all new UI elements on file change
-
 function changeInstrument(trk, ins, newIns){
       var i;
       for(i=0;i<midi.notes[trk].length;i++){
@@ -745,6 +803,7 @@ function updateInstrumentContainer(){
       for(i=0;i<midi.usedInstruments[selectedTrack].length;i++){
             var div = document.createElement('div');
             div.id = 'inscontainer'+i;
+            div.style = 'width: max-content;'
             var picker = document.createElement('select');
             picker.id = 'inspicker'+i;
             picker.setAttribute('onchange','triggerInstrChange('+i+');');
@@ -759,7 +818,7 @@ function updateInstrumentContainer(){
             var labl = document.createElement('label');
             labl.id = 'inspickerlabl'+i;
             labl.for = 'inspicker'+i;
-            labl.innerHTML = instrumentNames[getMM2Instrument(midi.usedInstruments[selectedTrack][i])-2]+' ➞ ';
+            labl.innerHTML = getMidiInstrumentName(midi.usedInstruments[selectedTrack][i])+' ➞ ';
             div.appendChild(labl);
             div.appendChild(picker);
             container.appendChild(div);

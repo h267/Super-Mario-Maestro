@@ -4,6 +4,8 @@ var len = 0;
 var notes = [];
 
 // Load all of the instruments in a very neat and concise way
+// (Why does it have to be this way Tone.js)
+// TODO: Come back to this please
 var goomba = new Tone.Sampler({'F#3': './wav/goomba.wav'},function(){
       goomba.toMaster();
       goomba.volume.value = -5;
@@ -78,6 +80,156 @@ var zuls = new Tone.Sampler({'F#3': './wav/zuls.wav'},function(){
       zuls.toMaster();
       zuls.volume.value = -5;
       zuls.curve = 'linear';
+});
+var bigshroom = new Tone.Sampler({'F#3': './wav/bigshroom.wav'},function(){
+      bigshroom.toMaster();
+      bigshroom.volume.value = -5;
+      bigshroom.curve = 'linear';
+});
+var blaster = new Tone.Sampler({'F#3': './wav/blaster.wav'},function(){
+      blaster.toMaster();
+      blaster.volume.value = -5;
+      blaster.curve = 'linear';
+});
+var boot = new Tone.Sampler({'F#3': './wav/boot.wav'},function(){
+      boot.toMaster();
+      boot.volume.value = -5;
+      boot.curve = 'linear';
+});
+var stiletto = new Tone.Sampler({'F#3': './wav/stiletto.wav'},function(){
+      stiletto.toMaster();
+      stiletto.volume.value = -5;
+      stiletto.curve = 'linear';
+});
+var cannon = new Tone.Sampler({'F#3': './wav/cannon.wav'},function(){
+      cannon.toMaster();
+      cannon.volume.value = -5;
+      cannon.curve = 'linear';
+});
+var chomp = new Tone.Sampler({'F#3': './wav/chomp.wav'},function(){
+      chomp.toMaster();
+      chomp.volume.value = -5;
+      chomp.curve = 'linear';
+});
+var post = new Tone.Sampler({'F#3': './wav/post.wav'},function(){
+      post.toMaster();
+      post.volume.value = -5;
+      post.curve = 'linear';
+});
+var coin = new Tone.Sampler({'F#3': './wav/coin.wav'},function(){
+      coin.toMaster();
+      coin.volume.value = -5;
+      coin.curve = 'linear';
+});
+var fireplant = new Tone.Sampler({'F#3': './wav/fireplant.wav'},function(){
+      fireplant.toMaster();
+      fireplant.volume.value = -5;
+      fireplant.curve = 'linear';
+});
+var flower = new Tone.Sampler({'F#3': './wav/flower.wav'},function(){
+      flower.toMaster();
+      flower.volume.value = -5;
+      flower.curve = 'linear';
+});
+var goombrat = new Tone.Sampler({'F#3': './wav/goombrat.wav'},function(){
+      goombrat.toMaster();
+      goombrat.volume.value = -5;
+      goombrat.curve = 'linear';
+});
+var greenkoopa = new Tone.Sampler({'F#3': './wav/greenkoopa.wav'},function(){
+      greenkoopa.toMaster();
+      greenkoopa.volume.value = -5;
+      greenkoopa.curve = 'linear';
+});
+var redkoopa = new Tone.Sampler({'F#3': './wav/redkoopa.wav'},function(){
+      redkoopa.toMaster();
+      redkoopa.volume.value = -5;
+      redkoopa.curve = 'linear';
+});
+var hammerbro = new Tone.Sampler({'F#3': './wav/hammerbro.wav'},function(){
+      hammerbro.toMaster();
+      hammerbro.volume.value = -5;
+      hammerbro.curve = 'linear';
+});
+var magikoopa = new Tone.Sampler({'F#3': './wav/magikoopa.wav'},function(){
+      magikoopa.toMaster();
+      magikoopa.volume.value = -5;
+      magikoopa.curve = 'linear';
+});
+var muncher = new Tone.Sampler({'F#3': './wav/muncher.wav'},function(){
+      muncher.toMaster();
+      muncher.volume.value = -5;
+      muncher.curve = 'linear';
+});
+var pow = new Tone.Sampler({'F#3': './wav/pow.wav'},function(){
+      pow.toMaster();
+      pow.volume.value = -5;
+      pow.curve = 'linear';
+});
+var spring = new Tone.Sampler({'F#3': './wav/spring.wav'},function(){
+      spring.toMaster();
+      spring.volume.value = -5;
+      spring.curve = 'linear';
+});
+var sidespring = new Tone.Sampler({'F#3': './wav/sidespring.wav'},function(){
+      sidespring.toMaster();
+      sidespring.volume.value = -5;
+      sidespring.curve = 'linear';
+});
+var star = new Tone.Sampler({'F#3': './wav/star.wav'},function(){
+      star.toMaster();
+      star.volume.value = -5;
+      star.curve = 'linear';
+});
+var superball = new Tone.Sampler({'F#3': './wav/superball.wav'},function(){
+      superball.toMaster();
+      superball.volume.value = -5;
+      superball.curve = 'linear';
+});
+var thwomp = new Tone.Sampler({'F#3': './wav/thwomp.wav'},function(){
+      thwomp.toMaster();
+      thwomp.volume.value = -5;
+      thwomp.curve = 'linear';
+});
+var wiggler = new Tone.Sampler({'F#3': './wav/wiggler.wav'},function(){
+      wiggler.toMaster();
+      wiggler.volume.value = -5;
+      wiggler.curve = 'linear';
+});
+var spike = new Tone.Sampler({'F#3': './wav/spike.wav'},function(){
+      spike.toMaster();
+      spike.volume.value = -5;
+      spike.curve = 'linear';
+});
+var spikeball = new Tone.Sampler({'F#3': './wav/spikeball.wav'},function(){
+      spikeball.toMaster();
+      spikeball.volume.value = -5;
+      spikeball.curve = 'linear';
+});
+var snowball = new Tone.Sampler({'F#3': './wav/snowball.wav'},function(){
+      snowball.toMaster();
+      snowball.volume.value = -5;
+      snowball.curve = 'linear';
+});
+var pokey = new Tone.Sampler({'F#3': './wav/pokey.wav'},function(){
+      pokey.toMaster();
+      pokey.volume.value = -5;
+      pokey.curve = 'linear';
+});
+var snowpokey = new Tone.Sampler({'F#3': './wav/snowpokey.wav'},function(){
+      snowpokey.toMaster();
+      snowpokey.volume.value = -5;
+      snowpokey.curve = 'linear';
+});
+var sword = new Tone.Sampler({'F#3': './wav/sword.wav'},function(){
+      sword.toMaster();
+      sword.volume.value = -5;
+      sword.curve = 'linear';
+});
+var toad = new Tone.Sampler({'C4': './wav/toad.wav'},function(){
+      toad.toMaster();
+      toad.volume.value = -5;
+      toad.curve = 'linear';
 });
 
 
@@ -187,6 +339,36 @@ function playNotes(curNotes){
                   case 12: mole.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
                   case 13: pswitch.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
                   case 14: zuls.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 15: bigshroom.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 16: blaster.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 17: boot.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 18: stiletto.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 19: cannon.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 20: chomp.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 21: post.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 22: coin.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 23: fireplant.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 24: flower.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 25: goombrat.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 26: greenkoopa.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 27: redkoopa.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 28: hammerbro.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 29: magikoopa.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 30: muncher.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 31: pow.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 32: spring.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 33: sidespring.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 34: star.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 35: superball.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 36: thwomp.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 37: wiggler.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 38: spike.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 39: spikeball.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 40: snowball.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 41: pokey.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 42: snowpokey.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 43: sword.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
+                  case 44: toad.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
             }
       }
       
