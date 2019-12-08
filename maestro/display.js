@@ -214,7 +214,6 @@ function decorateBG(){
 }
 
 function drawLimitLine(x){
-      x++;
       drawLine(x*16,0,x*16,27*16,'rgba(255,0,0,1)',3);
 }
 

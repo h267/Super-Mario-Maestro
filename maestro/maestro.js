@@ -1,28 +1,24 @@
-// Super Mario Maestro
+// Super Mario Maestro v1.2.0.1
 // made by h267
 
-/* TODO: New features
-
-1.2:
- - Bug fixes
- - y-offsets for individual tracks [New UI] 🗹
- - Changing/replacing instruments in tracks [New UI] 🗹
- - Add all instruments that can be reused more than a few times
- - Display both limits separately, add warning system to notify the user of conflicts [New UI]
+/* TODO: New features:
+1.2.1:
+ - Any more bug fixes if found
+ - Percussion support
+ - Pitching of percussion tracks by one-block increments
+ - Track-Channel Management
+ - Color-coded tracks - highlight notes in that color and color them that way in the scrubber, and of course show the color in the list
+ - Bigger file scrubber
 
  - Highlight enemies that don't have much room, maybe overlay exclamation point [New UI]
  - Better error messages to alleviate confusion and allow for better debugging
  - Playback line optionally drags the scrollbar with it (maybe a play all button)
  - A small info button that shows how to use everything and shows patch notes [New UI]
- - GM Drum Kit Support
  - Handle dynamic tempo changes [New UI]
  - x-offset number input or other way to nudge x-offset [New UI]
  - Music levels on tracks: Loup's Algorithms, then Ren's once acceleration is known
- - A dividing line that shows when the entity limit is reached
-
+ - Start music playback from anywhere in the blueprint
 */
-
-// TODO: Mislabeling with indirect instruments (see Megalovania.mid)
 
 // TODO: Finish level, noise threshold 31. Use monitor expressions debugger to restore threshold
 
@@ -46,51 +42,51 @@ var bpms = [
       286, // Fast Conveyor, Running
 ];
 var instrumentNames = [
-      'Goomba',
-      'Shellmet',
-      '1-Up',
-      'Spike Top',
-      'Sledge Bro',
-      'Piranha Plant',
-      'Bob-Omb',
-      'Spiny Shellmet',
-      'Dry Bones Shell',
-      'Mushroom',
-      'Rotten Mushroom',
-      'Green Beach Koopa',
-      'Monty Mole',
-      'P-Switch',
-      'Red Beach Koopa',
-      'Big Mushroom',
-      'Bill Blaster',
-      'Shoe Goomba',
-      'Stiletto Goomba',
-      'Cannon',
-      'Unchained Chomp',
-      'Chain Chomp Post',
-      'Coin',
-      'Fire Piranha Plant',
-      'Fire Flower',
-      'Goombrat',
-      'Green Koopa',
-      'Red Koopa',
-      'Hammer Bro',
-      'Magikoopa',
-      'Muncher',
-      'POW Block',
-      'Trampoline',
-      'Sideways Trampoline',
-      'Super Star',
-      'Superball Flower',
-      'Thwomp',
-      'Wiggler',
-      'Spike',
-      'Spike Ball',
-      'Snowball',
-      'Pokey',
-      'Snow Pokey',
-      'Master Sword'/*,
-      'Toad'*/ // If you uncomment this, only pain and suffering awaits
+      'Goomba (Grand Piano)',
+      'Shellmet (Reverb Cowbell)',
+      '1-Up (Synth Organ)',
+      'Spike Top (Harpsichord)',
+      'Sledge Bro (Bass Guitar)',
+      'Piranha Plant (Pizzicato Strings)',
+      'Bob-Omb (Orchestra Hit)',
+      'Spiny Shellmet (Trumpet)',
+      'Dry Bones Shell (Flute)',
+      'Mushroom (Square Wave)',
+      'Rotten Mushroom (Low Synth)',
+      'Green Beach Koopa (Bark)',
+      'Monty Mole (Banjo)',
+      'P-Switch (Snare Drum)',
+      'Red Beach Koopa (Meow)',
+      'Big Mushroom (Shamisen)',
+      'Bill Blaster (Timpani)',
+      'Shoe Goomba (Low Accordion)',
+      'Stiletto Goomba (Accordion)',
+      'Cannon (Timbales)',
+      'Unchained Chomp (Synth Piano)',
+      'Chain Chomp Post (Wood Block)',
+      'Coin (Sleigh Bells)',
+      'Fire Piranha Plant (Legato Strings)',
+      'Fire Flower (Recorder)',
+      'Goombrat (Honky-Tonk Piano)',
+      'Green Koopa (Xylophone)',
+      'Red Koopa (Vibraphone)',
+      'Hammer Bro (Electric Guitar)',
+      'Magikoopa (Synth Choir)',
+      'Muncher (Synth Piano 2)',
+      'POW Block (Kick Drum)',
+      'Trampoline (Crash Cymbal)',
+      'Sideways Trampoline (Hi-Hat)',
+      'Super Star (Music Box)',
+      'Superball Flower (Organ)',
+      'Thwomp (Ethnic Drum)',
+      'Wiggler (Tubular Bells)',
+      'Spike (Acoustic Bass Guitar)',
+      'Spike Ball (Bass Drum)',
+      'Snowball (Tom-Tom Drum)',
+      'Pokey (Acoustic Guitar)',
+      'Snow Pokey (Kazoo)',
+      'Master Sword (Synth Horn)'/*,
+      'Toad (Suffering)'*/ // If you uncomment this, only pain and suffering awaits
 ];
 var powerups = [4, 11, 12, 17, 26, 36, 37, 45]; // The only objects that count towards the powerup limit, not the entity limit
 var tiles;
@@ -360,7 +356,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                         level.areas[i].setTile(Math.round(x),y+1,getMM2Instrument(note.instrument));
                   }
             }
-            level.areas[i].ofsY = octaveShifts[i]*-13;
+            level.areas[i].ofsY = octaveShifts[i]*-12;
             //console.log('error = '+error);
       }
       //console.log(resolution+' bpqn chosen');
@@ -458,7 +454,7 @@ function moveOffsetTo(ox,oy){ // Offsets are given as percentages of the level
 function nudgeY(){
       noMouse = false;
       stopAudio();
-      var relativeOfs = parseInt(document.getElementById('yofspicker').value);
+      var relativeOfs = parseInt(document.getElementById('yofspicker').value)*-1;
       //console.log(relativeOfs+48);
       moveOffsetTo(null,(relativeOfs+48)/127);
 }
