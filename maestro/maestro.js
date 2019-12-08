@@ -757,13 +757,9 @@ function changeNoiseThreshold(){
       hardRefresh(false);
 }
 
-function moveTrackOfs(){
-      // Move selected track by offset times 13 vertically
-}
-
 function shiftTrackOctave(){
       octaveShifts[selectedTrack] = document.getElementById('octaveshift').value;
-      level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*-13;
+      level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*-12;
       softRefresh();
 }
 
