@@ -411,7 +411,7 @@ function drawLevel(redrawMini,noDOM){
                               else{
                                     powerupCount++;
                               }
-                              if((entityCount == 100 || powerupCount == 100) && limitLine == null){
+                              if((entityCount > 100 || powerupCount > 100) && limitLine == null){
                                     limitLine = i-ofsX;
                               }
                         }
