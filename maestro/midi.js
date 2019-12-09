@@ -59,7 +59,8 @@ class MIDIfile{
             this.timing = 0;
             this.duration = 0;
             this.noteCount = 0;
-            this.resolution = 1; // The smallest present unit of a note/rest is expressed as being 1/resolution quarter notes long.
+            this.blocksPerBeat = 1;
+            this.beatMarkers = {}; // key: bpb, val: tally of notes recommending corresponding bpb
             this.precision = 3;
             this.usedInstruments = [];
             this.notes;
@@ -251,13 +252,26 @@ class MIDIfile{
                   }
                   if(eventType==0x9 && data[1]!=0){
                         this.hasNotes[tpos] = true;
-                        var resStuff = getThisRes(noteDelta[channel],this.timing);
-                        var thisRes = resStuff.res;
-                        if(thisRes > this.resolution){this.resolution = thisRes; this.precision = resStuff.prc;}
+                        var bpbStuff = getThisBPB(noteDelta[channel],this.timing);
+                        console.log(bpbStuff);
+                        var thisBPB = bpbStuff.bpb;
+                        for(var j=1;j<17;j++){
+                              if(Math.floor(j/thisBPB)==j/thisBPB){
+                                    if (!this.beatMarkers[j]){this.beatMarkers[j] = 0;}
+                                    this.beatMarkers[j]++;
+                              }
+                        }
                         // TODO: Drum kit
                         // if(channel==10){console.log(data[0]);}
                         noteDelta[channel] = 0;
                         this.noteCount++;
+                  }
+            }
+            var highBeatMarkerCount = 0;
+            for(var i=1;i<17;i++){
+                  if(this.beatMarkers[i] > highBeatMarkerCount){
+                        highBeatMarkerCount = this.beatMarkers[i];
+                        this.blocksPerBeat = i;
                   }
             }
             this.tracks[tpos].push(new MIDIevent(delta,eventType,channel,data));
@@ -386,26 +400,21 @@ function getIntFromBytes(arr,pad){ // Gets an integer value from an arbitrary nu
       return n;
 }
 
-function getThisRes(delta,qnTime){
-      recurse++;
+function getThisBPB(delta,qnTime){
       if(delta==0){return 1;}
       //console.log(delta/qnTime);
       var i;
-      for(i=0;i<8;i++){
-            var power = Math.pow(2,(7-i)-5);
-            var quotient = (delta/qnTime)/power;
+      for(i=1;i<=16;i++){
+            var quotient = i*delta/qnTime;
             //console.log(quotient);
             if(Math.floor(quotient)==quotient){ // Recursion until the quotient becomes a whole number
-                  //console.log('Y '+(delta/qnTime)+' -> '+(1/power));
-                  recurse = 0;
-                  return {res: (1/power), prc: i+1};
+                  //console.log('Y '+(delta/qnTime)+' -> '+i);
+                  return {bpb: i, prc: i+1};
             }
-            if(recurse>20){return {res: 4, prc: 5};} // Give up
       }
       //console.log(delta+' / '+qnTime+' = '+(delta/qnTime)+' WEIRD');
-      //console.log('Rounded to '+Math.round(quotient/resolution)*resolution);
-      // /console.log(recurse);
-      return getThisRes(Math.round(quotient/resolution)*resolution,qnTime);
+      //console.log('Rounded to '+Math.round(quotient/blocksPerBeat)*blocksPerBeat);
+      return {bpb: 4, prc: 0}; // Give up
 }
 
 function getInstrumentLabel(program){ // Return a label name for the track based on the instrument

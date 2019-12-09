@@ -32,14 +32,15 @@
                     </select>
                     <p id="ELtext" style='display: inline;'>Entities in Area: 0</p>
                     <p id="PLtext" style='display: inline; position: relative; left: 20px'>Powerups in Area: 0</p>
+                    <p id="QEtext" style='display: inline; position: relative; left: 40px'>Blocks per Beat quality: -</p>
                     <p id="fstxt" style='margin-bottom:0px;'>File Scrubber</p>
                     <div id="minimapcontainer" style="overflow:auto;">
                          <canvas id="minimap" width="100px" height="64" style="border:1px solid black"></canvas>
                     </div>
                     <div style="display: grid; grid-template-columns: auto auto;">
                          <div id="lefttools" style="float:left">
-                              <label for="respicker" id="labrs">Resolution</label>
-                              <input id="respicker" type="number" name="respicker" value="0" min = "1" max = "8" onchange="changeRes()" style="width:50px;" min="-48" max="54" disabled>
+                              <label for="bpbpicker" id="labrs">Blocks per Beat</label>
+                              <input id="bpbpicker" type="number" name="bpbpicker" value="0" min = "1" max = "8" onchange="changeRes()" style="width:50px;" min="-48" max="54" disabled>
                               <label for="yofspicker" id="labys">Vertical Shift</label>
                               <input id="yofspicker" type="number" name="yofspicker" value="0" onchange="nudgeY()" style="width:50px;" min="-48" max="54" disabled>
                               <label for="noiseslider" id="nslabl">Noise Threshold</label>
