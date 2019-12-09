@@ -24,22 +24,34 @@
 
 var reader = new FileReader;
 var midi;
+// blocks per beat: 4
 var bpms = [
       28, // Slow Autoscroll
       // 28, // Backwards Normal Conveyor, Walking
+      32, // Underwater Walking
       56, // Normal Conveyor, Idle
-      57, // Medium Autoscroll
-      // 57, // Backwards Fast Conveyor, Running
-      85, // Walking
-      113, // Fast Conveyor, Idle
-      114, // Backwards Normal Conveyor, Running
-      115, // Fast Autoscroll
-      143, // Normal Conveyor, Walking
-      //143 // Blue Skull Ride, Idle
-      175, // Running
-      203, // Fast Conveyor, Walking  
-      231, // Normal Conveyor, Running
-      286, // Fast Conveyor, Running
+      // 56, // Medium Autoscroll
+      // 56, // Backwards Fast Conveyor, Running
+      64, // Swimming
+      84, // Walking
+      // 84, // Blaster in a Cloud, Idle
+      88, // Normal Conveyor, Underwater Walking
+      101, // Swimming Holding an Item
+      112, // Fast Autoscroll
+      // 112, // Backwards Normal Conveyor, Running
+      // 112, // Fast Conveyor, Idle
+      116, // Blaster in a Cloud, Underwater Walking
+      140, // Normal Conveyor, Walking
+      // 140 // Blue Skull Ride, Idle
+      144, // Fast Conveyor, Underwater Walking
+      148, // Blaster in a Cloud, Swimming
+      166, // Blaster in a Cloud, Walking
+      169, // Running
+      186, // Blaster in a Cloud, Swimming Holding an Item
+      194, // Fast Conveyor, Walking  
+      227, // Normal Conveyor, Running
+      256, // Blaster in a Cloud, Running
+      279, // Fast Conveyor, Running
 ];
 var instrumentNames = [
       'Goomba (Grand Piano)',
@@ -466,20 +478,27 @@ function resetOffsets(){
 }
 
 function bpmIDtoStr(id){
-      switch(id){
-            case 0: return 'Slow Autoscroll OR Backwards Normal Conveyor - Walking';
-            case 1: return 'Normal Conveyor - Idle';
-            case 2: return 'Medium Autoscroll OR Backwards Fast Conveyor - Running';
-            case 3: return 'Walking';
-            case 4: return 'Fast Conveyor - Idle';
-            case 5: return 'Backwards Normal Conveyor - Running';
-            case 6: return 'Fast Autoscroll';
-            case 7: return 'Blue Skulls OR Normal Conveyor - Walking';
-            case 8: return 'Running';
-            case 9: return 'Fast Conveyor - Walking';
-            case 10: return 'Normal Conveyor - Running';
-            case 11: return 'Fast Conveyor - Running';
-      }
+      const bpms = [
+            'Slow Autoscroll OR Backwards Normal Conveyor - Walking',
+            'Underwater Walking',
+            'Normal Conveyor - Idle OR Medium Autoscroll OR Backwards Fast Conveyor - Running',
+            'Swimming',
+            'Walking OR Blaster in a Cloud - Idle',
+            'Normal Conveyor - Underwater Walking',
+            'Swimming Holding an Item',
+            'Fast Autoscroll OR Fast Conveyor - Idle OR Backwards Normal Conveyor - Running',
+            'Blaster in a Cloud - Underwater Walking',
+            'Blue Skulls OR Normal Conveyor - Walking',
+            'Blaster in a Cloud - Swimming',
+            'Blaster in a Cloud - Walking',
+            'Running',
+            'Blaster in a Cloud - Swimming Holding an Item',
+            'Fast Conveyor - Walking',
+            'Normal Conveyor - Running',
+            'Blaster in a Cloud - Running',
+            'Fast Conveyor - Running',
+      ];
+      return bpms[i];
 }
 
 function reccomendTempo(songBPM,res,print){
