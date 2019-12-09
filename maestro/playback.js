@@ -235,7 +235,7 @@ var toad = new Tone.Sampler({'C4': './wav/toad.wav'},function(){
 
 Tone.Transport.PPQ = 128;
 
-function playLvl(level,bpm,resolution,ofsX,ofsY){
+function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY){
       stopAudio();
       var i;
       var j;
@@ -248,7 +248,7 @@ function playLvl(level,bpm,resolution,ofsX,ofsY){
                         addNote((j-ofsY)+48,level.checkTile(i,j+1)-2);
                   }
             }
-            advanceSchTime(128/resolution);
+            advanceSchTime(128/blocksPerBeat);
       }
       //console.log(notes);
       playAudio(bpm);
