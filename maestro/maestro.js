@@ -517,7 +517,7 @@ function bpmIDtoStr(id){
             'Blaster in a Cloud - Running',
             'Fast Conveyor - Running',
       ];
-      return bpms[i];
+      return bpms[id];
 }
 
 function reccomendTempo(songBPM,bpb,print){
