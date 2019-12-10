@@ -508,6 +508,7 @@ function bpmIDtoStr(id){
             'Fast Autoscroll OR Fast Conveyor - Idle OR Backwards Normal Conveyor - Running',
             'Blaster in a Cloud - Underwater Walking',
             'Blue Skulls OR Normal Conveyor - Walking',
+            'Fast Conveyor, Underwater Walking',
             'Blaster in a Cloud - Swimming',
             'Blaster in a Cloud - Walking',
             'Running',
@@ -517,7 +518,7 @@ function bpmIDtoStr(id){
             'Blaster in a Cloud - Running',
             'Fast Conveyor - Running',
       ];
-      return bpms[i];
+      return bpms[id];
 }
 
 function reccomendTempo(songBPM,bpb,print){
