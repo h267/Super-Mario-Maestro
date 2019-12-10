@@ -233,7 +233,7 @@ var toad = new Tone.Sampler({'C4': './wav/toad.wav'},function(){
 });
 
 
-Tone.Transport.PPQ = 128;
+Tone.Transport.PPQ = 2520;
 
 function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY){
       stopAudio();
@@ -248,7 +248,7 @@ function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY){
                         addNote((j-ofsY)+48,level.checkTile(i,j+1)-2);
                   }
             }
-            advanceSchTime(128/blocksPerBeat);
+            advanceSchTime(2520/blocksPerBeat);
       }
       //console.log(notes);
       playAudio(bpm);
@@ -292,7 +292,7 @@ function advanceSchTime(delta){
             }
             //console.log(time);
             pos++;
-      }, schTime.toString()+'i');
+      }, Math.round(schTime).toString()+'i');
       /*Tone.Draw.schedule(function(time){
             //highlightTile(pos+27,0);
             //highlightTile(Math.floor((240-27)*(time/Tone.Ticks(schTime).toSeconds()))+27,0);
