@@ -53,54 +53,53 @@ var bpms = [
       256, // Blaster in a Cloud, Running
       279, // Fast Conveyor, Running
 ];
-var instrumentNames = [
-      'Goomba (Grand Piano)',
-      'Shellmet (Reverb Cowbell)',
-      '1-Up (Synth Organ)',
-      'Spike Top (Harpsichord)',
-      'Sledge Bro (Bass Guitar)',
-      'Piranha Plant (Pizzicato Strings)',
-      'Bob-Omb (Orchestra Hit)',
-      'Spiny Shellmet (Trumpet)',
-      'Dry Bones Shell (Flute)',
-      'Mushroom (Square Wave)',
-      'Rotten Mushroom (Low Synth)',
-      'Green Beach Koopa (Bark)',
-      'Monty Mole (Banjo)',
-      'P-Switch (Snare Drum)',
-      'Red Beach Koopa (Meow)',
-      'Big Mushroom (Shamisen)',
-      'Bill Blaster (Timpani)',
-      'Shoe Goomba (Low Accordion)',
-      'Stiletto Goomba (Accordion)',
-      'Cannon (Timbales)',
-      'Unchained Chomp (Synth Piano)',
-      'Chain Chomp Post (Wood Block)',
-      'Coin (Sleigh Bells)',
-      'Fire Piranha Plant (Legato Strings)',
-      'Fire Flower (Recorder)',
-      'Goombrat (Honky-Tonk Piano)',
-      'Green Koopa (Xylophone)',
-      'Red Koopa (Vibraphone)',
-      'Hammer Bro (Electric Guitar)',
-      'Magikoopa (Synth Choir)',
-      'Muncher (Synth Piano 2)',
-      'POW Block (Kick Drum)',
-      'Trampoline (Crash Cymbal)',
-      'Sideways Trampoline (Hi-Hat)',
-      'Super Star (Music Box)',
-      'Superball Flower (Organ)',
-      'Thwomp (Ethnic Drum)',
-      'Wiggler (Tubular Bells)',
-      'Spike (Acoustic Bass Guitar)',
-      'Spike Ball (Bass Drum)',
-      'Snowball (Tom-Tom Drum)',
-      'Pokey (Acoustic Guitar)',
-      'Snow Pokey (Kazoo)',
-      'Master Sword (Synth Horn)'/*,
-      'Toad (Suffering)'*/ // If you uncomment this, only pain and suffering awaits
+var instruments = [
+      {name: 'Goomba (Grand Piano)', octave: 1, isPowerup: false},
+      {name: 'Shellmet (Reverb Cowbell)', octave: 1, isPowerup: false},
+      {name: '1-Up (Synth Organ)', octave: 0, isPowerup: true},
+      {name: 'Spike Top (Harpsichord)', octave: 0, isPowerup: false},
+      {name: 'Sledge Bro (Bass Guitar)', octave: -2, isPowerup: false},
+      {name: 'Piranha Plant (Pizzicato Strings)', octave: 1, isPowerup: false},
+      {name: 'Bob-Omb (Orchestra Hit)', octave: 0, isPowerup: false},
+      {name: 'Spiny Shellmet (Trumpet)', octave: 1, isPowerup: false},
+      {name: 'Dry Bones Shell (Flute)', octave: 2, isPowerup: false},
+      {name: 'Mushroom (Square Wave)', octave: 1, isPowerup: true},
+      {name: 'Rotten Mushroom (Low Synth)', octave: -2, isPowerup: true},
+      {name: 'Green Beach Koopa (Bark)', octave: 0, isPowerup: false},
+      {name: 'Monty Mole (Banjo)', octave: 0, isPowerup: false},
+      {name: 'P-Switch (Snare Drum)', octave: 0, isPowerup: false},
+      {name: 'Red Beach Koopa (Meow)', octave: 0, isPowerup: false},
+      {name: 'Big Mushroom (Shamisen)', octave: 0, isPowerup: false},
+      {name: 'Bill Blaster (Timpani)', octave: 0, isPowerup: false},
+      {name: 'Shoe Goomba (Low Accordion)', octave: -1, isPowerup: false},
+      {name: 'Stiletto Goomba (Accordion)', octave: 0, isPowerup: false},
+      {name: 'Cannon (Timbales)', octave: 0, isPowerup: false},
+      {name: 'Unchained Chomp (Synth Piano)', octave: 0, isPowerup: false},
+      {name: 'Chain Chomp Post (Wood Block)', octave: 0, isPowerup: false},
+      {name: 'Coin (Sleigh Bells)', octave: 0, isPowerup: false},
+      {name: 'Fire Piranha Plant (Legato Strings)', octave: 0, isPowerup: false},
+      {name: 'Fire Flower (Recorder)', octave: 1, isPowerup: false},
+      {name: 'Goombrat (Honky-Tonk Piano)', octave: 1, isPowerup: false},
+      {name: 'Green Koopa (Xylophone)', octave: 1, isPowerup: false},
+      {name: 'Red Koopa (Vibraphone)', octave: 1, isPowerup: false},
+      {name: 'Hammer Bro (Electric Guitar)', octave: 1, isPowerup: false},
+      {name: 'Magikoopa (Synth Choir)', octave: 1, isPowerup: false},
+      {name: 'Muncher (Synth Piano 2)', octave: 0, isPowerup: false},
+      {name: 'POW Block (Kick Drum)', octave: 0, isPowerup: false},
+      {name: 'Trampoline (Crash Cymbal)', octave: 0, isPowerup: false},
+      {name: 'Sideways Trampoline (Hi-Hat)', octave: 0, isPowerup: false},
+      {name: 'Super Star (Music Box)', octave: 1, isPowerup: true},
+      {name: 'Superball Flower (Organ)', octave: 1, isPowerup: false},
+      {name: 'Thwomp (Ethnic Drum)', octave: 0, isPowerup: false},
+      {name: 'Wiggler (Tubular Bells)', octave: 1, isPowerup: false},
+      {name: 'Spike (Acoustic Bass Guitar)', octave: -2, isPowerup: false},
+      {name: 'Spike Ball (Bass Drum)', octave: 0, isPowerup: false},
+      {name: 'Snowball (Tom-Tom Drum)', octave: 0, isPowerup: false},
+      {name: 'Pokey (Acoustic Guitar)', octave: 0, isPowerup: false},
+      {name: 'Snow Pokey (Kazoo)', octave: 1, isPowerup: false},
+      {name: 'Master Sword (Synth Horn)', octave: 0, isPowerup: false},/*
+      {name: 'Toad (Suffering)', octave: 0, isPowerup: false},*/ // If you uncomment this, only pain and suffering awaits
 ];
-var powerups = [4, 11, 12, 17, 26, 36, 37, 45]; // The only objects that count towards the powerup limit, not the entity limit
 var tiles;
 var bgs;
 var speed = 10;
@@ -368,10 +367,11 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                   var roundedBy = roundX-x;
                   // console.log("Rounded by: " + roundedBy);
                   if(roundedBy > 0.14){quantizeErrorAggregate += Math.abs(roundX-x);} // TODO: Figure out why this threshold is necessary
-                  y = note.pitch;
+                  var instrument = getMM2Instrument(note.instrument);
+                  y = note.pitch+(-12*instruments[instrument-2].octave)+1;
                   level.areas[i].setTile(roundX,y,1);
                   if(y+1<level.height && level.checkTile(roundX,y+1)==null){
-                        level.areas[i].setTile(roundX,y+1,getMM2Instrument(note.instrument));
+                        level.areas[i].setTile(roundX,y+1,instrument);
                   }
             }
             level.areas[i].ofsY = octaveShifts[i]*-12;
@@ -423,11 +423,11 @@ function drawLevel(redrawMini,noDOM){
                   }
                   if(!noDOM){
                         if(i<ofsX+240 && i>=ofsX+27 && j<=ofsY+27 && j>ofsY && ijtile >= 2){
-                              if(notInArr(powerups,ijtile)){
-                                    entityCount++;
+                              if(instruments[ijtile-2].isPowerup){
+                                    powerupCount++;
                               }
                               else{
-                                    powerupCount++;
+                                    entityCount++;
                               }
                               if((entityCount > 100 || powerupCount > 100) && limitLine == null){
                                     limitLine = i-ofsX;
@@ -843,10 +843,15 @@ function updateInstrumentContainer(){
             picker.id = 'inspicker'+i;
             picker.setAttribute('onchange','triggerInstrChange('+i+');');
             var j;
-            for(j=0;j<instrumentNames.length;j++){
+            for(j=0;j<instruments.length;j++){
                   var opt = document.createElement('option');
                   opt.value = j+2;
-                  opt.innerHTML = instrumentNames[j];
+                  opt.innerHTML = instruments[j].name + ' (';
+                  if(instruments[j].octave >= 0){
+                        opt.innerHTML += '+' + instruments[j].octave + ' 8va)';
+                  } else {
+                        opt.innerHTML += '' + instruments[j].octave + ' 8vb)';
+                  }
                   picker.appendChild(opt);
             }
             picker.selectedIndex = instrumentChanges[selectedTrack][i];
