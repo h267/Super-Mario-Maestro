@@ -306,11 +306,11 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
             if(midi.firstTempo != 0){songBPM = 60000000/midi.firstTempo;}
             if(reccTempo){
                   refreshTempos(blocksPerBeat);
-                  bpm = reccomendTempo(songBPM,blocksPerBeat,true);
+                  bpm = recommendTempo(songBPM,blocksPerBeat,true);
                   haveTempo = true;
             }
             if(!limitedUpdate){
-                  reccomendBPB();
+                  recommendBPB();
                   updateInstrumentContainer();
             }
             bbar = midi.firstBbar
@@ -328,8 +328,8 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                         //setTempoText(Math.round(60000000/uspqn)+' bpm');
                         songBPM = 60000000/uspqn;
                         refreshTempos(blocksPerBeat);
-                        bpm = reccomendTempo(songBPM,blocksPerBeat,true);
-                        if(!limitedUpdate){reccomendBPB();}
+                        bpm = recommendTempo(songBPM,blocksPerBeat,true);
+                        if(!limitedUpdate){recommendBPB();}
                         haveTempo = true;
                         //console.log('tempo = '+uspqn+' / '+midi.timing+' = '+uspqn/midi.timing+' microseconds per tick');
                         //tempo = (uspqn/midi.timing)*bpus[speed];
@@ -380,8 +380,8 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
       //console.log(blocksPerBeat+' bpqn chosen');
       if(!haveTempo && reccTempo){ // Use default tempo if none was found
             refreshTempos(blocksPerBeat);
-            bpm = reccomendTempo(songBPM,blocksPerBeat,true); // TODO: Add a checkmark or asterisk next to the reccomended tempo
-            if(!limitedUpdate){reccomendBPB();}
+            bpm = recommendTempo(songBPM,blocksPerBeat,true); // TODO: Add a checkmark or asterisk next to the recommended tempo
+            if(!limitedUpdate){recommendBPB();}
       }
       haveTempo = true;
       if(!limitedUpdate){selectTrack(-1);}
@@ -521,7 +521,7 @@ function bpmIDtoStr(id){
       return bpms[id];
 }
 
-function reccomendTempo(songBPM,bpb,print){
+function recommendTempo(songBPM,bpb,print){
       var closestDist = 10000;
       var recc = -1;
       for(i=0;i<bpms.length;i++){
@@ -726,13 +726,13 @@ function stopBtn(){
       stopAudio();
 }
 
-function reccomendBPB(){
+function recommendBPB(){
       var recmd = blocksPerBeat;
       var curBPM = bpm;
       var diffPercent = Math.abs(curBPM-songBPM)/songBPM;
       // console.log('S'+blocksPerBeat+': '+diffPercent+' @ '+curBPM);
       while(diffPercent > 0.1){
-            curBPM = reccomendTempo(songBPM,recmd,false);
+            curBPM = recommendTempo(songBPM,recmd,false);
             diffPercent = Math.abs(curBPM-songBPM)/songBPM;
             //console.log(recmd+': '+diffPercent+' @ '+curBPM);
             if(recmd + blocksPerBeat >= 16){break;}
