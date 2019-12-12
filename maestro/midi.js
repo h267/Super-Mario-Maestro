@@ -253,7 +253,7 @@ class MIDIfile{
                   if(eventType==0x9 && data[1]!=0){
                         this.hasNotes[tpos] = true;
                         var bpbStuff = getThisBPB(noteDelta[channel],this.timing);
-                        console.log(bpbStuff);
+                        // console.log(bpbStuff);
                         var thisBPB = bpbStuff.bpb;
                         for(var j=1;j<17;j++){
                               if(Math.floor(j/thisBPB)==j/thisBPB){

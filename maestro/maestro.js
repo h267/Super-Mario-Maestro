@@ -124,6 +124,8 @@ var isNewFile;
 var noiseThreshold = 0;
 var selectedTrack = 0;
 var octaveShifts = [];
+var notesAboveScreen = [];
+var notesBelowScreen = [];
 var instrumentChanges;
 var quantizeErrorAggregate = 0;
 
@@ -230,6 +232,10 @@ function loadFile(){ // Load file from the file input element
                         instrumentChanges[i][j] = getMM2Instrument(midi.usedInstruments[i][j])-2;
                   }
             }
+            notesAboveScreen = new Array(midi.tracks.length);
+            notesAboveScreen.fill(0);
+            notesBelowScreen = new Array(midi.tracks.length);
+            notesBelowScreen.fill(0);
             document.getElementById('octaveshift').value = 0;
             blocksPerBeat = midi.blocksPerBeat;
             document.getElementById('bpbpicker').value = blocksPerBeat;
@@ -359,6 +365,8 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                   }*/
                   //console.log(advance+' '+tempo+' '+midi.tracks[i][j].deltaTime);
             }
+            notesAboveScreen[i] = 0;
+            notesBelowScreen[i] = 0;
             for(j=0;j<midi.notes[i].length;j++){
                   var note = midi.notes[i][j];
                   if(note.volume<=noiseThreshold){continue;} // Skip notes with volume below noise threshold
@@ -373,6 +381,8 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                   if(y+1<level.height && level.checkTile(roundX,y+1)==null){
                         level.areas[i].setTile(roundX,y+1,instrument);
                   }
+                  if(y<=ofsY){notesBelowScreen[i]++;}
+                  if(y>=ofsY+27){notesAboveScreen[i]++;}
             }
             level.areas[i].ofsY = octaveShifts[i]*-12;
             //console.log('error = '+error);
@@ -442,7 +452,7 @@ function drawLevel(redrawMini,noDOM){
       if(!noDOM){
             document.getElementById('ELtext').innerHTML = "Entities in Area: "+entityCount;
             document.getElementById('PLtext').innerHTML = "Powerups in Area: "+powerupCount;
-            console.log(quantizeErrorAggregate);
+            // console.log(quantizeErrorAggregate);
             if(quantizeErrorAggregate < 10){ // TODO: figure out what number this should actually be
                   if(quantizeErrorAggregate === 0){
                         document.getElementById('QEtext').innerHTML = "Blocks per Beat quality: Perfect";
@@ -460,6 +470,7 @@ function drawLevel(redrawMini,noDOM){
 
             if(powerupCount>100){document.getElementById('PLtext').style.color = 'red';}
             else{document.getElementById('PLtext').style.color = '';}
+            updateOutOfBoundsNoteCounts();
       }
       if(redrawMini){minimapData = captureMini();}
       else{setMiniData(minimapData);}
@@ -862,10 +873,30 @@ function updateInstrumentContainer(){
             div.appendChild(labl);
             div.appendChild(picker);
             container.appendChild(div);
+            updateOutOfBoundsNoteCounts();
       }
 }
 
 function triggerInstrChange(selectedInstrument){
       changeInstrument(selectedTrack,getMM2Instrument(midi.usedInstruments[selectedTrack][selectedInstrument]),document.getElementById('inspicker'+selectedInstrument).selectedIndex+2);
       instrumentChanges[selectedTrack][selectedInstrument] = document.getElementById('inspicker'+selectedInstrument).selectedIndex;
+}
+
+function updateOutOfBoundsNoteCounts(){
+      var nasText = document.getElementById('NASText');
+      var nbsText = document.getElementById('NBSText');
+      var denom = midi.noteCount/midi.tracks.length;
+      nasText.innerHTML = 'Notes above screen: ' + notesAboveScreen[selectedTrack];
+      console.log('Math.floor(255*'+notesAboveScreen[selectedTrack]+'/'+denom+')');
+      var red = Math.floor(255*notesAboveScreen[selectedTrack]/denom);
+      var green = 255-Math.floor(510*notesAboveScreen[selectedTrack]/denom);
+      if(red > 255){red = 255;}
+      if(green < 0){green = 0;}
+      nasText.style.color = 'rgb('+red+','+green+',0)';
+      nbsText.innerHTML = 'Notes below screen: ' + notesBelowScreen[selectedTrack];
+      red = Math.floor(255*notesBelowScreen[selectedTrack]/denom);
+      green = 255-Math.floor(510*notesBelowScreen[selectedTrack]/denom);
+      if(red > 255){red = 255;}
+      if(green < 0){green = 0;}
+      nbsText.style.color = 'rgb('+red+','+green+',0)';
 }
