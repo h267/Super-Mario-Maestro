@@ -39,12 +39,13 @@
                     </div>
                     <div style="display: grid; grid-template-columns: auto auto;">
                          <div id="lefttools" style="float:left">
-                              <label for="bpbpicker" id="labrs">Blocks per Beat</label>
-                              <input id="bpbpicker" type="number" name="bpbpicker" value="0" min = "1" max = "8" onchange="changeRes()" style="width:50px;" min="-48" max="54" disabled>
                               <label for="yofspicker" id="labys">Vertical Shift</label>
                               <input id="yofspicker" type="number" name="yofspicker" value="0" onchange="nudgeY()" style="width:50px;" min="-48" max="54" disabled>
                               <label for="noiseslider" id="nslabl">Noise Threshold</label>
                               <input id="noiseslider" type="range" min="0" max="127" value="0" onchange="changeNoiseThreshold()" style='display: none; position: relative; top: 5px;'>
+                              <label for="bpbpicker" id="labrs">Blocks per Beat</label>
+                              <input id="bpbpicker" type="number" name="bpbpicker" value="0" min = "1" max = "8" onchange="pickBPB()" style="width:50px;" min="1" max="16" disabled>
+                              <button id="bpbrecommend" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button>
                               <div class="container" id="trkcontainer" style="border:1px solid black; width:220px; height: 150px; overflow-y: auto;">
                                    <!-- To be populated with track checkboxes -->
                               </div>

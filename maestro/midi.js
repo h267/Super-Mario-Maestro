@@ -52,6 +52,7 @@ class MIDIfile{
             this.bytes = file;
             this.tracks = []; // Each track is filled with an array of events
             this.trkLabels = [];
+            this.trkQuantizeErrors = [];
             this.hasNotes = [];
             this.error = 0;
             this.debug = 0;
@@ -60,7 +61,6 @@ class MIDIfile{
             this.duration = 0;
             this.noteCount = 0;
             this.blocksPerBeat = 1;
-            this.beatMarkers = {}; // key: bpb, val: tally of notes recommending corresponding bpb
             this.precision = 3;
             this.usedInstruments = [];
             this.notes;
@@ -89,6 +89,19 @@ class MIDIfile{
                   this.parseTrack();
                   //console.log(this.tracks[tpos]);
             }
+            var lowestQuantizeError = Infinity;
+            var bestBPB = 0;
+            for(var i=0;i<16;i++){
+                  var total = 0;
+                  for(var j=0;j<this.tracks.length;j++){
+                        total += this.trkQuantizeErrors[j][i];
+                  }
+                  if(total<lowestQuantizeError){
+                        lowestQuantizeError = total;
+                        bestBPB = i+1;
+                  }
+            }
+            this.blocksPerBeat = bestBPB;
             console.log(this);
             if(this.error!=0){alert('The file was parsed unsuccessfully. Check the browser console for details.');}
             //console.log(this.noteCount+' notes');
@@ -136,6 +149,7 @@ class MIDIfile{
             }
             this.tracks.push([]);
             this.notes[tpos] = [];
+            this.trkQuantizeErrors[tpos] = new Array(16).fill(0);
             var len = this.fetchBytes(4);
             //console.log('len = '+len);
             while(!done){
@@ -227,7 +241,14 @@ class MIDIfile{
                         case 0x9:
                               if(!rs){data.push(this.fetchBytes(1));}
                               data.push(this.fetchBytes(1));
-                              this.notes[tpos].push(new Note(trackDuration,data[0],data[1],currentInstrument[channel],channel));
+                              var note = new Note(trackDuration,data[0],data[1],currentInstrument[channel],channel)
+                              this.notes[tpos].push(note);
+                              for(var i=1;i<=16;i++){
+                                    var x = (note.time/this.timing)*i
+                                    var roundX = Math.round(x);
+                                    // console.log("Rounded by: " + roundX-x);
+                                    this.trkQuantizeErrors[tpos][i-1] += Math.abs(roundX-x);
+                              }
                               if(notInArr(this.usedInstruments[tpos],currentInstrument[channel])){this.usedInstruments[tpos].push(currentInstrument[channel]);}
                               break;
                         case 0xC:
@@ -254,24 +275,10 @@ class MIDIfile{
                         this.hasNotes[tpos] = true;
                         var bpbStuff = getThisBPB(noteDelta[channel],this.timing);
                         console.log(bpbStuff);
-                        var thisBPB = bpbStuff.bpb;
-                        for(var j=1;j<17;j++){
-                              if(Math.floor(j/thisBPB)==j/thisBPB){
-                                    if (!this.beatMarkers[j]){this.beatMarkers[j] = 0;}
-                                    this.beatMarkers[j]++;
-                              }
-                        }
                         // TODO: Drum kit
                         // if(channel==10){console.log(data[0]);}
                         noteDelta[channel] = 0;
                         this.noteCount++;
-                  }
-            }
-            var highBeatMarkerCount = 0;
-            for(var i=1;i<17;i++){
-                  if(this.beatMarkers[i] > highBeatMarkerCount){
-                        highBeatMarkerCount = this.beatMarkers[i];
-                        this.blocksPerBeat = i;
                   }
             }
             this.tracks[tpos].push(new MIDIevent(delta,eventType,channel,data));
