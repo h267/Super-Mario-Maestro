@@ -110,6 +110,7 @@ var bpm = 120;
 var songBPM = 120;
 var fileLoaded = false;
 var blocksPerBeat = 4;
+var recmdBlocksPerBeat = 4;
 var currentHighlight = {x:-1,y:-1};
 var prevHighlighted = false;
 var clickedTile = null;
@@ -312,11 +313,11 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
             if(midi.firstTempo != 0){songBPM = 60000000/midi.firstTempo;}
             if(reccTempo){
                   refreshTempos(blocksPerBeat);
-                  bpm = reccomendTempo(songBPM,blocksPerBeat,true);
+                  bpm = recommendTempo(songBPM,blocksPerBeat,true);
                   haveTempo = true;
             }
             if(!limitedUpdate){
-                  reccomendBPB();
+                  recommendBPB();
                   updateInstrumentContainer();
             }
             bbar = midi.firstBbar
@@ -334,8 +335,8 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                         //setTempoText(Math.round(60000000/uspqn)+' bpm');
                         songBPM = 60000000/uspqn;
                         refreshTempos(blocksPerBeat);
-                        bpm = reccomendTempo(songBPM,blocksPerBeat,true);
-                        if(!limitedUpdate){reccomendBPB();}
+                        bpm = recommendTempo(songBPM,blocksPerBeat,true);
+                        if(!limitedUpdate){recommendBPB();}
                         haveTempo = true;
                         //console.log('tempo = '+uspqn+' / '+midi.timing+' = '+uspqn/midi.timing+' microseconds per tick');
                         //tempo = (uspqn/midi.timing)*bpus[speed];
@@ -372,9 +373,6 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                   if(note.volume<=noiseThreshold){continue;} // Skip notes with volume below noise threshold
                   x = (note.time/midi.timing)*blocksPerBeat
                   var roundX = Math.round(x);
-                  var roundedBy = roundX-x;
-                  // console.log("Rounded by: " + roundedBy);
-                  if(roundedBy > 0.14){quantizeErrorAggregate += Math.abs(roundX-x);} // TODO: Figure out why this threshold is necessary
                   var instrument = getMM2Instrument(note.instrument);
                   y = note.pitch+(-12*instruments[instrument-2].octave)+1;
                   level.areas[i].setTile(roundX,y,1);
@@ -385,13 +383,14 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                   if(y>=ofsY+27){notesAboveScreen[i]++;}
             }
             level.areas[i].ofsY = octaveShifts[i]*-12;
+            if(level.areas[i].visible){quantizeErrorAggregate += midi.trkQuantizeErrors[i][blocksPerBeat];}
             //console.log('error = '+error);
       }
       //console.log(blocksPerBeat+' bpqn chosen');
       if(!haveTempo && reccTempo){ // Use default tempo if none was found
             refreshTempos(blocksPerBeat);
-            bpm = reccomendTempo(songBPM,blocksPerBeat,true); // TODO: Add a checkmark or asterisk next to the reccomended tempo
-            if(!limitedUpdate){reccomendBPB();}
+            bpm = recommendTempo(songBPM,blocksPerBeat,true); // TODO: Add a checkmark or asterisk next to the recommended tempo
+            if(!limitedUpdate){recommendBPB();}
       }
       haveTempo = true;
       if(!limitedUpdate){selectTrack(-1);}
@@ -452,9 +451,10 @@ function drawLevel(redrawMini,noDOM){
       if(!noDOM){
             document.getElementById('ELtext').innerHTML = "Entities in Area: "+entityCount;
             document.getElementById('PLtext').innerHTML = "Powerups in Area: "+powerupCount;
-            // console.log(quantizeErrorAggregate);
-            if(quantizeErrorAggregate < 10){ // TODO: figure out what number this should actually be
-                  if(quantizeErrorAggregate === 0){
+
+            console.log(quantizeErrorAggregate);
+            if(quantizeErrorAggregate < 0.5 * midi.noteCount){ // TODO: add more well defined ranges
+                  if(quantizeErrorAggregate < 0.14 * midi.noteCount){
                         document.getElementById('QEtext').innerHTML = "Blocks per Beat quality: Perfect";
                         document.getElementById('QEtext').style.color = 'green';
                   } else {
@@ -532,7 +532,7 @@ function bpmIDtoStr(id){
       return bpms[id];
 }
 
-function reccomendTempo(songBPM,bpb,print){
+function recommendTempo(songBPM,bpb,print){
       var closestDist = 10000;
       var recc = -1;
       for(i=0;i<bpms.length;i++){
@@ -704,15 +704,31 @@ function handleMove(e){
       //}
 }
 
-function changeRes(){ // TODO: Change the blocks per beat slider to a dropdown
+function pickBPB(){ // TODO: Change the blocks per beat slider to a dropdown
+      blocksPerBeat = document.getElementById('bpbpicker').value;
+      changeRes();
+}
+
+function changeToRecommendedBPB(){
+      document.getElementById('bpbrecommend').disabled = true;
+      blocksPerBeat = recmdBlocksPerBeat;
+      document.getElementById('bpbpicker').value = blocksPerBeat;
+      changeRes();
+}
+
+function changeRes(){
       if(!fileLoaded){return;}
+      if(recmdBlocksPerBeat !== blocksPerBeat){
+            document.getElementById('bpbrecommend').disabled = false;
+      } else {
+            document.getElementById('bpbrecommend').disabled = true;
+      }
       noMouse = false;
       stopAudio();
       var ratio = (ofsX/2)/minimap.width;
       //console.log(ofsX+' / '+(minimap.width/2));
       //if(ratio>1){ratio = ratio-Math.floor(ratio);}
       //console.log(ratio+'... '+ofsX+' -> '+(ofsX*ratio));
-      blocksPerBeat = document.getElementById('bpbpicker').value;
       //console.log('chose res of '+blocksPerBeat);
       //document.getElementById('trkcontainer').innerHTML = '';
       hardRefresh(true);
@@ -737,19 +753,37 @@ function stopBtn(){
       stopAudio();
 }
 
-function reccomendBPB(){
-      var recmd = blocksPerBeat;
+function recommendBPB(){
+      var lowestQuantizeError = Infinity;
+      var bestBPB = 0;
+      for(var i=0;i<16;i++){
+            var total = 0;
+            for(var j=0;j<midi.tracks.length;j++){
+                  if(!level.areas[j] || level.areas[j].visible){total += midi.trkQuantizeErrors[j][i];}
+            }
+            // console.log('quantize at ' + (i+1) + 'BPB: ' + total);
+            if(total<lowestQuantizeError){
+                  lowestQuantizeError = total;
+                  bestBPB = i+1;
+            }
+      }
+      var recmd = bestBPB;
       var curBPM = bpm;
       var diffPercent = Math.abs(curBPM-songBPM)/songBPM;
-      // console.log('S'+blocksPerBeat+': '+diffPercent+' @ '+curBPM);
+      // console.log('S'+bestBPB+': '+diffPercent+' @ '+curBPM);
       while(diffPercent > 0.1){
-            curBPM = reccomendTempo(songBPM,recmd,false);
+            curBPM = recommendTempo(songBPM,recmd,false);
             diffPercent = Math.abs(curBPM-songBPM)/songBPM;
-            //console.log(recmd+': '+diffPercent+' @ '+curBPM);
-            if(recmd + blocksPerBeat >= 16){break;}
-            recmd += blocksPerBeat;
+            // console.log(recmd+': '+diffPercent+' @ '+curBPM);
+            if(recmd + bestBPB >= 16){break;}
+            recmd += bestBPB;
       }
-      document.getElementById('bpbpicker').value = recmd;
+      recmdBlocksPerBeat = recmd;
+      if(recmdBlocksPerBeat !== blocksPerBeat){
+            var button = document.getElementById('bpbrecommend')
+            button.disabled = "false";
+            button.onclick = function(){document.getElementById('bpbpicker').value = recmdBlocksPerBeat;}
+      }
       changeRes();
       return recmd;
 }
