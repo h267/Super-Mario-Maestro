@@ -96,6 +96,7 @@ class MIDIfile{
                   for(var j=0;j<this.tracks.length;j++){
                         total += this.trkQuantizeErrors[j][i];
                   }
+                  // console.log('BPB: ' + (i+1) + ', error: ' + total);
                   if(total<lowestQuantizeError){
                         lowestQuantizeError = total;
                         bestBPB = i+1;
@@ -243,12 +244,6 @@ class MIDIfile{
                               data.push(this.fetchBytes(1));
                               var note = new Note(trackDuration,data[0],data[1],currentInstrument[channel],channel)
                               this.notes[tpos].push(note);
-                              for(var i=1;i<=16;i++){
-                                    var x = (note.time/this.timing)*i
-                                    var roundX = Math.round(x);
-                                    // console.log("Rounded by: " + roundX-x);
-                                    this.trkQuantizeErrors[tpos][i-1] += Math.abs(roundX-x);
-                              }
                               if(notInArr(this.usedInstruments[tpos],currentInstrument[channel])){this.usedInstruments[tpos].push(currentInstrument[channel]);}
                               break;
                         case 0xC:
@@ -275,7 +270,13 @@ class MIDIfile{
                         this.hasNotes[tpos] = true;
                         var bpbStuff = getThisBPB(noteDelta[channel],this.timing);
                     
-                        console.log(bpbStuff);
+                        // console.log(bpbStuff);
+                        for(var i=1;i<=16;i++){
+                              var x = i*noteDelta[channel]/this.timing;
+                              var roundX = Math.round(x);
+                              // console.log("Rounded by: " + roundX-x);
+                              this.trkQuantizeErrors[tpos][i-1] += Math.abs(roundX-x);
+                        }
                         // TODO: Drum kit
                         // if(channel==10){console.log(data[0]);}
                         noteDelta[channel] = 0;
