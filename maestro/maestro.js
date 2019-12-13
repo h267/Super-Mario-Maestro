@@ -371,7 +371,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                   x = (note.time/midi.timing)*blocksPerBeat
                   var roundX = Math.round(x);
                   var instrument = getMM2Instrument(note.instrument);
-                  y = note.pitch+(-12*instruments[instrument-2].octave)+1;
+                  y = note.pitch+(-12*instruments[instrument-2].octave)+1; // y = note.pitch;
                   level.areas[i].setTile(roundX,y,1);
                   if(y+1<level.height && level.checkTile(roundX,y+1)==null){
                         level.areas[i].setTile(roundX,y+1,instrument);
@@ -410,14 +410,17 @@ function drawLevel(redrawMini,noDOM){
       entityCount = 0;
       powerupCount = 0;
       var j;
-      for(i=0;i<midi.tracks.length;i++){
-            notesAboveScreen[i] = 0;
-            notesBelowScreen[i] = 0;
-            for(j=0;j<midi.notes[i].length;j++){
-                  var note = midi.notes[i][j];
-                  y = note.pitch+(-12*instruments[getMM2Instrument(note.instrument)-2].octave)+1;
-                  if(y+octaveShifts[i]*12<=ofsY){notesBelowScreen[i]++;}
-                  if(y+octaveShifts[i]*12>=ofsY+27){notesAboveScreen[i]++;}
+      if(fileLoaded){
+            for(i=0;i<midi.tracks.length;i++){
+                  notesAboveScreen[i] = 0;
+                  notesBelowScreen[i] = 0;
+                  for(j=0;j<midi.notes[i].length;j++){
+                        var note = midi.notes[i][j];
+                        y = note.pitch + (-12*instruments[getMM2Instrument(note.instrument)-2].octave) + 1 - level.areas[i].ofsY;
+                        // y = note.pitch - level.areas[i].ofsY
+                        if(y <= ofsY){notesBelowScreen[i]++;}
+                        if(y > ofsY+27){notesAboveScreen[i]++;}
+                  }
             }
       }
       var x;
