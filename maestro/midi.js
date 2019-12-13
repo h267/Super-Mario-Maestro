@@ -274,6 +274,7 @@ class MIDIfile{
                   if(eventType==0x9 && data[1]!=0){
                         this.hasNotes[tpos] = true;
                         var bpbStuff = getThisBPB(noteDelta[channel],this.timing);
+                    
                         console.log(bpbStuff);
                         // TODO: Drum kit
                         // if(channel==10){console.log(data[0]);}
