@@ -251,7 +251,6 @@ function loadFile(){ // Load file from the file input element
 }
 
 function placeNoteBlocks(limitedUpdate, reccTempo){
-      quantizeErrorAggregate = 0;
       var i;
       var j;
       var x;
@@ -366,8 +365,6 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                   }*/
                   //console.log(advance+' '+tempo+' '+midi.tracks[i][j].deltaTime);
             }
-            notesAboveScreen[i] = 0;
-            notesBelowScreen[i] = 0;
             for(j=0;j<midi.notes[i].length;j++){
                   var note = midi.notes[i][j];
                   if(note.volume<=noiseThreshold){continue;} // Skip notes with volume below noise threshold
@@ -379,11 +376,8 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                   if(y+1<level.height && level.checkTile(roundX,y+1)==null){
                         level.areas[i].setTile(roundX,y+1,instrument);
                   }
-                  if(y<=ofsY){notesBelowScreen[i]++;}
-                  if(y>=ofsY+27){notesAboveScreen[i]++;}
             }
             level.areas[i].ofsY = octaveShifts[i]*-12;
-            if(level.areas[i].visible){quantizeErrorAggregate += midi.trkQuantizeErrors[i][blocksPerBeat];}
             //console.log('error = '+error);
       }
       //console.log(blocksPerBeat+' bpqn chosen');
@@ -416,6 +410,16 @@ function drawLevel(redrawMini,noDOM){
       entityCount = 0;
       powerupCount = 0;
       var j;
+      for(i=0;i<midi.tracks.length;i++){
+            notesAboveScreen[i] = 0;
+            notesBelowScreen[i] = 0;
+            for(j=0;j<midi.notes[i].length;j++){
+                  var note = midi.notes[i][j];
+                  y = note.pitch+(-12*instruments[getMM2Instrument(note.instrument)-2].octave)+1;
+                  if(y+octaveShifts[i]*12<=ofsY){notesBelowScreen[i]++;}
+                  if(y+octaveShifts[i]*12>=ofsY+27){notesAboveScreen[i]++;}
+            }
+      }
       var x;
       var y;
       if(!noDOM){limitLine = null;}
@@ -452,9 +456,9 @@ function drawLevel(redrawMini,noDOM){
             document.getElementById('ELtext').innerHTML = "Entities in Area: "+entityCount;
             document.getElementById('PLtext').innerHTML = "Powerups in Area: "+powerupCount;
 
-            console.log(quantizeErrorAggregate);
-            if(quantizeErrorAggregate < 0.5 * midi.noteCount){ // TODO: add more well defined ranges
-                  if(quantizeErrorAggregate < 0.14 * midi.noteCount){
+            // console.log(quantizeErrorAggregate / midi.noteCount / blocksPerBeat);
+            if(quantizeErrorAggregate / midi.noteCount / blocksPerBeat < 0.05){ // TODO: add more well defined ranges
+                  if(quantizeErrorAggregate / midi.noteCount / blocksPerBeat < 0.01){
                         document.getElementById('QEtext').innerHTML = "Blocks per Beat quality: Perfect";
                         document.getElementById('QEtext').style.color = 'green';
                   } else {
@@ -723,6 +727,10 @@ function changeRes(){
       } else {
             document.getElementById('bpbrecommend').disabled = true;
       }
+      quantizeErrorAggregate = 0;
+      for(var i=0;i<midi.tracks.length;i++){
+            if(!level.areas[i] || level.areas[i].visible){quantizeErrorAggregate += midi.trkQuantizeErrors[i][blocksPerBeat-1];}
+      }
       noMouse = false;
       stopAudio();
       var ratio = (ofsX/2)/minimap.width;
@@ -921,7 +929,7 @@ function updateOutOfBoundsNoteCounts(){
       var nbsText = document.getElementById('NBSText');
       var denom = midi.noteCount/midi.tracks.length;
       nasText.innerHTML = 'Notes above screen: ' + notesAboveScreen[selectedTrack];
-      console.log('Math.floor(255*'+notesAboveScreen[selectedTrack]+'/'+denom+')');
+      // console.log('Math.floor(255*'+notesAboveScreen[selectedTrack]+'/'+denom+')');
       var red = Math.floor(255*notesAboveScreen[selectedTrack]/denom);
       var green = 255-Math.floor(510*notesAboveScreen[selectedTrack]/denom);
       if(red > 255){red = 255;}
