@@ -80,8 +80,9 @@ function drawTile(image,x,y){
       ctx.drawImage(image, x, y);
 }
 
-function miniPlot(x,y){
-      ctxMini.fillStyle = 'black';
+function miniPlot(x,y,style){
+      if(style == undefined){style = 'black';}
+      ctxMini.fillStyle = style;
       ctxMini.fillRect(x,minimap.height-y,1,1);
 }
 

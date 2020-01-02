@@ -244,6 +244,7 @@ class MIDIfile{
                               data.push(this.fetchBytes(1));
                               var note = new Note(trackDuration,data[0],data[1],currentInstrument[channel],channel)
                               this.notes[tpos].push(note);
+                              // TODO: When a new instrument is found, push a new track in the event and notes array, then copy events and notes there instead of in this track
                               if(notInArr(this.usedInstruments[tpos],currentInstrument[channel])){this.usedInstruments[tpos].push(currentInstrument[channel]);}
                               break;
                         case 0xC:

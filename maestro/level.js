@@ -4,6 +4,7 @@ class Level{
             if(this.areas == undefined){this.areas = [];}
             this.setDims();
             this.overview = new Area(this.width,this.height);
+            this.isTrackOccupant = new Array(this.width);
             this.refresh;
       }
       checkTile(x,y){
@@ -39,15 +40,25 @@ class Level{
       }
       refresh(){
             this.overview = new Area(this.width,this.height);
+            this.isTrackOccupant = new Array(this.width);
             var i;
             var j;
+            for(i=0;i<this.width;i++){
+                  this.isTrackOccupant[i] = new Array(this.height);
+                  for(j=0;j<this.height;j++){
+                        this.isTrackOccupant[i][j] = new Array(this.areas.length).fill(false);
+                  }
+            }
             var k;
             for(i=0;i<this.areas.length;i++){
                   if(!this.areas[i].visible){continue;}
                   for(j=0;j<this.areas[i].w;j++){
                         for(k=0;k<this.areas[i].h;k++){
                               var thisTile = this.areas[i].getTile(j,k,true);
-                              if(thisTile!=null){this.overview.setTile(j,k,thisTile);}
+                              if(thisTile!=null){
+                                    this.overview.setTile(j,k,thisTile);
+                                    this.isTrackOccupant[j][k][i] = true;
+                              }
                         }
                   }
             }
