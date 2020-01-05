@@ -3,9 +3,10 @@
 
 /* TODO: New features:
 1.2.1:
+ - Fix minimap selection being cut off
  - Make minimap 2x larger
  - Improved track-spacific note offscreen display
- - Highlight the notes of the selected track in the minimap and in the display
+ - Highlight the notes of the selected track in the display
  - Make bpb suggestions better, factor in tempo
  - Percussion support: More specific instrument suggestions and proper labeling of percussion tracks
  - Lower Spike's volume to better match in-game playback :(
@@ -14,7 +15,6 @@
  - Highlight overlapping tiles in red
  - Display the original tempo of the MIDI again
  - Put the instruments in alphabetical order
- - Gray out the labels of tracks with 0 notes onscreen
 
 
 After:
@@ -29,8 +29,6 @@ After:
  - Start music playback from anywhere in the blueprint
  - Bigger file scrubber
 */
-
-// TODO: Finish level, noise threshold 31. Use monitor expressions debugger to restore threshold
 
 var reader = new FileReader;
 var midi;
@@ -386,7 +384,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                         instrument = getPercussionInstrument(note.pitch)+2;
                         note.instrument = getMidiInstrument(instrument);
                         note.originalInstrument = note.instrument;
-                        y = ofsY+6; // TODO: Better placement, separate different instruments into tracks
+                        y = 54; // TODO: Better placement, separate different instruments into tracks
                   }
                   level.areas[i].setTile(roundX,y,1); // 1 is the ID of a note block tile
                   if(y+1<level.height && level.checkTile(roundX,y+1)==null){ // Check if there is room for an enemy can be placed on top of a note
@@ -425,17 +423,28 @@ function drawLevel(redrawMini,noDOM){
       }
       entityCount = 0;
       powerupCount = 0;
+      var hasVisibleNotes;
       var j;
       if(fileLoaded){
+            hasVisibleNotes = new Array(midi.tracks.length).fill(false);
             for(i=0;i<midi.tracks.length;i++){
                   notesAboveScreen[i] = 0;
                   notesBelowScreen[i] = 0;
                   for(j=0;j<midi.notes[i].length;j++){
                         var note = midi.notes[i][j];
-                        y = note.pitch + (-12*instruments[getMM2Instrument(note.instrument)-2].octave) + 1 - level.areas[i].ofsY;
+                        x = Math.round((note.time/midi.timing)*blocksPerBeat);
+                        if(midi.tracks[i].channel!=9){y = note.pitch + (-12*instruments[getMM2Instrument(note.instrument)-2].octave) + 1 - level.areas[i].ofsY;}
+                        else{y = 54;}
                         // y = note.pitch - level.areas[i].ofsY
                         if(y <= ofsY){notesBelowScreen[i]++;}
-                        if(y > ofsY+26){notesAboveScreen[i]++;} // Omit the notes on the very top row for now
+                        else if(y > ofsY+26){notesAboveScreen[i]++;} // Omit the notes on the very top row for now
+                        else if(x >= ofsX && x < ofsX+240){ // Check if notes are visible
+                              hasVisibleNotes[i] = true;
+                        }
+                  }
+                  if(!isNewFile){
+                        if(hasVisibleNotes[i]){document.getElementById('trklabl'+i).style.color = 'black'}
+                        else{document.getElementById('trklabl'+i).style.color = 'gray'}
                   }
             }
       }
