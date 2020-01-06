@@ -425,7 +425,7 @@ function drawLevel(redrawMini,noDOM){
       powerupCount = 0;
       var hasVisibleNotes;
       var j;
-      if(fileLoaded){
+      if(fileLoaded && !noDOM){
             hasVisibleNotes = new Array(midi.tracks.length).fill(false);
             for(i=0;i<midi.tracks.length;i++){
                   notesAboveScreen[i] = 0;
@@ -456,9 +456,15 @@ function drawLevel(redrawMini,noDOM){
                   if(!redrawMini && i>ofsX+240){break;}
                   x = ofsX + i - 27;
                   y = ofsY + j;
-                  var tile = level.checkTile(x,y);
-                  if(tile != null && isVisible(x,y,ofsX,ofsY)){drawTile(tiles[tile],i*16,((27-j)*16));}
-                  var ijtile = level.checkTile(i-27,j);
+                  var tile = level.checkTile(x,y); // Tile on the main screen
+                  if(tile != null && isVisible(x,y,ofsX,ofsY)){
+                        drawTile(tiles[tile],i*16,((27-j)*16));
+                        if(level.numberOfOccupants[x][y] > 1){ // Highlight any overalapping tiles in red
+                              //console.log('h '+x+','+y);
+                              highlightTile(i,27-j,'rgba(255,0,0,0.4)');
+                        }
+                  }
+                  var ijtile = level.checkTile(i-27,j); // Tile on the minimap
                   if(ijtile == 1 && redrawMini){
                         if(level.isTrackOccupant[i-27][j][selectedTrack]){
                               miniPlot((i-27)/2,j/2,'blue');
@@ -475,7 +481,7 @@ function drawLevel(redrawMini,noDOM){
                               else{
                                     entityCount++;
                               }
-                              if((entityCount > 100 || powerupCount > 100) && limitLine == null){
+                              if((entityCount > 100 || powerupCount > 100) && (limitLine == null || i-ofsX < limitLine)){
                                     limitLine = i-ofsX;
                               }
                         }
@@ -676,8 +682,8 @@ function handleMove(e){
 
       if(currentHighlight.x!=tilePos.x || currentHighlight.y!=tilePos.y){
             drawLevel(false,true);
-            highlightTile(tilePos.x,27-tilePos.y,'rgba(0,0,0,0.1)');
-            drawTile(cursor,(tilePos.x-1)*16,(27-(tilePos.y+1))*16);
+            highlightTile(tilePos.x,27-tilePos.y,'rgba(0,0,0,0.1)'); // Lightly highlight the tile the cursor is on
+            drawTile(cursor,(tilePos.x-1)*16,(27-(tilePos.y+1))*16); // Draw the cursor icon
             currentHighlight = {x: tilePos.x, y: tilePos.y};
             refresh = true;
       }
