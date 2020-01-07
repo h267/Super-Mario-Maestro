@@ -62,6 +62,15 @@ function fillRect(x,y,w,h,style){
       ctx.fillRect(x,y,w,h);
 }
 
+function drawBox(x,y,w,h,thickness,style){
+      if(style == undefined){style = 'black';}
+      if(thickness == undefined){thickness = 1;}
+      ctx.strokeStyle = style;
+      ctx.lineWidth = thickness;
+      ctx.rect(x,y,w,h);
+      ctx.stroke();
+}
+
 function getImg(loc){
       return new Promise(function(resolve,reject){
             var img = new Image();
@@ -171,6 +180,12 @@ function getRealMiniOfs(e){
 function highlightTile(tx,ty,style){
       if(style==undefined){style='rgba(0,255,0,0.5)';}
       fillRect(tx*16,ty*16,16,16,style);
+}
+
+function outlineTile(tx,ty,thickness,style){
+      if(thickness==undefined){thickness = 1;}
+      if(style==undefined){style='rgba(0,255,0,0.5)';}
+      drawBox(tx*16,ty*16,16,16,thickness,style);
 }
 
 function highlightCol(tx,style){

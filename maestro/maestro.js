@@ -4,18 +4,18 @@
 /* TODO: New features:
 1.2.1:
  - Fix minimap selection being cut off
- - Make minimap 2x larger
- - Improved track-spacific note offscreen display
- - Highlight the notes of the selected track in the display
+ - Save the background of the main display like the minimap, so highlights and the playback indicator don't require the level to be redrawn
+ - Make minimap larger and add a vscode type slider, eliminating a need for a scrollbar
+ - Improved track-specific note offscreen display (what percentage of notes are above and below the screen boundary)
+ - Substitute "Reccomend BPM" option for a warning/notification that a new BPB is recommended
  - Make bpb suggestions better, factor in tempo
  - Percussion support: More specific instrument suggestions and proper labeling of percussion tracks
  - Lower Spike's volume to better match in-game playback :(
  - Pitching of percussion tracks by one-block increments
  - Automatically separate mixed tracks into one track per instrument
- - Highlight overlapping tiles in red
  - Display the original tempo of the MIDI again
  - Put the instruments in alphabetical order
-
+ - Make the webpage CSS look a little better
 
 After:
  - Track-Channel Management
@@ -462,6 +462,9 @@ function drawLevel(redrawMini,noDOM){
                         if(level.numberOfOccupants[x][y] > 1){ // Highlight any overalapping tiles in red
                               //console.log('h '+x+','+y);
                               highlightTile(i,27-j,'rgba(255,0,0,0.4)');
+                        }
+                        if(tile == 1 && level.isTrackOccupant[x][y][selectedTrack]){ // Outline note blocks of the selected track in red
+                              outlineTile(i,27-j,1,'rgba(0,0,255,0.1)');
                         }
                   }
                   var ijtile = level.checkTile(i-27,j); // Tile on the minimap
