@@ -217,6 +217,15 @@ function getLastMiniData(){
       return lastMiniData;
 }
 
+function captureDisplay(){
+      return ctx.getImageData(0,0,canvas.width,canvas.height);
+}
+
+function setDisplayData(imgData){
+      if(imgData == null){return;}
+      ctx.putImageData(imgData,0,0);
+}
+
 function decorateBG(){
       if(bgs==null){
             loadBGs().then(function(loaded){

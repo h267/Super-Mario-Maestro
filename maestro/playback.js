@@ -237,7 +237,8 @@ var toad = new Tone.Sampler({'C4': './wav/toad.wav'},function(){
 
 Tone.Transport.PPQ = 2520;
 
-function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY){
+function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY,playConflicts){
+      if(playConflicts == undefined){playConflicts = true;} // TODO: Make this an option
       stopAudio();
       var i;
       var j;
@@ -246,8 +247,17 @@ function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY){
             notes.push([]);
             for(j=ofsY+1;j<ofsY+27;/*j=0;j<level.height;*/j++){
                   if(j>=level.height || j<0){continue;}
-                  if(level.checkTile(i,j) == 1){
-                        addNote((j-ofsY)+47,level.checkTile(i,j+1)-2);
+                  if(!playConflicts){
+                        if(level.checkTile(i,j) == 1){
+                              addNote((j-ofsY)+47,level.checkTile(i,j+1)-2);
+                        }
+                  }
+                  else{
+                        for(var k=0;k<level.areas.length;k++){
+                              if(level.areas[k].getTile(i,j,true) == 1){
+                                    addNote((j-ofsY)+47,level.areas[k].getTile(i,j+1,true)-2);
+                              }    
+                        }
                   }
             }
             advanceSchTime(2520/blocksPerBeat);
@@ -285,11 +295,11 @@ function advanceSchTime(delta){
             var curNotes = notes[pos];
             //if(notes.length!=0){console.log(curNotes);}
             //if(curNotes.length>0){console.log('ye');}
-            drawLevel(false,true);
+            clearDisplayOverlays();
             highlightCol(pos+27,'rgba(255,0,0,0.5)');
             playNotes(curNotes);
             if(pos+27==239){
-                  drawLevel(false,true);
+                  clearDisplayOverlays();
                   enableMouse();
             }
             //console.log(time);

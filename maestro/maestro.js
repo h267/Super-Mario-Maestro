@@ -1,10 +1,13 @@
 // Super Mario Maestro v1.2.1
 // made by h267
 
+// FIXME: Level playback no longer automatically terminates when finished
+
 /* TODO: New features:
 1.2.1:
- - Fix minimap selection being cut off
  - Save the background of the main display like the minimap, so highlights and the playback indicator don't require the level to be redrawn
+ - Support for adding tracks
+ - Fix minimap region being cut off
  - Make minimap larger and add a vscode type slider, eliminating a need for a scrollbar
  - Improved track-specific note offscreen display (what percentage of notes are above and below the screen boundary)
  - Substitute "Reccomend BPM" option for a warning/notification that a new BPB is recommended
@@ -18,6 +21,7 @@
  - Make the webpage CSS look a little better
 
 After:
+ - Spatial Management
  - Track-Channel Management
  - Highlight enemies that don't have much room, maybe overlay exclamation point [New UI]
  - Better error messages to alleviate confusion and allow for better debugging
@@ -123,6 +127,7 @@ var currentHighlight = {x:-1,y:-1};
 var prevHighlighted = false;
 var clickedTile = null;
 var minimapData = null;
+var displayData = null;
 var bbar = 1;
 var noMouse = false;
 var cursor;
@@ -318,7 +323,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
             level.addArea(new Area(width,height));
             //x = 0;
             if(midi.firstTempo != 0){songBPM = 60000000/midi.firstTempo;}
-            if(reccTempo){
+            if(reccTempo){ // TODO: Optimize speed?
                   refreshTempos(blocksPerBeat);
                   bpm = recommendTempo(songBPM,blocksPerBeat,true);
                   haveTempo = true;
@@ -421,6 +426,7 @@ function drawLevel(redrawMini,noDOM){
       for(i=0;i<240;i++){
             drawTile(tiles[0],i*16,canvas.height-16);
       }
+      decorateBG();
       entityCount = 0;
       powerupCount = 0;
       var hasVisibleNotes;
@@ -493,7 +499,6 @@ function drawLevel(redrawMini,noDOM){
             if(!redrawMini && i>ofsX+240){break;}
       }
       if(limitLine != null){drawLimitLine(limitLine);}
-      decorateBG();
       if(!noDOM){
             document.getElementById('ELtext').innerHTML = "Entities in Area: "+entityCount;
             document.getElementById('PLtext').innerHTML = "Powerups in Area: "+powerupCount;
@@ -518,11 +523,16 @@ function drawLevel(redrawMini,noDOM){
             else{document.getElementById('PLtext').style.color = '';}
             updateOutOfBoundsNoteCounts();
       }
+      displayData = captureDisplay();
       if(redrawMini){minimapData = captureMini();}
       else{setMiniData(minimapData);}
       if(fileLoaded){
             miniBox(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
       }
+}
+
+function clearDisplayOverlays(){
+      setDisplayData(displayData);
 }
 
 function moveOffsetTo(ox,oy){ // Offsets are given as percentages of the level
@@ -656,7 +666,8 @@ function handleClick(e){
       if(noMouse){return;}
       if(clickedTile!=null){
             clickedTile = null;
-            drawLevel(false,true);
+            clearDisplayOverlays();
+            //drawLevel(false,true);
             return;
       }
       var canvasOfs = getOffset(e);
@@ -684,7 +695,7 @@ function handleMove(e){
       var refresh = false;
 
       if(currentHighlight.x!=tilePos.x || currentHighlight.y!=tilePos.y){
-            drawLevel(false,true);
+            clearDisplayOverlays();
             highlightTile(tilePos.x,27-tilePos.y,'rgba(0,0,0,0.1)'); // Lightly highlight the tile the cursor is on
             drawTile(cursor,(tilePos.x-1)*16,(27-(tilePos.y+1))*16); // Draw the cursor icon
             currentHighlight = {x: tilePos.x, y: tilePos.y};
@@ -804,6 +815,7 @@ function stopBtn(){
 }
 
 function recommendBPB(){
+      // TODO: New system
       var lowestQuantizeError = Infinity;
       var bestBPB = 0;
       for(var i=0;i<16;i++){
@@ -848,7 +860,8 @@ function enableMouse(){
 
 function handleOut(){
       if(noMouse){return;}
-      drawLevel(false,true);
+      clearDisplayOverlays();
+      //drawLevel(false,true);
 }
 
 function showEverything(){
@@ -1018,4 +1031,23 @@ function getPercussionInstrument(pitch){ // TODO: More/better suggstions
             case 77: return getInstrumentById('post'); break;
             default: return getInstrumentById('pswitch');
       }
+}
+
+// TODO: These functions
+// Maybe turn tracks into actual objects so this isn't a nightmare
+
+function addTrack(){
+
+}
+
+function moveEventToTrack(){
+      
+}
+
+function addEventToTrack(){
+      
+}
+
+function removeEventFromTrack(){
+
 }
