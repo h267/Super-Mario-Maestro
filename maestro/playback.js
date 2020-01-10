@@ -9,6 +9,7 @@ var notes = [];
 // The octave of each instrument is listed as the same so the playback will match in-game playback
 // (some instruments sound lower than others at the same y value)
 var goomba = new Tone.Sampler({'F3': './wav/goomba.wav'},function(){
+//var goomba = new Tone.Sampler({'F3': './wav/sine.wav'},function(){
       goomba.toMaster();
       goomba.volume.value = -5;
       goomba.curve = 'linear';
@@ -242,10 +243,12 @@ function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY,playConflicts){
       stopAudio();
       var i;
       var j;
-      for(i=ofsX;i<ofsX+240-27;/*i<level.width;*/i++){
+      for(i=ofsX;i<ofsX+240-27;i++){
+      //for(i=ofsX;i<i<level.width;i++){
             if(i>=level.width){break;} // Plays extra music otherwise. Probably should come back to this
             notes.push([]);
-            for(j=ofsY+1;j<ofsY+27;/*j=0;j<level.height;*/j++){
+            for(j=ofsY+1;j<ofsY+27;j++){
+            //for(j=0;j<level.height;j++){
                   if(j>=level.height || j<0){continue;}
                   if(!playConflicts){
                         if(level.checkTile(i,j) == 1){
@@ -254,6 +257,7 @@ function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY,playConflicts){
                   }
                   else{
                         for(var k=0;k<level.areas.length;k++){
+                              if(!level.areas[k].isVisible){continue;}
                               if(level.areas[k].getTile(i,j,true) == 1){
                                     addNote((j-ofsY)+47,level.areas[k].getTile(i,j+1,true)-2);
                               }    

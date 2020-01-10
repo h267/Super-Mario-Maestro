@@ -1,7 +1,7 @@
 // Super Mario Maestro v1.2.1
 // made by h267
 
-// FIXME: Level playback no longer automatically terminates when finished
+// FIXME: Level playback no longer automatically terminates when the music ends before the level does
 
 /* TODO: New features:
 1.2.1:
@@ -236,8 +236,8 @@ function loadFile(){ // Load file from the file input element
             document.getElementById('trkcontainer').innerHTML = '';
             //document.getElementById('trkselect').innerHTML = '';
             selectedTrack = 0;
-            octaveShifts = new Array(midi.tracks.length).fill(0);
-            instrumentChanges = new Array(midi.tracks.length);
+            octaveShifts = new Array(midi.notes.length).fill(0);
+            instrumentChanges = new Array(midi.notes.length);
             var i;
             var j;
             for(i=0;i<instrumentChanges.length;i++){
@@ -246,9 +246,9 @@ function loadFile(){ // Load file from the file input element
                         instrumentChanges[i][j] = getMM2Instrument(midi.usedInstruments[i][j])-2;
                   }
             }
-            notesAboveScreen = new Array(midi.tracks.length);
+            notesAboveScreen = new Array(midi.notes.length);
             notesAboveScreen.fill(0);
-            notesBelowScreen = new Array(midi.tracks.length);
+            notesBelowScreen = new Array(midi.notes.length);
             notesBelowScreen.fill(0);
             document.getElementById('octaveshift').value = 0;
             blocksPerBeat = midi.blocksPerBeat;
@@ -264,6 +264,7 @@ function loadFile(){ // Load file from the file input element
 }
 
 function placeNoteBlocks(limitedUpdate, reccTempo){
+      //console.log('rebuilding level');
       var i;
       var j;
       var x;
@@ -274,7 +275,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
       var uspqn = 500000; // Assumed
       var haveTempo = false; // TODO: Get rid of this when adding dynamic tempo
       level = new Level();
-      for(i=0;i<midi.tracks.length;i++){
+      for(i=0;i<midi.notes.length;i++){
             // Add checkbox with label for each track
             if(!limitedUpdate){
                   var div = document.createElement('div');
@@ -328,12 +329,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                   bpm = recommendTempo(songBPM,blocksPerBeat,true);
                   haveTempo = true;
             }
-            if(!limitedUpdate){
-                  recommendBPB();
-                  updateInstrumentContainer();
-            }
             bbar = midi.firstBbar
-
             for(j=0;j<midi.tracks[i].length;j++){ // This code is still here for if I add dynamic tempo/time signature options
                   break;
                   //x+=tempo*midi.tracks[i][j].deltaTime;
@@ -399,6 +395,10 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
             level.areas[i].ofsY = octaveShifts[i]*-12;
             //console.log('error = '+error);
       }
+      if(!limitedUpdate){
+            recommendBPB();
+            updateInstrumentContainer();
+      }
       //console.log(blocksPerBeat+' bpqn chosen');
       if(!haveTempo && reccTempo){ // Use default tempo if none was found
             refreshTempos(blocksPerBeat);
@@ -432,14 +432,14 @@ function drawLevel(redrawMini,noDOM){
       var hasVisibleNotes;
       var j;
       if(fileLoaded && !noDOM){
-            hasVisibleNotes = new Array(midi.tracks.length).fill(false);
-            for(i=0;i<midi.tracks.length;i++){
+            hasVisibleNotes = new Array(midi.notes.length).fill(false);
+            for(i=0;i<midi.notes.length;i++){
                   notesAboveScreen[i] = 0;
                   notesBelowScreen[i] = 0;
                   for(j=0;j<midi.notes[i].length;j++){
                         var note = midi.notes[i][j];
                         x = Math.round((note.time/midi.timing)*blocksPerBeat);
-                        if(midi.tracks[i].channel!=9){y = note.pitch + (-12*instruments[getMM2Instrument(note.instrument)-2].octave) + 1 - level.areas[i].ofsY;}
+                        if(midi.notes[i][j].channel!=9){y = note.pitch + (-12*instruments[getMM2Instrument(note.instrument)-2].octave) + 1 - level.areas[i].ofsY;}
                         else{y = 54;}
                         // y = note.pitch - level.areas[i].ofsY
                         if(y <= ofsY){notesBelowScreen[i]++;}
@@ -607,7 +607,7 @@ function recommendTempo(songBPM,bpb,print){
 
 function chkRefresh(){
       var i;
-      for(i=0;i<midi.tracks.length;i++){
+      for(i=0;i<midi.notes.length;i++){
             level.areas[i].setVisibility(document.getElementById('chk'+i).checked);
       }
       noMouse = false;
@@ -781,8 +781,8 @@ function changeRes(){
             document.getElementById('bpbrecommend').disabled = true;
       }
       quantizeErrorAggregate = 0;
-      for(var i=0;i<midi.tracks.length;i++){
-            if(!level.areas[i] || level.areas[i].visible){quantizeErrorAggregate += midi.trkQuantizeErrors[i][blocksPerBeat-1];}
+      for(var i=0;i<midi.notes.length;i++){
+            if(!level.areas[i] || level.areas[i].isVisible){quantizeErrorAggregate += midi.trkQuantizeErrors[i][blocksPerBeat-1];}
       }
       noMouse = false;
       stopAudio();
@@ -805,7 +805,8 @@ function playBtn(){
                   return;
             }*/
             noMouse = true;
-            playLvl(level,bpm/*songBPM*/,blocksPerBeat,ofsX,ofsY);
+            playLvl(level,bpm,blocksPerBeat,ofsX,ofsY);
+            //playLvl(level,songBPM,blocksPerBeat,ofsX,ofsY);
       }
 }
 
@@ -820,8 +821,8 @@ function recommendBPB(){
       var bestBPB = 0;
       for(var i=0;i<16;i++){
             var total = 0;
-            for(var j=0;j<midi.tracks.length;j++){
-                  if(!level.areas[j] || level.areas[j].visible){total += midi.trkQuantizeErrors[j][i];}
+            for(var j=0;j<midi.notes.length;j++){
+                  if(!level.areas[j] || level.areas[j].isVisible){total += midi.trkQuantizeErrors[j][i];}
             }
             // console.log('quantize at ' + (i+1) + 'BPB: ' + total);
             if(total<lowestQuantizeError){
@@ -910,17 +911,17 @@ function selectTrack(trkID){
       var initSelect = (trkID == -1);
       if(trkID == -1){
             var i;
-            for(i=0;i<midi.tracks.length;i++){ // Find the first visible checkbox to select 
+            for(i=0;i<midi.notes.length;i++){ // Find the first visible checkbox to select 
                   trkID = i;
                   if(document.getElementById('chk'+i).style.display != 'none'){break;}
             }
       }
-      if(document.getElementById('chk'+trkID).checked != level.areas[trkID].visible && !initSelect){return;} // Check to see if the checkbox is about to update. If yes, return
+      if(document.getElementById('chk'+trkID).checked != level.areas[trkID].isVisible && !initSelect){return;} // Check to see if the checkbox is about to update. If yes, return
       selectedTrack = trkID;
       document.getElementById('octaveshift').value = octaveShifts[selectedTrack];
       //console.log(trkID);
       var i;
-      for(i=0;i<midi.tracks.length;i++){
+      for(i=0;i<midi.notes.length;i++){
             if(i != trkID){
                   document.getElementById('item'+i).style.backgroundColor = '';
             }
@@ -983,7 +984,7 @@ function triggerInstrChange(selectedInstrument){
 function updateOutOfBoundsNoteCounts(){
       var nasText = document.getElementById('NASText');
       var nbsText = document.getElementById('NBSText');
-      var denom = midi.noteCount/midi.tracks.length;
+      var denom = midi.noteCount/midi.notes.length;
       nasText.innerHTML = 'Notes above screen: ' + notesAboveScreen[selectedTrack];
       // console.log('Math.floor(255*'+notesAboveScreen[selectedTrack]+'/'+denom+')');
       var red = Math.floor(255*notesAboveScreen[selectedTrack]/denom);

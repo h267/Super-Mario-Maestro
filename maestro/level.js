@@ -55,7 +55,7 @@ class Level{
             }
             var k;
             for(i=0;i<this.areas.length;i++){
-                  if(!this.areas[i].visible){continue;}
+                  if(!this.areas[i].isVisible){continue;}
                   for(j=0;j<this.areas[i].w;j++){
                         for(k=0;k<this.areas[i].h;k++){
                               var thisTile = this.areas[i].getTile(j,k,true);
@@ -77,7 +77,7 @@ class Area{
             this.h = h;
             this.ofsX = 0;
             this.ofsY = 0;
-            this.visible = true;
+            this.isVisible = true;
             this.clear();
       }
       getTile(x,y,useOfs){
@@ -111,7 +111,7 @@ class Area{
             }
       }
       setVisibility(v){
-            this.visible = v;
+            this.isVisible = v;
       }
       isInBounds(x,y){
             return x < this.w + this.ofsX && x >= this.ofsX && y < this.h + this.ofsY && y >= this.ofsY;

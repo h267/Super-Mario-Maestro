@@ -82,6 +82,7 @@ class MIDIfile{
             //console.log('Started parsing');
             this.parseHeader();
             this.notes = new Array(this.ntrks);
+            var t0 = (new Date).getTime();
             for(tpos=0;tpos<this.ntrks;tpos++){
                   isNewTrack = true;
                   this.usedInstruments.push([]);
@@ -107,6 +108,7 @@ class MIDIfile{
             if(this.error!=0){alert('The file was parsed unsuccessfully. Check the browser console for details.');}
             //console.log(this.noteCount+' notes');
             //console.log(this.notes);
+            console.log('MIDI data loaded in '+((new Date).getTime() - t0)+' ms');
       }
       parseHeader(){
             if(this.parseString(4) == 'MThd'){/*console.log('MThd');*/}
@@ -278,8 +280,6 @@ class MIDIfile{
                               // console.log("Rounded by: " + roundX-x);
                               this.trkQuantizeErrors[tpos][i-1] += Math.abs(roundX-x);
                         }
-                        // TODO: Drum kit
-                        // if(channel==10){console.log(data[0]);}
                         noteDelta[channel] = 0;
                         this.noteCount++;
                   }
