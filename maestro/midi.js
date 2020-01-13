@@ -50,11 +50,8 @@ var midiInstrumentNames = ['Acoustic Grand Piano', 'Bright Acoustic Piano', // T
 class MIDIfile{
       constructor(file){
             this.bytes = file;
-            this.tracks = []; // Each track is filled with an array of events
-            this.trkLabels = [];
-            this.trkQuantizeErrors = [];
-            this.hasNotes = [];
-            this.error = 0;
+            this.trks;
+            this.error = null;
             this.debug = 0;
             this.timingFormat = 0;
             this.timing = 0;
@@ -62,8 +59,6 @@ class MIDIfile{
             this.noteCount = 0;
             this.blocksPerBeat = 1;
             this.precision = 3;
-            this.usedInstruments = [];
-            this.notes;
             this.firstBbar = 1;
             this.firstTempo = 0;
             currentInstrument = new Array(16).fill(0);
@@ -81,21 +76,24 @@ class MIDIfile{
       parse(){
             //console.log('Started parsing');
             this.parseHeader();
-            this.notes = new Array(this.ntrks);
+            this.trks = new Array(this.ntrks);
             var t0 = (new Date).getTime();
+            var i;
+            for(i=0;i<this.ntrks;i++){
+                  this.trks[i] = new MIDItrack();
+            }
             for(tpos=0;tpos<this.ntrks;tpos++){
                   isNewTrack = true;
-                  this.usedInstruments.push([]);
-                  this.usedInstruments[tpos].push();
+                  this.trks[tpos].usedInstruments.push();
                   this.parseTrack();
-                  //console.log(this.tracks[tpos]);
+                  //console.log(this.trks[tpos].events);
             }
             var lowestQuantizeError = Infinity;
             var bestBPB = 0;
             for(var i=0;i<16;i++){
                   var total = 0;
-                  for(var j=0;j<this.tracks.length;j++){
-                        total += this.trkQuantizeErrors[j][i];
+                  for(var j=0;j<this.trks.length;j++){
+                        total += this.trks[j].quantizeErrors[i];
                   }
                   // console.log('BPB: ' + (i+1) + ', error: ' + total);
                   if(total<lowestQuantizeError){
@@ -105,27 +103,26 @@ class MIDIfile{
             }
             this.blocksPerBeat = bestBPB;
             console.log(this);
-            if(this.error!=0){alert('The file was parsed unsuccessfully. Check the browser console for details.');}
+            if(this.error!=null){alert('An error occurred while attempting to read the file:\n'+this.error.msg+'\nPosition 0x'+this.error.pos.toString(16));}
             //console.log(this.noteCount+' notes');
-            //console.log(this.notes);
             console.log('MIDI data loaded in '+((new Date).getTime() - t0)+' ms');
       }
       parseHeader(){
             if(this.parseString(4) == 'MThd'){/*console.log('MThd');*/}
             else{
                   console.log('ERROR: No MThd');
-                  this.error = 1;
+                  this.error = {code: 1, pos: ppos, msg: 'No MIDI header detected.'};
                   return;
             }
             if(this.fetchBytes(4)!=6){
                   console.log('ERROR: File header is not 6 bytes long.');
-                  this.error = 2;
+                  this.error = {code: 2, pos: ppos, msg: 'Unrecognized MIDI header length.'};
                   return;
             }
             this.fmt = this.fetchBytes(2);
             if(this.fmt > 2){
                   console.log('ERROR: Unrecognized format number.');
-                  this.error = 3;
+                  this.error = {code: 3, pos: ppos, msg: 'Unrecognized MIDI format number.'};;
             }
             this.ntrks = this.fetchBytes(2);
             //console.log('Format '+this.fmt+', '+this.ntrks+' tracks');
@@ -147,26 +144,25 @@ class MIDIfile{
             var done = false;
             if(this.parseString(4) != 'MTrk'){
                   console.log('ERROR: No MTrk');
-                  this.error = 4;
+                  this.error = {code: 4, pos: ppos, msg: 'Failed to find MIDI track.'};;
                   return;
             }
-            this.tracks.push([]);
-            this.notes[tpos] = [];
-            this.trkQuantizeErrors[tpos] = new Array(16).fill(0);
+            //this.trks.push(new MIDItrack());
             var len = this.fetchBytes(4);
             //console.log('len = '+len);
             while(!done){
                   done = this.parseEvent();
             }
-            this.trkLabels.push(this.labelCurrentTrack());
+            this.labelCurrentTrack();
             //console.log('Track '+tpos);
-            //console.log(this.tracks[tpos]);
+            //console.log(this.trks[tpos].events);
             //console.log(trackDuration);
             if(trackDuration > this.duration){this.duration = trackDuration;}
             trackDuration = 0;
             noteDelta.fill(0);
       }
       parseEvent(){
+            var addr = ppos;
             var delta = this.parseDeltaTime();
             trackDuration += delta;
             var statusByte = this.fetchBytes(1);
@@ -234,7 +230,7 @@ class MIDIfile{
                                                 data.push(this.fetchBytes(1));
                                           }
                               }
-                              eventType = getIntFromBytes([255,metaType]);
+                              eventType = getIntFromBytes([0xFF,metaType]);
                   }
                   if(channel!=15){eventType = statusByte;}
                   channel = -1; // global
@@ -244,10 +240,10 @@ class MIDIfile{
                         case 0x9:
                               if(!rs){data.push(this.fetchBytes(1));}
                               data.push(this.fetchBytes(1));
-                              var note = new Note(trackDuration,data[0],data[1],currentInstrument[channel],channel)
-                              this.notes[tpos].push(note);
+                              var note = new Note(trackDuration,data[0],data[1],currentInstrument[channel],channel);
+                              this.trks[tpos].notes.push(note);
                               // TODO: When a new instrument is found, push a new track in the event and notes array, then copy events and notes there instead of in this track
-                              if(notInArr(this.usedInstruments[tpos],currentInstrument[channel])){this.usedInstruments[tpos].push(currentInstrument[channel]);}
+                              if(notInArr(this.trks[tpos].usedInstruments,currentInstrument[channel])){this.trks[tpos].usedInstruments.push(currentInstrument[channel]);}
                               break;
                         case 0xC:
                               if(!rs){data.push(this.fetchBytes(1));}
@@ -270,7 +266,6 @@ class MIDIfile{
                         noteDelta[i] += delta;
                   }
                   if(eventType==0x9 && data[1]!=0){
-                        this.hasNotes[tpos] = true;
                         var bpbStuff = getThisBPB(noteDelta[channel],this.timing);
                     
                         // console.log(bpbStuff);
@@ -278,13 +273,13 @@ class MIDIfile{
                               var x = i*noteDelta[channel]/this.timing;
                               var roundX = Math.round(x);
                               // console.log("Rounded by: " + roundX-x);
-                              this.trkQuantizeErrors[tpos][i-1] += Math.abs(roundX-x);
+                              this.trks[tpos].quantizeErrors[i-1] += Math.abs(roundX-x);
                         }
                         noteDelta[channel] = 0;
                         this.noteCount++;
                   }
             }
-            this.tracks[tpos].push(new MIDIevent(delta,eventType,channel,data));
+            this.trks[tpos].events.push(new MIDIevent(delta,eventType,channel,data,addr));
             //console.log('+'+delta+': '+eventType+' @'+channel);
             //console.log(data);
             //this.debug++;
@@ -320,7 +315,7 @@ class MIDIfile{
                   nbytes++;
                   if(nbytes>4){
                         console.log('Something is very wrong here.');
-                        console.log(this.tracks[tpos]);
+                        console.log(this.trks[tpos].events);
                         this.debug = 1;
                         break;
                   }
@@ -340,13 +335,13 @@ class MIDIfile{
       }
       labelCurrentTrack(){
             var labl = 'empty';
-            if(this.usedInstruments[tpos].length == 1){
-                  labl = getInstrumentLabel(this.usedInstruments[tpos][0]);
+            if(this.trks[tpos].usedInstruments.length == 1){
+                  labl = getInstrumentLabel(this.trks[tpos].usedInstruments[0]);
             }
-            else if(this.usedInstruments[tpos].length > 1){
+            else if(this.trks[tpos].usedInstruments.length > 1){
                   labl = 'Mixed Track';
             }
-            this.trkLabels[tpos] = labl+' '+this.getLabelNumber(labl);
+            this.trks[tpos].label = labl+' '+this.getLabelNumber(labl);
       }
       getLabelNumber(label){ // Check for duplicates
             var iteration = 0;
@@ -357,8 +352,8 @@ class MIDIfile{
                   var thisLabel = label+' '+iteration.toString();
                   //console.log(thisLabel);
                   var i = 0;
-                  for(i=0;i<this.trkLabels.length;i++){
-                        if(thisLabel == this.trkLabels[i]){pass = false;}
+                  for(i=0;i<this.trks.length;i++){
+                        if(thisLabel == this.trks[i].label){pass = false;}
                   }
             }
             return iteration;
@@ -366,11 +361,22 @@ class MIDIfile{
 }
 
 class MIDIevent{
-      constructor(deltaTime, type, channel, data){
+      constructor(deltaTime, type, channel, data, address){
             this.deltaTime = deltaTime;
             this.type = type;
             this.channel = channel; // -1 means global event, such as meta or sysex
             this.data = data; // An array of the parameters
+            this.address = address;
+      }
+}
+
+class MIDItrack{
+      constructor(){
+            this.events = [];
+            this.label = '';
+            this.quantizeErrors = new Array(16).fill(0);
+            this.usedInstruments = [];
+            this.notes = [];
       }
 }
 

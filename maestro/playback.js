@@ -301,10 +301,10 @@ function advanceSchTime(delta){
             //if(curNotes.length>0){console.log('ye');}
             clearDisplayOverlays();
             highlightCol(pos+27,'rgba(255,0,0,0.5)');
-            playNotes(curNotes);
-            if(pos+27==239){
-                  clearDisplayOverlays();
+            if(curNotes != undefined){playNotes(curNotes);} // Prevent weird crash
+            if(pos >= Math.min(239-27,level.width)-1){
                   enableMouse();
+                  clearDisplayOverlays();
             }
             //console.log(time);
             pos++;
