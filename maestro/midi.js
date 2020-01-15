@@ -390,8 +390,11 @@ class Note{
             this.channel = channel;
       }
 }
-
-var recurse = 0;
+function cloneNote(note){
+      var newNote = new Note(note.time, note.pitch, note.volume, note.instrument, note.channel);
+      newNote.originalInstrument = note.originalInstrument;
+      return newNote;
+}
 
 function ASCII(n){
       return String.fromCharCode(n);

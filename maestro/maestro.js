@@ -1,9 +1,16 @@
 // Super Mario Maestro v1.2.1
 // made by h267
 
+// FIXME:
+//        Make tracks refresh correctly when a new one is added
+//        Make it so placeNoteBlocks() is called only once on file load
+
+// TODO: Better labels for cloned tracks, 
+
 /* TODO: New features:
 1.2.1:
  - Support for adding tracks
+ - Make the entity count count overlapping entities
  - Fix minimap region being cut off
  - Make minimap larger and add a vscode type slider, eliminating a need for a scrollbar
  - Improved track-specific note offscreen display (what percentage of notes are above and below the screen boundary)
@@ -252,10 +259,19 @@ function loadFile(){ // Load file from the file input element
             document.getElementById('bpbpicker').value = blocksPerBeat;
             isNewFile = true;
             fileLoaded = true;
+            for(i=0;i<midi.trks.length;i++){
+                  if(midi.trks[i].usedInstruments.length > 1){
+                        sepInsFromTrk(midi.trks[i]);
+                  }
+            }
             placeNoteBlocks(false, true);
             isNewFile = false;
             document.getElementById('yofspicker').disabled = false;
             document.getElementById('bpbpicker').disabled = false;
+            /*var newTrack = new MIDItrack();
+            newTrack.label = 'test'
+            newTrack.notes[0] = new Note(0,0,1,0,0);
+            addTrack(newTrack);*/
             //console.log(midi.noteCount+' notes total');
       }
 }
@@ -273,6 +289,11 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
       var uspqn = 500000; // Assumed
       var haveTempo = false; // TODO: Get rid of this when adding dynamic tempo
       level = new Level();
+      bbar = midi.firstBbar;
+      if(!limitedUpdate){
+            document.getElementById('trkcontainer').innerHTML = '';
+            recommendBPB();
+      }
       for(i=0;i<midi.trks.length;i++){
             // Add checkbox with label for each track
             if(!limitedUpdate){
@@ -327,7 +348,6 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                   bpm = recommendTempo(songBPM,blocksPerBeat,true);
                   haveTempo = true;
             }
-            bbar = midi.firstBbar;
             for(j=0;j<midi.trks[i].events.length;j++){ // This code is still here for if I add dynamic tempo/time signature options
                   break;
                   //x+=tempo*midi.tracks[i][j].deltaTime;
@@ -394,14 +414,13 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
             //console.log('error = '+error);
       }
       if(!limitedUpdate){ // TODO: Only hard refresh once. Trigger this BPB recommendation before blocks are placed
-            recommendBPB();
             updateInstrumentContainer();
       }
       //console.log(blocksPerBeat+' bpqn chosen');
       if(!haveTempo && reccTempo){ // Use default tempo if none was found
             refreshTempos(blocksPerBeat);
             bpm = recommendTempo(songBPM,blocksPerBeat,true); // TODO: Add a checkmark or asterisk next to the recommended tempo
-            if(!limitedUpdate){recommendBPB();}
+            if(!limitedUpdate){recommendBPB();} // FIXME: Probably unintentional behavior now
       }
       haveTempo = true;
       if(!limitedUpdate){selectTrack(-1);}
@@ -772,8 +791,9 @@ function changeToRecommendedBPB(){
       changeBPB();
 }
 
-function changeBPB(){
+function changeBPB(moveOfs){
       if(!fileLoaded){return;}
+      if(moveOfs == undefined){moveOfs = true;}
       if(recmdBlocksPerBeat !== blocksPerBeat){
             document.getElementById('bpbrecommend').disabled = false;
       } else {
@@ -783,18 +803,14 @@ function changeBPB(){
       for(var i=0;i<midi.trks.length;i++){
             if(!level.areas[i] || level.areas[i].isVisible){quantizeErrorAggregate += midi.trks[i].quantizeErrors[blocksPerBeat-1];}
       }
-      noMouse = false;
-      stopAudio();
-      var ratio = (ofsX/2)/minimap.width;
-      //console.log(ofsX+' / '+(minimap.width/2));
-      //if(ratio>1){ratio = ratio-Math.floor(ratio);}
-      //console.log(ratio+'... '+ofsX+' -> '+(ofsX*ratio));
-      //console.log('chose res of '+blocksPerBeat);
-      //document.getElementById('trkcontainer').innerHTML = '';
-      hardRefresh(true);
-      //console.log('ratio = '+ratio);
-      moveOffsetTo(ratio,null);
-      miniBox(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
+      if(moveOfs){
+            noMouse = false;
+            stopAudio();
+            var ratio = (ofsX/2)/minimap.width;
+            moveOffsetTo(ratio,null);
+            miniBox(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
+            hardRefresh(false, true);
+      }
 }
 
 function playBtn(){
@@ -846,7 +862,7 @@ function recommendBPB(){
             button.disabled = "false";
             button.onclick = function(){document.getElementById('bpbpicker').value = recmdBlocksPerBeat;}
       }
-      changeBPB();
+      changeBPB(false);
       return recmd;
 }
 
@@ -891,8 +907,9 @@ function softRefresh(){ // Refresh changes to track layers
       drawLevel(true);
 }
 
-function hardRefresh(reccTempo){ // Refresh changes to the entire MIDI
-      placeNoteBlocks(true, reccTempo);
+function hardRefresh(reccTempo, limitUpdate){ // Refresh changes to the entire MIDI
+      if(limitUpdate == undefined){limitUpdate = true;}
+      placeNoteBlocks(limitUpdate, reccTempo);
 }
 
 function changeNoiseThreshold(){
@@ -1034,10 +1051,42 @@ function getPercussionInstrument(pitch){ // TODO: More/better suggstions
 }
 
 // TODO: These functions
-// Maybe turn tracks into actual objects so this isn't a nightmare
 
-function addTrack(){
+function addTrack(newTrack){
+      midi.trks.push(newTrack);
+      hardRefresh(false,false);
+}
 
+function cloneTrack(trk){
+      var newTrk = new MIDItrack();
+      newTrk.label = trk.label+'_';
+      return newTrk;
+}
+
+function sepInsFromTrk(trk){
+      var i;
+      var newTrks = new Array(trk.usedInstruments.length);
+      for(i=0;i<trk.usedInstruments.length;i++){
+            newTrks[i] = new MIDItrack();
+            newTrks[i].usedInstruments = [trk.usedInstruments[i]];
+            newTrks[i].label = trk.label+'_'; // TODO: Better naming scheme
+      }
+      var j;
+      for(i=0;i<trk.notes.length;i++){
+            for(j=0;j<trk.usedInstruments.length;j++){
+                  if(trk.notes[i].instrument == trk.usedInstruments[j]){
+                        newTrks[j].notes.push(cloneNote(trk.notes[i]));
+                        break;
+                  }
+            }
+      }
+      for(i=0;i<newTrks.length;i++){
+            midi.trks.push(newTrks[i]);
+            octaveShifts.push(0);
+            notesAboveScreen.push(0);
+            notesBelowScreen.push(0);
+            instrumentChanges.push([getMM2Instrument(newTrks[i].usedInstruments[0])-2]);
+      }
 }
 
 function moveEventToTrack(){
