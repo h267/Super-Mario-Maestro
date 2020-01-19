@@ -242,8 +242,8 @@ class MIDIfile{
                               data.push(this.fetchBytes(1));
                               var note = new Note(trackDuration,data[0],data[1],currentInstrument[channel],channel);
                               this.trks[tpos].notes.push(note);
-                              // TODO: When a new instrument is found, push a new track in the event and notes array, then copy events and notes there instead of in this track
                               if(notInArr(this.trks[tpos].usedInstruments,currentInstrument[channel])){this.trks[tpos].usedInstruments.push(currentInstrument[channel]);}
+                              if(channel == 9){this.trks[tpos].hasPercussion = true;}
                               break;
                         case 0xC:
                               if(!rs){data.push(this.fetchBytes(1));}
@@ -336,7 +336,12 @@ class MIDIfile{
       labelCurrentTrack(){
             var labl = 'empty';
             if(this.trks[tpos].usedInstruments.length == 1){
-                  labl = getInstrumentLabel(this.trks[tpos].usedInstruments[0]);
+                  if(this.trks[tpos].hasPercussion){
+                        labl = 'Percussion';
+                  } else{
+                        labl = getInstrumentLabel(this.trks[tpos].usedInstruments[0]);
+                  }
+                  
             }
             else if(this.trks[tpos].usedInstruments.length > 1){
                   labl = 'Mixed Track';
@@ -377,6 +382,7 @@ class MIDItrack{
             this.quantizeErrors = new Array(16).fill(0);
             this.usedInstruments = [];
             this.notes = [];
+            this.hasPercussion = false;
       }
 }
 

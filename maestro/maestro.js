@@ -1,26 +1,19 @@
 // Super Mario Maestro v1.2.1
 // made by h267
 
-// FIXME:
-//        Make tracks refresh correctly when a new one is added
-//        Make it so placeNoteBlocks() is called only once on file load
-
-// TODO: Better labels for cloned tracks, 
+// FIXME: Disappearing graphics when moused over before file is uploaded,
+//        Graying out of tracks not updated when multi tracks are split upon file load
 
 /* TODO: New features:
 1.2.1:
- - Support for adding tracks
  - Make the entity count count overlapping entities
- - Fix minimap region being cut off
- - Make minimap larger and add a vscode type slider, eliminating a need for a scrollbar
+ - Make minimap larger and add a vscode type slider, eliminating a need for a scrollbar (maybe?)
  - Improved track-specific note offscreen display (what percentage of notes are above and below the screen boundary)
  - Substitute "Reccomend BPM" option for a warning/notification that a new BPB is recommended
  - Make bpb suggestions better, factor in tempo
  - Percussion support: More specific instrument suggestions and proper labeling of percussion tracks
  - Lower Spike's volume to better match in-game playback :(
  - Pitching of percussion tracks by one-block increments
- - Automatically separate mixed tracks into one track per instrument
- - Display the original tempo of the MIDI again
  - Put the instruments in alphabetical order
  - Make the webpage CSS look a little better
 
@@ -268,6 +261,7 @@ function loadFile(){ // Load file from the file input element
             isNewFile = false;
             document.getElementById('yofspicker').disabled = false;
             document.getElementById('bpbpicker').disabled = false;
+            document.getElementById('tempotext').innerHTML = 'Original: '+Math.round(songBPM)+' bpm';
             /*var newTrack = new MIDItrack();
             newTrack.label = 'test'
             newTrack.notes[0] = new Note(0,0,1,0,0);
@@ -343,7 +337,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
             level.addArea(new Area(width,height));
             //x = 0;
             if(midi.firstTempo != 0){songBPM = 60000000/midi.firstTempo;}
-            if(reccTempo){ // TODO: Optimize speed?
+            if(reccTempo){
                   refreshTempos(blocksPerBeat);
                   bpm = recommendTempo(songBPM,blocksPerBeat,true);
                   haveTempo = true;
@@ -395,7 +389,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
             for(j=0;j<midi.trks[i].notes.length;j++){
                   var note = midi.trks[i].notes[j];
                   if(note.volume<=noiseThreshold){continue;} // Skip notes with volume below noise threshold
-                  x = (note.time/midi.timing)*blocksPerBeat
+                  x = (note.time/midi.timing)*blocksPerBeat;
                   var roundX = Math.round(x);
                   var instrument = getMM2Instrument(note.instrument);
                   y = note.pitch+(-12*instruments[instrument-2].octave)+1; // y = note.pitch;
@@ -413,7 +407,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
             level.areas[i].ofsY = octaveShifts[i]*-12;
             //console.log('error = '+error);
       }
-      if(!limitedUpdate){ // TODO: Only hard refresh once. Trigger this BPB recommendation before blocks are placed
+      if(!limitedUpdate){
             updateInstrumentContainer();
       }
       //console.log(blocksPerBeat+' bpqn chosen');
@@ -487,7 +481,7 @@ function drawLevel(redrawMini,noDOM){
                               //console.log('h '+x+','+y);
                               highlightTile(i,27-j,'rgba(255,0,0,0.4)');
                         }
-                        if(tile == 1 && level.isTrackOccupant[x][y][selectedTrack]){ // Outline note blocks of the selected track in red
+                        if(tile == 1 && level.isTrackOccupant[x][y][selectedTrack]){ // Outline note blocks of the selected track in blue
                               outlineTile(i,27-j,1,'rgba(0,0,255,0.2)');
                         }
                   }
@@ -560,7 +554,8 @@ function moveOffsetTo(ox,oy){ // Offsets are given as percentages of the level
             ofsX = Math.floor(ox*width);
             //console.log(ox+' -> '+ofsX);
       }
-      if(ofsX>(minimap.width-((canvas.width/32)-(27/2)))*2){ofsX = (minimap.width-((canvas.width/32)-(27/2)))*2;}
+      var limX = (minimap.width-((canvas.width/32)-(27/2)))*2+(blocksPerBeat*bbar);
+      if(ofsX>limX){ofsX = limX;}
       if(ofsX<0){ofsX=0;}
       ofsX = Math.floor(ofsX/(blocksPerBeat*bbar))*blocksPerBeat*bbar; // Quantize to the nearest measure
       if(oy!=null){ofsY = oy*127;}
@@ -780,7 +775,15 @@ function handleMove(e){
 }
 
 function pickBPB(){
-      blocksPerBeat = document.getElementById('bpbpicker').value;
+      var val = document.getElementById('bpbpicker').value;
+      val = Math.floor(val);
+      if(val == 69){
+            alert('stop');
+      }
+      if(val < 1){val = 1;}
+      if(val > 8){val = 8;}
+      document.getElementById('bpbpicker').value = val;
+      blocksPerBeat = val;
       changeBPB();
 }
 
@@ -793,7 +796,8 @@ function changeToRecommendedBPB(){
 
 function changeBPB(moveOfs){
       if(!fileLoaded){return;}
-      if(moveOfs == undefined){moveOfs = true;}
+      //if(moveOfs == undefined){moveOfs = true;}
+      moveOfs = true;
       if(recmdBlocksPerBeat !== blocksPerBeat){
             document.getElementById('bpbrecommend').disabled = false;
       } else {
@@ -803,13 +807,13 @@ function changeBPB(moveOfs){
       for(var i=0;i<midi.trks.length;i++){
             if(!level.areas[i] || level.areas[i].isVisible){quantizeErrorAggregate += midi.trks[i].quantizeErrors[blocksPerBeat-1];}
       }
-      if(moveOfs){
+      if(moveOfs && !isNewFile){
             noMouse = false;
             stopAudio();
             var ratio = (ofsX/2)/minimap.width;
             moveOffsetTo(ratio,null);
             miniBox(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
-            hardRefresh(false, true);
+            hardRefresh(true, true);
       }
 }
 
@@ -902,9 +906,10 @@ function selectTempo(){
       bpm = bpms[selected]*(4/blocksPerBeat);
 }
 
-function softRefresh(){ // Refresh changes to track layers
+function softRefresh(noDOM){ // Refresh changes to track layers
+      if(noDOM == undefined){noDOM = false;}
       level.refresh();
-      drawLevel(true);
+      drawLevel(true,noDOM);
 }
 
 function hardRefresh(reccTempo, limitUpdate){ // Refresh changes to the entire MIDI
@@ -945,7 +950,7 @@ function selectTrack(trkID){
                   document.getElementById('item'+i).style.backgroundColor = '#c3c3ff';
             }
       }
-      softRefresh();
+      softRefresh(true);
       updateInstrumentContainer();
 }
 
@@ -1050,26 +1055,12 @@ function getPercussionInstrument(pitch){ // TODO: More/better suggstions
       }
 }
 
-// TODO: These functions
-
-function addTrack(newTrack){
-      midi.trks.push(newTrack);
-      hardRefresh(false,false);
-}
-
-function cloneTrack(trk){
-      var newTrk = new MIDItrack();
-      newTrk.label = trk.label+'_';
-      return newTrk;
-}
-
-function sepInsFromTrk(trk){
+function sepInsFromTrk(trk){ // Create new 
       var i;
       var newTrks = new Array(trk.usedInstruments.length);
       for(i=0;i<trk.usedInstruments.length;i++){
             newTrks[i] = new MIDItrack();
             newTrks[i].usedInstruments = [trk.usedInstruments[i]];
-            newTrks[i].label = trk.label+'_'; // TODO: Better naming scheme
       }
       var j;
       for(i=0;i<trk.notes.length;i++){
@@ -1081,22 +1072,21 @@ function sepInsFromTrk(trk){
             }
       }
       for(i=0;i<newTrks.length;i++){
-            midi.trks.push(newTrks[i]);
-            octaveShifts.push(0);
-            notesAboveScreen.push(0);
-            notesBelowScreen.push(0);
-            instrumentChanges.push([getMM2Instrument(newTrks[i].usedInstruments[0])-2]);
+            var labl = getInstrumentLabel(newTrks[i].usedInstruments[0]);
+            newTrks[i].label = labl+' '+midi.getLabelNumber(labl);
+            addTrack(newTrks[i]);
       }
+      snipTrack(trk);
 }
 
-function moveEventToTrack(){
-      
+function addTrack(trk){
+      midi.trks.push(trk);
+      octaveShifts.push(0);
+      notesAboveScreen.push(0);
+      notesBelowScreen.push(0);
+      instrumentChanges.push([getMM2Instrument(trk.usedInstruments[0])-2]);
 }
 
-function addEventToTrack(){
-      
-}
-
-function removeEventFromTrack(){
-
+function snipTrack(trk){ // This makes the track invisible, but doesn't actually remove it from the array
+      trk.notes = [];
 }
