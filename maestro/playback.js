@@ -304,6 +304,7 @@ function advanceSchTime(delta){
             if(curNotes != undefined){playNotes(curNotes);} // Prevent weird crash
             if(pos >= Math.min(239-27,level.width)-1){
                   enableMouse();
+                  document.getElementById('playbtn').disabled = false;
                   clearDisplayOverlays();
             }
             //console.log(time);

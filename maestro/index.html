@@ -11,32 +11,40 @@
           <link rel="stylesheet" href="style.css">
           <meta charset="utf-8"/>          
      </head>
-     <body style="background-color:white;">
-          <!-- <p style='text-align: center; font-size:24px; margin-bottom: 5px;'>Super Mario Maestro v1.1</p> -->
+     <body>
           <div style="width:100%">
                <div style="display: table;margin: 0 auto;">
-                    <img src="icon/logo.png" alt="Maestro Logo" style="height:35px; margin-bottom: 5px;"></img>
+                    <img src="icon/logo.png" alt="Maestro Logo" class="logo"></img>
                     <p style="float:right; position: relative; left: 5px; top: 7px;">v1.2.1</p>
                </div>
           </div>
-
           <div style="width: 95%; margin: 0 auto">
-               <div id="displaycontainer" style="overflow:auto;">
+               <div id="displaycontainer" class="dispcontainer" style="margin-bottom: 2px;">
                     <canvas id="canvas" width="3840" height="432"></canvas>
                </div>
                <div id="toolbox" style="display: none;">
-                    <button id="playbtn" type="button" onclick="playBtn()" style="float:left;">Play</button>
-                    <button id="stopbtn" type="button" onclick="stopBtn()">Stop</button>
-                    <select id="temposelect" onchange="selectTempo()">
-                         <!-- To be populated with tempo options -->
-                    </select>
-                    <p id="ELtext" style='display: inline;'>Entities in Area: 0</p>
-                    <p id="PLtext" style='display: inline; position: relative; left: 20px'>Powerups in Area: 0</p>
-                    <p id="QEtext" style='display: inline; position: relative; left: 40px'>Blocks per Beat quality: -</p>
-                    <p id="tempotext" style="position: relative; left: 160px; top: 2px; font-size: 10px; height: 0px; margin-top: 0px; margin-bottom: 0px;">Original: -</p>
+                    <div>
+                         <table style="height: 24px;">
+                              <td><button id="playbtn" class="button" type="button" onclick="playBtn()">Play</button></td>
+                              <td><button id="stopbtn" class="button" type="button" onclick="stopBtn()">Stop</button></td>
+                              <td><select id="temposelect" class="dropdown" onchange="selectTempo()">
+                                   <!-- To be populated with tempo options -->
+                              </select></td>
+                              <td><div class="controlcontainer">
+                                   <table>
+                                        <tr class="displaytextrow">
+                                             <td><p id="ELtext" class="displaytext">Entities in Area: 0</p></td>
+                                             <td><p id="PLtext" class="displaytext">Powerups in Area: 0</p></td>
+                                             <td><p id="QEtext" class="displaytext">Blocks per Beat quality: -</p></td>
+                                        </tr>
+                                   </table>
+                              </div></td>
+                         </table s>
+                    </div>
+                    <p id="tempotext" style="position: relative; left: 130px; top: 2px; font-size: 10px; height: 0px; width: max-content; margin-top: 0px; margin-bottom: 0px;">Original: -</p>
                     <p id="fstxt" style='margin-bottom:0px;'>File Scrubber</p>
-                    <div id="minimapcontainer" style="overflow:auto;">
-                         <canvas id="minimap" width="100px" height="64" style="border:1px solid black"></canvas>
+                    <div id="minimapcontainer">
+                         <canvas id="minimap" width="100px" height="64" class="dispcontainer"></canvas>
                     </div>
                     <div style="display: grid; grid-template-columns: auto auto;">
                          <div id="lefttools" style="float:left">
@@ -46,7 +54,7 @@
                               <input id="noiseslider" type="range" min="0" max="127" value="0" onchange="changeNoiseThreshold()" style='display: none; position: relative; top: 5px;'>
                               <label for="bpbpicker" id="labrs">Blocks per Beat</label>
                               <input id="bpbpicker" type="number" name="bpbpicker" value="0" min = "1" max = "8" onchange="pickBPB()" style="width:50px;" min="1" max="16" disabled>
-                              <button id="bpbrecommend" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button>
+                              <button id="bpbrecommend" class="button" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button>
                               <div class="container" id="trkcontainer" style="border:1px solid black; width:220px; height: 150px; overflow-y: auto;">
                                    <!-- To be populated with track checkboxes -->
                               </div>
@@ -55,17 +63,20 @@
                               <p style='font-size: 15px; margin-top: 4px; margin-bottom: 8px;'>Track Settings:</p>
                               <label for="octaveshift">Octave Shift</label>
                               <input id="octaveshift" type="number" min="-10" max="10" value="0" style="width: 50px;" onchange="shiftTrackOctave()">
-                              <p id="NASText">Notes above screen: 0</p>
-                              <p id="NBSText">Notes below screen: 0</p>
-                              <div id="instrumentcontainer" style="width: 420px; height: 150px; overflow-y: auto;">
+                              <p class="displaytext" id="NASText">Notes above screen: 0</p>
+                              <p class="displaytext" id="NBSText">Notes below screen: 0</p>
+                              <div id="instrumentcontainer" style="width: 420px; overflow-y: auto;">
                                    <!-- To be populated with track instrument changes -->
                               </div>
                          </div>
                     </div>
                </div>
-               <p id="filetext" style="float:left">MIDI File:</p>
+               <p id="filetext" class="displaytext" style="float:left; margin-top: 17px;">MIDI File:</p>
                <input id ="fileinput" type="file" onchange="loadFile()" style="margin-top:5px; margin-left:5px"></input>
-               <p style="position: absolute; bottom: 1em; right: 1em; text-align: right; margin-bottom: 0px;">made by h267</p>
+               <div style="position: absolute; bottom: 1em; right: 1em;">
+                    <button id="discordbutton" class="discordbutton" onClick="handleDiscordPress();"></button>
+                    <p style="text-align: right; margin-bottom: 0px; font-style: italic;">made by h267</p>
+               </div>
           </div>
 
           <script src="./lib/Tone.js"></script> 

@@ -1,8 +1,8 @@
 // Super Mario Maestro v1.2.1
 // made by h267
 
-// FIXME: Disappearing graphics when moused over before file is uploaded,
-//        Graying out of tracks not updated when multi tracks are split upon file load
+// FIXME: Graying out of tracks not updated when multi tracks are split upon file load
+//        Some of the colors blend poorly under the new CSS
 
 /* TODO: New features:
 1.2.1:
@@ -15,7 +15,8 @@
  - Lower Spike's volume to better match in-game playback :(
  - Pitching of percussion tracks by one-block increments
  - Put the instruments in alphabetical order
- - Make the webpage CSS look a little better
+ - Make the webpage CSS look a lot better
+ - Small text next to the Discord button advertising it, possibly
 
 After:
  - Spatial Management
@@ -140,12 +141,14 @@ var notesBelowScreen = [];
 var instrumentChanges;
 var quantizeErrorAggregate = 0;
 
+// Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
-
 getImg('icon/ruler.png').then(function(cursorImg){
       cursor = cursorImg;
       loadTiles().then(function(){
-            drawLevel(false,true);  
+            loadBGs().then(function(){
+                  drawLevel(false,true);
+            });
       });
 });
 
@@ -413,7 +416,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
       //console.log(blocksPerBeat+' bpqn chosen');
       if(!haveTempo && reccTempo){ // Use default tempo if none was found
             refreshTempos(blocksPerBeat);
-            bpm = recommendTempo(songBPM,blocksPerBeat,true); // TODO: Add a checkmark or asterisk next to the recommended tempo
+            bpm = recommendTempo(songBPM,blocksPerBeat,true);
             if(!limitedUpdate){recommendBPB();} // FIXME: Probably unintentional behavior now
       }
       haveTempo = true;
@@ -427,7 +430,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
       console.log('Completed in '+((new Date).getTime()-t0)+' ms');
 }
 
-function drawLevel(redrawMini,noDOM){
+function drawLevel(redrawMini,noDOM){ // false true
       if(tiles==undefined){return;}
       if(redrawMini==undefined){redrawMini=false;}
       if(noDOM==undefined){noDOM=false;}
@@ -824,6 +827,7 @@ function playBtn(){
                   return;
             }*/
             noMouse = true;
+            document.getElementById('playbtn').disabled = true;
             playLvl(level,bpm,blocksPerBeat,ofsX,ofsY);
             //playLvl(level,songBPM,blocksPerBeat,ofsX,ofsY);
       }
@@ -831,6 +835,8 @@ function playBtn(){
 
 function stopBtn(){
       noMouse = false;
+      document.getElementById('playbtn').disabled = false;
+      clearDisplayOverlays();
       stopAudio();
 }
 
@@ -973,6 +979,7 @@ function updateInstrumentContainer(){
             var picker = document.createElement('select');
             picker.id = 'inspicker'+i;
             picker.setAttribute('onchange','triggerInstrChange('+i+');');
+            picker.setAttribute('class','dropdown');
             var j;
             for(j=0;j<instruments.length;j++){
                   var opt = document.createElement('option');
@@ -1089,4 +1096,26 @@ function addTrack(trk){
 
 function snipTrack(trk){ // This makes the track invisible, but doesn't actually remove it from the array
       trk.notes = [];
+}
+
+function handleDiscordPress(){
+      var btn = document.getElementById('discordbutton');
+      btn.style.animationFillMode = 'both';
+      btn.style.animation = '0.2s discordpress, 1.5s discordglow';
+      btn.style.animationIterationCount = '1, infinite';
+      btn.style.animationDirection = 'alternate';
+      setTimeout(function(){
+            btn.style.boxShadow = '#1a5586 0px 0px';
+            btn.style.transform = 'translateY(8px)';
+            //self.location='https://google.com';
+      }, 200);
+      setTimeout(function(){
+            btn.disabled = true;
+            btn.style.animation = 'discorddisappear 0.5s';
+            btn.style.animationFillMode = 'both';
+            self.location='https://google.com';
+      }, 600);
+      /*setTimeout(function(){
+            btn.style.animationPlayState = 'running';
+      }, 1000);*/
 }

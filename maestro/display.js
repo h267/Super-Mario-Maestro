@@ -227,13 +227,6 @@ function setDisplayData(imgData){
 }
 
 function decorateBG(){
-      if(bgs==null){
-            loadBGs().then(function(loaded){
-                  bgs = loaded;
-                  decorateBG();
-            });
-            return;
-      }
       drawTile(bgs[0],16,canvas.height-64);
       drawTile(bgs[1],(240-10)*16,17*16);
 }
@@ -249,6 +242,7 @@ function loadBGs(){
                   getImg('bg/goal.png')
             ]).then(function(loaded){
                   //console.log('BGs loaded');
+                  bgs = loaded;
                   resolve(loaded);
             });
       });
