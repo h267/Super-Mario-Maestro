@@ -65,6 +65,7 @@ function fillRect(x,y,w,h,style){
 function drawBox(x,y,w,h,thickness,style){
       if(style == undefined){style = 'black';}
       if(thickness == undefined){thickness = 1;}
+      ctx.beginPath();
       ctx.strokeStyle = style;
       ctx.lineWidth = thickness;
       ctx.rect(x,y,w,h);

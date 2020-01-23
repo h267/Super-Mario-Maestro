@@ -11,11 +11,10 @@ body{
       overflow: auto;
       border: 3px solid steelblue;
       border-radius: 3px;
-      scrollbar-color: #9d9dce lightblue;
 }
 
 input#fileinput{
-	color: cyan;
+	color: white;
 	background-color: steelblue;
 	border: 3px solid steelblue;
 	border-radius: 5px;
@@ -85,7 +84,7 @@ button::-moz-focus-inner {
 p, label{
       font-size: 12px;
       font-family: Arial, Helvetica, sans-serif;
-      color: cyan;
+      color: white;
 }
 
 .displaytext{
@@ -124,8 +123,12 @@ select::-moz-focus-inner{
       border: 0;
 }
 
-.trkmenuitem{ 
-      display: inline-block;
+.tracklistitem{ 
+      transition: background-color 150ms, border 150ms;
+}
+
+.tracklabel{
+      transition: color 150ms;
 }
 
 .displaytextrow > td{

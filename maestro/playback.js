@@ -2,6 +2,7 @@ var schTime = 0;
 var pos = 0;
 var len = 0;
 var notes = [];
+var framesPerColumn = 0;
 
 // Load all of the instruments in a very neat and concise way
 // (Why does it have to be this way Tone.js)
@@ -239,8 +240,9 @@ var toad = new Tone.Sampler({'C4': './wav/toad.wav'},function(){
 Tone.Transport.PPQ = 2520;
 
 function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY,playConflicts){
-      if(playConflicts == undefined){playConflicts = true;} // TODO: Make this an option
+      if(playConflicts == undefined){playConflicts = true;}
       stopAudio();
+      framesPerColumn = 1/(blocksPerBeat*bpm/3600);
       var i;
       var j;
       for(i=ofsX;i<ofsX+240-27;i++){
@@ -286,6 +288,13 @@ function stopAudio(){
       notes = [];
 }
 
+function resetPlayback(){
+      enableMouse();
+      document.getElementById('playbtn').disabled = false;
+      clearDisplayOverlays();
+      scrollDisplayTo(0);
+}
+
 function addNote(note,instrument){
       notes[pos].push({note:note, instrument:instrument});
       //console.log('Scheduled '+note+' at '+schTime);
@@ -296,16 +305,19 @@ function advanceSchTime(delta){
       Tone.Transport.schedule(function(time){
             //console.log('p '+pos);
             //console.log(notes);
+            /*if(pos==0){
+                  //smoothScrollCont(framesPerColumn, duration);
+                  smoothScrollCont(framesPerColumn);
+            }*/
             var curNotes = notes[pos];
             //if(notes.length!=0){console.log(curNotes);}
             //if(curNotes.length>0){console.log('ye');}
             clearDisplayOverlays();
             highlightCol(pos+27,'rgba(255,0,0,0.5)');
+            scrollDisplayTo(pos*16);
             if(curNotes != undefined){playNotes(curNotes);} // Prevent weird crash
             if(pos >= Math.min(239-27,level.width)-1){
-                  enableMouse();
-                  document.getElementById('playbtn').disabled = false;
-                  clearDisplayOverlays();
+                  resetPlayback();
             }
             //console.log(time);
             pos++;
@@ -388,5 +400,4 @@ function playNotes(curNotes){
                   case 44: toad.triggerAttackRelease(noteNumToStr(curNotes[i].note),'4n'); break;
             }
       }
-      
 }

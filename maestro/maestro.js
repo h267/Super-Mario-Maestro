@@ -1,24 +1,27 @@
-// Super Mario Maestro v1.2.1
+// Super Mario Maestro v1.3
 // made by h267
 
-// FIXME: Graying out of tracks not updated when multi tracks are split upon file load
+// FIXME: Graying out of tracks not updated when multi tracks are split upon file load (see RSE theme)
 //        Some of the colors blend poorly under the new CSS
 
 /* TODO: New features:
-1.2.1:
+1.3:
+ - Finish CSS
+ - CSS loading animation
  - Make the entity count count overlapping entities
- - Make minimap larger and add a vscode type slider, eliminating a need for a scrollbar (maybe?)
- - Improved track-specific note offscreen display (what percentage of notes are above and below the screen boundary)
- - Substitute "Reccomend BPM" option for a warning/notification that a new BPB is recommended
+ - Make minimap larger and/or more usable for Hermit
+ - Improve track-specific note offscreen display (what percentage of notes are above and below the screen boundary)
+ - Substitute "Recommend BPB" option for a warning/notification that a new BPB is recommended, or just omit until 1.3
+ - Separate persussion tracks into different instruments
  - Make bpb suggestions better, factor in tempo
- - Percussion support: More specific instrument suggestions and proper labeling of percussion tracks
+ - Percussion support: More specific instrument suggestions
  - Lower Spike's volume to better match in-game playback :(
- - Pitching of percussion tracks by one-block increments
+ - Pitching of percussion tracks by one-block increments (or others by checking an "advanced" option)
  - Put the instruments in alphabetical order
- - Make the webpage CSS look a lot better
- - Small text next to the Discord button advertising it, possibly
+ - Give the Discord button actual animation in the background
+ - Small, brief text next to the Discord button advertising it, possibly
 
-After:
+1.4 and After:
  - Spatial Management
  - Track-Channel Management
  - Highlight enemies that don't have much room, maybe overlay exclamation point [New UI]
@@ -140,6 +143,7 @@ var notesAboveScreen = [];
 var notesBelowScreen = [];
 var instrumentChanges;
 var quantizeErrorAggregate = 0;
+var scrollPos = 0;
 
 // Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
@@ -225,7 +229,7 @@ function loadFile(){ // Load file from the file input element
       reader.readAsArrayBuffer(document.getElementById('fileinput').files[0]);
 	reader.onload = function(){
             if(fileLoaded){
-                  noMouse = false;
+                  enableMouse();
                   stopAudio();
             }
             if(!fileLoaded){showEverything();}
@@ -259,6 +263,9 @@ function loadFile(){ // Load file from the file input element
                   if(midi.trks[i].usedInstruments.length > 1){
                         sepInsFromTrk(midi.trks[i]);
                   }
+                  if(midi.trks[i].usedInstruments.length == 0 || midi.trks[i].hasPercussion){continue;}
+                  console.log(midi.trks[i].usedInstruments[0]);
+                  octaveShifts[i] = instruments[getMM2Instrument(midi.trks[i].usedInstruments[0])-2].octave*-1;
             }
             placeNoteBlocks(false, true);
             isNewFile = false;
@@ -296,7 +303,9 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
             if(!limitedUpdate){
                   var div = document.createElement('div');
                   div.id = 'item'+i;
+                  div.setAttribute('class','tracklistitem');
                   div.setAttribute('onclick','selectTrack('+i+');');
+                  div.style.borderRadius = '5px';
                   // Add a new track checkbox
                   var chkbox = document.createElement('input');
                   chkbox.id = 'chk'+i;
@@ -322,6 +331,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                   labl.style.position = 'relative';
                   labl.style.bottom = '3px';
                   labl.id = 'trklabl'+i;
+                  labl.setAttribute('class','tracklabel');
                   div.appendChild(labl);
 
                   document.getElementById('trkcontainer').appendChild(div);
@@ -395,7 +405,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                   x = (note.time/midi.timing)*blocksPerBeat;
                   var roundX = Math.round(x);
                   var instrument = getMM2Instrument(note.instrument);
-                  y = note.pitch+(-12*instruments[instrument-2].octave)+1; // y = note.pitch;
+                  y = note.pitch+1; // y = note.pitch;
                   if(note.channel == 9){
                         instrument = getPercussionInstrument(note.pitch)+2;
                         note.instrument = getMidiInstrument(instrument);
@@ -430,7 +440,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
       console.log('Completed in '+((new Date).getTime()-t0)+' ms');
 }
 
-function drawLevel(redrawMini,noDOM){ // false true
+function drawLevel(redrawMini,noDOM){
       if(tiles==undefined){return;}
       if(redrawMini==undefined){redrawMini=false;}
       if(noDOM==undefined){noDOM=false;}
@@ -454,7 +464,7 @@ function drawLevel(redrawMini,noDOM){ // false true
                   for(j=0;j<midi.trks[i].notes.length;j++){
                         var note = midi.trks[i].notes[j];
                         x = Math.round((note.time/midi.timing)*blocksPerBeat);
-                        if(note.channel!=9){y = note.pitch + (-12*instruments[getMM2Instrument(note.instrument)-2].octave) + 1 - level.areas[i].ofsY;}
+                        if(note.channel!=9){y = note.pitch + 1 - level.areas[i].ofsY;}
                         else{y = 54;}
                         // y = note.pitch - level.areas[i].ofsY
                         if(y <= ofsY){notesBelowScreen[i]++;}
@@ -485,13 +495,13 @@ function drawLevel(redrawMini,noDOM){ // false true
                               highlightTile(i,27-j,'rgba(255,0,0,0.4)');
                         }
                         if(tile == 1 && level.isTrackOccupant[x][y][selectedTrack]){ // Outline note blocks of the selected track in blue
-                              outlineTile(i,27-j,1,'rgba(0,0,255,0.2)');
+                              outlineTile(i,27-j,2,'rgb(102,205,170)');
                         }
                   }
                   var ijtile = level.checkTile(i-27,j); // Tile on the minimap
                   if(ijtile == 1 && redrawMini){
                         if(level.isTrackOccupant[i-27][j][selectedTrack]){
-                              miniPlot((i-27)/2,j/2,'blue');
+                              miniPlot((i-27)/2,j/2,'rgb(72,209,204)');
                         }
                         else{
                               miniPlot((i-27)/2,j/2);
@@ -566,7 +576,7 @@ function moveOffsetTo(ox,oy){ // Offsets are given as percentages of the level
 }
 
 function nudgeY(){
-      noMouse = false;
+      enableMouse();
       stopAudio();
       var relativeOfs = parseInt(document.getElementById('yofspicker').value)*-1;
       //console.log(relativeOfs+48);
@@ -626,7 +636,7 @@ function chkRefresh(){
       for(i=0;i<midi.trks.length;i++){
             level.areas[i].setVisibility(document.getElementById('chk'+i).checked);
       }
-      noMouse = false;
+      enableMouse();
       stopAudio();
       softRefresh();
 }
@@ -791,7 +801,7 @@ function pickBPB(){
 }
 
 function changeToRecommendedBPB(){
-      document.getElementById('bpbrecommend').disabled = true;
+      //document.getElementById('bpbrecommend').disabled = true;
       blocksPerBeat = recmdBlocksPerBeat;
       document.getElementById('bpbpicker').value = blocksPerBeat;
       changeBPB();
@@ -801,17 +811,17 @@ function changeBPB(moveOfs){
       if(!fileLoaded){return;}
       //if(moveOfs == undefined){moveOfs = true;}
       moveOfs = true;
-      if(recmdBlocksPerBeat !== blocksPerBeat){
+      /*if(recmdBlocksPerBeat !== blocksPerBeat){
             document.getElementById('bpbrecommend').disabled = false;
       } else {
             document.getElementById('bpbrecommend').disabled = true;
-      }
+      }*/
       quantizeErrorAggregate = 0;
       for(var i=0;i<midi.trks.length;i++){
             if(!level.areas[i] || level.areas[i].isVisible){quantizeErrorAggregate += midi.trks[i].quantizeErrors[blocksPerBeat-1];}
       }
       if(moveOfs && !isNewFile){
-            noMouse = false;
+            enableMouse();
             stopAudio();
             var ratio = (ofsX/2)/minimap.width;
             moveOffsetTo(ratio,null);
@@ -834,9 +844,7 @@ function playBtn(){
 }
 
 function stopBtn(){
-      noMouse = false;
-      document.getElementById('playbtn').disabled = false;
-      clearDisplayOverlays();
+      resetPlayback();
       stopAudio();
 }
 
@@ -867,11 +875,11 @@ function recommendBPB(){
             recmd += bestBPB;
       }
       recmdBlocksPerBeat = recmd;
-      if(recmdBlocksPerBeat !== blocksPerBeat){
+      /*if(recmdBlocksPerBeat !== blocksPerBeat){
             var button = document.getElementById('bpbrecommend')
             button.disabled = "false";
             button.onclick = function(){document.getElementById('bpbpicker').value = recmdBlocksPerBeat;}
-      }
+      }*/
       changeBPB(false);
       return recmd;
 }
@@ -949,11 +957,16 @@ function selectTrack(trkID){
       //console.log(trkID);
       var i;
       for(i=0;i<midi.trks.length;i++){
+            var trkdiv = document.getElementById('item'+i);
             if(i != trkID){
-                  document.getElementById('item'+i).style.backgroundColor = '';
+                  trkdiv.style.backgroundColor = '';
+                  trkdiv.style.border = '';
+                  document.getElementById('trklabl'+i).style.color = '';
             }
             else{
-                  document.getElementById('item'+i).style.backgroundColor = '#c3c3ff';
+                  trkdiv.style.backgroundColor = 'mediumaquamarine';
+                  trkdiv.style.border = '2px solid mediumaquamarine';
+                  document.getElementById('trklabl'+i).style.color = 'black';
             }
       }
       softRefresh(true);
@@ -1107,15 +1120,49 @@ function handleDiscordPress(){
       setTimeout(function(){
             btn.style.boxShadow = '#1a5586 0px 0px';
             btn.style.transform = 'translateY(8px)';
-            //self.location='https://google.com';
       }, 200);
       setTimeout(function(){
             btn.disabled = true;
             btn.style.animation = 'discorddisappear 0.5s';
             btn.style.animationFillMode = 'both';
-            self.location='https://google.com';
+            smoothScrollTo(900,10);
+            //window.open('https://google.com'); // TODO: Replace with Discord invite link
       }, 600);
       /*setTimeout(function(){
             btn.style.animationPlayState = 'running';
       }, 1000);*/
+}
+
+function scrollDisplayBy(pixels){
+      var current = document.getElementById('displaycontainer').scrollLeft;
+      document.getElementById('displaycontainer').scrollLeft = current + pixels;
+}
+
+function scrollDisplayTo(pixelsOfs){
+      document.getElementById('displaycontainer').scrollLeft = pixelsOfs;
+}
+
+// Smooth scrolling is currently unused
+
+function smoothScrollTo(pos, frames){
+      if(frames == undefined){frames = 60;}
+      var initPos = document.getElementById('displaycontainer').scrollLeft;
+      scrollPos = initPos;
+      var scrollAmount = (pos-initPos)/frames;
+      window.requestAnimationFrame(function(){scrollFrame(scrollAmount, frames);});
+}
+
+function smoothScrollCont(scrollAmount){
+      var frames = Infinity;
+      scrollPos = document.getElementById('displaycontainer').scrollLeft;
+      window.requestAnimationFrame(function(){scrollFrame(scrollAmount, frames);});
+}
+
+function scrollFrame(amnt, frames){
+      if(!noMouse){return;}
+      if(frames == 0){return;}
+      scrollPos += amnt;
+      document.getElementById('displaycontainer').scrollLeft = Math.round(scrollPos);
+      frames--;
+      window.requestAnimationFrame(function(){scrollFrame(amnt, frames);});
 }
