@@ -1,25 +1,25 @@
 // Super Mario Maestro v1.3
 // made by h267
 
-// FIXME: Graying out of tracks not updated when multi tracks are split upon file load (see RSE theme)
-//        Some of the colors blend poorly under the new CSS
+// FIXME: Some of the colors blend poorly under the new CSS
 
 /* TODO: New features:
 1.3:
  - Finish CSS
  - CSS loading animation
+ - "Advanced" toggle for weird BPB settings and semitone transposition
+ - Button to octave shift a track into view automatically
+ - A group of recommended instruments at the top of the dropdown
+ - A group of common tempos at the top of the tempo dropdown
  - Make the entity count count overlapping entities
  - Make minimap larger and/or more usable for Hermit
  - Improve track-specific note offscreen display (what percentage of notes are above and below the screen boundary)
- - Substitute "Recommend BPB" option for a warning/notification that a new BPB is recommended, or just omit until 1.3
  - Separate persussion tracks into different instruments
- - Make bpb suggestions better, factor in tempo
  - Percussion support: More specific instrument suggestions
- - Lower Spike's volume to better match in-game playback :(
- - Pitching of percussion tracks by one-block increments (or others by checking an "advanced" option)
+ - Pitching of percussion tracks by one-block increments
  - Put the instruments in alphabetical order
  - Give the Discord button actual animation in the background
- - Small, brief text next to the Discord button advertising it, possibly
+ - A tutorial
 
 1.4 and After:
  - Spatial Management
@@ -144,6 +144,8 @@ var notesBelowScreen = [];
 var instrumentChanges;
 var quantizeErrorAggregate = 0;
 var scrollPos = 0;
+var hasVisibleNotes;
+var conflictCount = 0;
 
 // Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
@@ -242,6 +244,7 @@ function loadFile(){ // Load file from the file input element
             selectedTrack = 0;
             octaveShifts = new Array(midi.trks.length).fill(0);
             instrumentChanges = new Array(midi.trks.length);
+            hasVisibleNotes = new Array(midi.trks.length).fill(false);
             var i;
             var j;
             for(i=0;i<instrumentChanges.length;i++){
@@ -264,7 +267,6 @@ function loadFile(){ // Load file from the file input element
                         sepInsFromTrk(midi.trks[i]);
                   }
                   if(midi.trks[i].usedInstruments.length == 0 || midi.trks[i].hasPercussion){continue;}
-                  console.log(midi.trks[i].usedInstruments[0]);
                   octaveShifts[i] = instruments[getMM2Instrument(midi.trks[i].usedInstruments[0])-2].octave*-1;
             }
             placeNoteBlocks(false, true);
@@ -306,6 +308,8 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                   div.setAttribute('class','tracklistitem');
                   div.setAttribute('onclick','selectTrack('+i+');');
                   div.style.borderRadius = '5px';
+                  div.style.borderColor = 'mediumaquamarine';
+                  div.style.borderWidth = '0px';
                   // Add a new track checkbox
                   var chkbox = document.createElement('input');
                   chkbox.id = 'chk'+i;
@@ -454,7 +458,7 @@ function drawLevel(redrawMini,noDOM){
       decorateBG();
       entityCount = 0;
       powerupCount = 0;
-      var hasVisibleNotes;
+      conflictCount = 0;
       var j;
       if(fileLoaded && !noDOM){
             hasVisibleNotes = new Array(midi.trks.length).fill(false);
@@ -473,10 +477,17 @@ function drawLevel(redrawMini,noDOM){
                               hasVisibleNotes[i] = true;
                         }
                   }
-                  if(!isNewFile){
-                        if(hasVisibleNotes[i]){document.getElementById('trklabl'+i).style.color = 'black'}
-                        else{document.getElementById('trklabl'+i).style.color = 'gray'}
-                  }
+                  //if(!isNewFile){
+                        if(hasVisibleNotes[i]){
+                              if(i == selectedTrack){document.getElementById('trklabl'+i).style.color = 'black';}
+                              else{document.getElementById('trklabl'+i).style.color = 'white';}
+                              
+                        }
+                        else{
+                              if(i == selectedTrack){document.getElementById('trklabl'+i).style.color = 'gray';}
+                              else{document.getElementById('trklabl'+i).style.color = 'lightgray';}
+                        }
+                  //}
             }
       }
       var x;
@@ -492,6 +503,7 @@ function drawLevel(redrawMini,noDOM){
                         drawTile(tiles[tile],i*16,((27-j)*16));
                         if(level.numberOfOccupants[x][y] > 1){ // Highlight any overalapping tiles in red
                               //console.log('h '+x+','+y);
+                              conflictCount++;
                               highlightTile(i,27-j,'rgba(255,0,0,0.4)');
                         }
                         if(tile == 1 && level.isTrackOccupant[x][y][selectedTrack]){ // Outline note blocks of the selected track in blue
@@ -529,8 +541,31 @@ function drawLevel(redrawMini,noDOM){
             document.getElementById('PLtext').innerHTML = "Powerups in Area: "+powerupCount;
 
             // console.log(quantizeErrorAggregate / midi.noteCount / blocksPerBeat);
-            if(quantizeErrorAggregate / midi.noteCount / blocksPerBeat < 0.05){ // TODO: add more well defined ranges
-                  if(quantizeErrorAggregate / midi.noteCount / blocksPerBeat < 0.01){
+            var qeScore = quantizeErrorAggregate / midi.noteCount / blocksPerBeat;
+            if(qeScore == 0){
+                  document.getElementById('QEtext').innerHTML = "BPB Quality: Perfect";
+                  document.getElementById('QEtext').style.color = 'lime';
+            }
+            else if(qeScore > 20){
+                  document.getElementById('QEtext').innerHTML = "BPB Quality: Bad";
+                  document.getElementById('QEtext').style.color = 'red';
+            }
+            else if(qeScore > 5){
+                  document.getElementById('QEtext').innerHTML = "BPB Quality: Okay";
+                  document.getElementById('QEtext').style.color = 'orange';
+            }
+            else if(qeScore > 1){
+                  document.getElementById('QEtext').innerHTML = "BPB Quality: Good";
+                  document.getElementById('QEtext').style.color = 'limegreen';
+            }
+            else{
+                  document.getElementById('QEtext').innerHTML = "BPB Quality: Great";
+                  document.getElementById('QEtext').style.color = 'limegreen';
+            }
+            console.log('qeScore = '+qeScore);
+            document.getElementById('NCtext').innerHTML = "Spatial Conficts: " + conflictCount;
+            /*if(quantizeErrorAggregate / midi.noteCount / blocksPerBeat < 0.05){ // TODO: add more well defined ranges
+                  if(quantizeErrorAggregate / midi.noteCount / blocksPerBeat == 0){
                         document.getElementById('QEtext').innerHTML = "Blocks per Beat quality: Perfect";
                         document.getElementById('QEtext').style.color = 'green';
                   } else {
@@ -540,7 +575,8 @@ function drawLevel(redrawMini,noDOM){
             } else {
                   document.getElementById('QEtext').innerHTML = "Blocks per Beat quality: Bad";
                   document.getElementById('QEtext').style.color = 'red';
-            }
+            }*/
+
             if(entityCount>100){document.getElementById('ELtext').style.color = 'red';}
             else{document.getElementById('ELtext').style.color = '';}
 
@@ -849,10 +885,9 @@ function stopBtn(){
 }
 
 function recommendBPB(){
-      // TODO: New system
       var lowestQuantizeError = Infinity;
       var bestBPB = 0;
-      for(var i=0;i<16;i++){
+      for(var i=0;i<8;i++){ // Iterate to 8 for now
             var total = 0;
             for(var j=0;j<midi.trks.length;j++){
                   if(!level.areas[j] || level.areas[j].isVisible){total += midi.trks[j].quantizeErrors[i];}
@@ -864,16 +899,16 @@ function recommendBPB(){
             }
       }
       var recmd = bestBPB;
-      var curBPM = bpm;
-      var diffPercent = Math.abs(curBPM-songBPM)/songBPM;
+      //var curBPM = bpm;
+      //var diffPercent = Math.abs(curBPM-songBPM)/songBPM;
       // console.log('S'+bestBPB+': '+diffPercent+' @ '+curBPM);
-      while(diffPercent > 0.1){
+      /*while(diffPercent > 0.1){
             curBPM = recommendTempo(songBPM,recmd,false);
             diffPercent = Math.abs(curBPM-songBPM)/songBPM;
             // console.log(recmd+': '+diffPercent+' @ '+curBPM);
             if(recmd + bestBPB >= 16){break;}
             recmd += bestBPB;
-      }
+      }*.
       recmdBlocksPerBeat = recmd;
       /*if(recmdBlocksPerBeat !== blocksPerBeat){
             var button = document.getElementById('bpbrecommend')
@@ -916,7 +951,7 @@ function refreshTempos(){
 
 function selectTempo(){
       var sel = document.getElementById('temposelect');
-      var selected = sel.selectedIndex;
+      var selected = sel.value;
       bpm = bpms[selected]*(4/blocksPerBeat);
 }
 
@@ -960,13 +995,16 @@ function selectTrack(trkID){
             var trkdiv = document.getElementById('item'+i);
             if(i != trkID){
                   trkdiv.style.backgroundColor = '';
-                  trkdiv.style.border = '';
-                  document.getElementById('trklabl'+i).style.color = '';
+                  trkdiv.style.borderWidth = '0px';
+                  if(hasVisibleNotes[i]){document.getElementById('trklabl'+i).style.color = '';}
+                  else{document.getElementById('trklabl'+i).style.color = 'lightgray';}
             }
             else{
                   trkdiv.style.backgroundColor = 'mediumaquamarine';
-                  trkdiv.style.border = '2px solid mediumaquamarine';
-                  document.getElementById('trklabl'+i).style.color = 'black';
+                  trkdiv.style.borderWidth = '2px';
+                  if(hasVisibleNotes[i]){document.getElementById('trklabl'+i).style.color = 'black';}
+                  else{document.getElementById('trklabl'+i).style.color = 'gray';}
+                  
             }
       }
       softRefresh(true);

@@ -96,7 +96,7 @@ class MIDIfile{
                         total += this.trks[j].quantizeErrors[i];
                   }
                   // console.log('BPB: ' + (i+1) + ', error: ' + total);
-                  if(total<lowestQuantizeError){
+                  if(total<lowestQuantizeError && i<8){
                         lowestQuantizeError = total;
                         bestBPB = i+1;
                   }
@@ -270,10 +270,10 @@ class MIDIfile{
                     
                         // console.log(bpbStuff);
                         for(var i=1;i<=16;i++){
-                              var x = i*noteDelta[channel]/this.timing;
+                              var x = i*noteDelta[channel]/this.timing; // TODO: Better algorithm needed?
                               var roundX = Math.round(x);
                               // console.log("Rounded by: " + roundX-x);
-                              this.trks[tpos].quantizeErrors[i-1] += Math.abs(roundX-x);
+                              this.trks[tpos].quantizeErrors[i-1] += Math.round(Math.abs((roundX-x)/i)*100);
                         }
                         noteDelta[channel] = 0;
                         this.noteCount++;

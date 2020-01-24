@@ -202,7 +202,7 @@ var wiggler = new Tone.Sampler({'F3': './wav/wiggler.wav'},function(){
 });
 var spike = new Tone.Sampler({'F3': './wav/spike.wav'},function(){
       spike.toMaster();
-      spike.volume.value = -5;
+      spike.volume.value = -7;
       spike.curve = 'linear';
 });
 var spikeball = new Tone.Sampler({'F3': './wav/spikeball.wav'},function(){
