@@ -9,15 +9,17 @@ class Level{
             this.refresh;
       }
       checkTile(x,y){
-            /*var i;
+            return this.overview.getTile(x,y,true);
+      }
+      getTileOccupants(x,y){
+            var i;
             var occupants = [];
             for(i=0;i<this.areas.length;i++){
-                  if(!this.areas[i].visible){continue;}
-                  var thisTile = this.areas[i].getTile(x,y);
+                  if(!this.areas[i].isVisible){continue;}
+                  var thisTile = this.areas[i].getTile(x,y,true);
                   if(thisTile!=null){occupants.push(thisTile);}
             }
-            return occupants;*/
-            return this.overview.getTile(x,y);
+            return occupants;
       }
       setDims(){
             var max = {w: 0, h: 0};

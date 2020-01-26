@@ -108,9 +108,13 @@ function miniClear(){
 }
 
 function miniBox(x,y,w,h,style){
-      if(style == undefined){style = 'rgba(0,178,238,0.4)';}
+      if(style == undefined){style = 'rgba(127,127,255,0.2)';}
       ctxMini.fillStyle = style;
       ctxMini.fillRect(x,minimap.height-y,w,h);
+      ctxMini.strokeStyle = 'rgb(127,127,255)';
+      ctxMini.beginPath();
+      ctxMini.rect(x,minimap.height-y,w,h);
+      ctxMini.stroke();
 }
 
 function handleMouseDown(e){

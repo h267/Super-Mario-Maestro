@@ -22,60 +22,67 @@
                <div id="displaycontainer" class="dispcontainer" style="margin-bottom: 2px;">
                     <canvas id="canvas" width="3840" height="432"></canvas>
                </div>
-               <div id="toolbox" style="display: none;">
-                    <div>
-                         <table>
-                              <td><button id="playbtn" class="button" type="button" onclick="playBtn()">Play</button></td>
-                              <td><button id="stopbtn" class="button" type="button" onclick="stopBtn()">Stop</button></td>
-                              <td><select id="temposelect" class="dropdown" onchange="selectTempo()">
-                                   <!-- To be populated with tempo options -->
-                              </select></td>
-                              <td><div class="controlcontainer">
-                                   <table style="height: 24px;">
-                                        <tr class="displaytextrow">
-                                             <td><p id="ELtext" class="displaytext">Entities in Area: 0</p></td>
-                                             <td><p id="PLtext" class="displaytext">Powerups in Area: 0</p></td>
-                                             <td><p id="QEtext" class="displaytext">BPB Quality: -</p></td>
-                                             <td><p id="NCtext" class="displaytext">Spatial Conflicts: -</p></td>
-                                        </tr>
-                                   </table>
-                              </div></td>
-                         </table>
+               <div id="toolbox" style="display: none; height: 24px;">
+                    <div class="smallspacedcontainer">
+                         <div>
+                              <button id="playbtn" class="button" type="button" onclick="playBtn()" style="margin-right: 4px;">Play</button><button id="stopbtn" class="button" type="button" onclick="stopBtn()">Stop</button>
+                         </div>
+                         <select id="temposelect" class="dropdown" onchange="selectTempo()">
+                              <!-- To be populated with tempo options -->
+                         </select>
+                         <div class="controlcontainer spacedcontainer" style="height: 24px; margin-bottom: 0px">
+                              <p id="ELtext" class="displaytext">Entities in Area: 0</p>
+                              <p id="PLtext" class="displaytext">Powerups in Area: 0</p>
+                              <p id="QEtext" class="displaytext">BPB Quality: -</p>
+                              <p id="NCtext" class="displaytext">Spatial Conflicts: -</p>
+                         </div>
                     </div>
                     <p id="tempotext" style="position: relative; left: 130px; top: 2px; font-size: 10px; height: 0px; width: max-content; margin-top: 0px; margin-bottom: 0px;">Original: -</p>
                     <p id="fstxt" style='margin-bottom:0px;'>File Scrubber</p>
                     <div id="minimapcontainer" class="dispcontainer" style="margin-bottom: 4px; background-color: #195180;">
                          <canvas id="minimap" width="100px" height="64" style="margin-bottom: 4px"></canvas>
                     </div>
-                    <div class="controlcontainer"><table><tr>
-                         <td><label for="yofspicker" id="labys">Vertical Shift</label>
-                         <input id="yofspicker" type="number" name="yofspicker" value="0" onchange="nudgeY()" style="width:50px;" min="-48" max="54" disabled></td>
-                         <td><label for="noiseslider" id="nslabl">Noise Threshold</label>
-                         <input id="noiseslider" type="range" min="0" max="127" value="0" onchange="changeNoiseThreshold()" style='display: none; position: relative; top: 5px;'></td>
-                         <td><label for="bpbpicker" id="labrs">Blocks per Beat</label>
-                         <input id="bpbpicker" type="number" name="bpbpicker" value="0" min = "1" max = "8" onchange="pickBPB()" style="width:50px;" min="1" max="16" disabled></td>
-                         <!--<td><button id="bpbrecommend" class="button" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button></td>-->
-                    </tr></table></div>
+                    <div class="controlcontainer spacedcontainer">
+                         <div>
+                              <label for="yofspicker" id="labys">Vertical Shift</label>
+                              <input id="yofspicker" type="number" name="yofspicker" value="0" onchange="nudgeY()" style="width:50px;" min="-48" max="54" disabled>
+                         </div>
+                         <div id="noisecontrol">
+                              <label for="noiseslider" id="nslabl">Noise Threshold</label>
+                              <input id="noiseslider" type="range" min="0" max="127" value="0" onchange="changeNoiseThreshold()" style='position: relative; top: 5px;'>
+                         </div>
+                         <div>
+                              <label for="bpbpicker" id="labrs">Blocks per Beat</label>
+                              <input id="bpbpicker" type="number" name="bpbpicker" value="0" min = "1" max = "8" oninput="pickBPB()" style="width:50px;" min="1" max="16" disabled>
+                         </div>
+                         <!--<button id="bpbrecommend" class="button" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button>-->
+                    </div>
+                    <div style="display: flex;">
+                         <div id="lefttools">
+                              <div class="controlcontainer" id="trkcontainer" style="border:3px solid steelblue; width:220px; height: 160px; overflow-y: auto; margin-right: 4px;">
+                                   <!-- To be populated with track checkboxes -->
+                              </div>
+                         </div>
+                         <div id="righttools" class="controlcontainer" style="width: 600px; height: 160px;">
+                              <p style='font-size: 15px; margin-top: 4px; margin-bottom: 8px; font-weight: bold;'>Track Settings:</p>
+                              <label for="octaveshift">Octave Shift</label>
+                              <input id="octaveshift" type="number" min="-10" max="10" value="0" style="width: 50px;" onchange="shiftTrackOctave()">
+                              <div id="semishiftdiv" style="display: inline;">
+                                   <label for="semitoneshift">Semitones</label>
+                                   <input id="semitoneshift" type="number" min="-11" max="11" value="0" style="width: 50px;" onchange="shiftTrackOctave()">
+                              </div>
+                              <div class="spacedcontainer">
+                                   <p class="displaytext" id="NASText" style="padding-right: 12px;">Notes above screen: 0</p>
+                                   <p class="displaytext" id="NBSText">Notes below screen: 0</p>
+                              </div>
+                              <div id="instrumentcontainer">
+                                   <!-- To be populated with track instrument changes -->
+                              </div>
+                         </div>
+                    </div>
                     <div>
-                         <table>
-                              <tr>
-                                   <td><div id="lefttools" style="float:left">
-                                        <div class="controlcontainer" id="trkcontainer" style="border:3px solid steelblue; width:220px; height: 160px; overflow-y: auto;">
-                                             <!-- To be populated with track checkboxes -->
-                                        </div>
-                                   </div></td>
-                                   <td><div id="righttools" class="controlcontainer" style="width: 600px; height: 160px;">
-                                        <p style='font-size: 15px; margin-top: 4px; margin-bottom: 8px; font-weight: bold;'>Track Settings:</p>
-                                        <label for="octaveshift">Octave Shift</label>
-                                        <input id="octaveshift" type="number" min="-10" max="10" value="0" style="width: 50px;" onchange="shiftTrackOctave()">
-                                        <p class="displaytext" id="NASText">Notes above screen: 0</p>
-                                        <p class="displaytext" id="NBSText">Notes below screen: 0</p>
-                                        <div id="instrumentcontainer" style="width: 420px; overflow-y: auto;">
-                                             <!-- To be populated with track instrument changes -->
-                                        </div>
-                                   </div></td>
-                              </tr>
-                         </table>
+                         <input id="advbox" type="checkbox" onchange="toggleAdvancedMode()"></input>
+                         <label for="advbox" style="position: relative; bottom: 3px; right: 4px;">Advanced Settings</label>
                     </div>
                </div>
                <p id="filetext" class="displaytext" style="float:left; margin-top: 17px;">MIDI File:</p>

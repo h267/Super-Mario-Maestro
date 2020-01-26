@@ -70,12 +70,18 @@ class MIDIfile{
             isNewTrack = true;
             currentLabel = 'Goomba'
             this.parse();
+            if(this.error!=null){alert('An error occurred while attempting to read the file:\n'+this.error.msg+'\nPosition 0x'+this.error.pos.toString(16));}
       }
 
       // Main parsing functions
       parse(){
             //console.log('Started parsing');
             this.parseHeader();
+            if(this.error != null){
+                  if(this.error.code <= 2 && this.error.code != 0){
+                        return;
+                  }
+            }
             this.trks = new Array(this.ntrks);
             var t0 = (new Date).getTime();
             var i;
@@ -103,7 +109,6 @@ class MIDIfile{
             }
             this.blocksPerBeat = bestBPB;
             console.log(this);
-            if(this.error!=null){alert('An error occurred while attempting to read the file:\n'+this.error.msg+'\nPosition 0x'+this.error.pos.toString(16));}
             //console.log(this.noteCount+' notes');
             console.log('MIDI data loaded in '+((new Date).getTime() - t0)+' ms');
       }

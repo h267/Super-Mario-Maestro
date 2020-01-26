@@ -11,6 +11,7 @@ body{
       overflow: auto;
       border: 3px solid steelblue;
       border-radius: 3px;
+      margin-bottom: 4px;
 }
 
 input#fileinput{
@@ -34,6 +35,7 @@ input#fileinput{
       transition: transform 80ms, box-shadow 80ms;
       box-shadow: #1a5586 0px 4px;
 }
+
 button::-moz-focus-inner {
       border: 0;
 }
@@ -97,6 +99,28 @@ p, label{
 	border: 3px solid steelblue;
       border-radius: 5px;
       width: max-content;
+}
+
+.spacedcontainer{
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+}
+
+.spacedcontainer > *{
+      margin-left: 8px;
+      margin-right: 8px;
+}
+
+.smallspacedcontainer{
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+}
+
+.smallspacedcontainer > *{
+      margin-left: 4px;
+      margin-right: 4px;
 }
 
 input{
