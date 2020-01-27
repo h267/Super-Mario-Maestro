@@ -1,28 +1,26 @@
 // Super Mario Maestro v1.3
 // made by h267
 
-// FIXME: none yet
+// FIXME: Disappearing tracks when using octave shift
 
 /* TODO: New features:
 1.3:
- - Make Advanced toggle work for restricting BPBs
- - Finish CSS
- - CSS loading animation
- - Button to octave shift a track into view automatically
- - A group of recommended instruments at the top of the dropdown
- - A group of common tempos at the top of the tempo dropdown
- - Make minimap larger and/or more usable for Hermit
- - Separate persussion tracks into different instruments
- - More specific percussion suggestions
- - Put the instruments in alphabetical order
- - Give the Discord button actual animation in the background, make it pop out on hover
-
- - Example MIDI
- - A tutorial
-
+ 1. Make minimap larger and/or more usable for Hermit
+ 2. A group of common tempos at the top of the tempo dropdown
+ 3. A group of recommended instruments at the top of the dropdown
+ 4. More specific percussion suggestions
+ 5. Separate persussion tracks into different instruments
+ 6. Put the instruments in alphabetical order
+ 7. Give the Discord button actual animation in the background, make it pop out on hover
+ 8. Finish CSS for now
+ 
  1.3.1:
  - Pre-rendered audio
  - Full level playback
+ - CSS loading animation
+ - Faster loading on track selection
+ - Example MIDI
+ - A tutorial
 
 1.4 and After:
  - Spatial Management
@@ -70,7 +68,7 @@ var bpms = [
 ];
 var instruments = [
       {id: 'goomba', name: 'Goomba (Grand Piano)', octave: 1, isPowerup: false},
-      {id: 'buzzybeetle', name: 'Shellmet (Reverb Cowbell)', octave: 1, isPowerup: false},
+      {id: 'buzzybeetle', name: 'Shellmet (Detuned Bell)', octave: 1, isPowerup: false},
       {id: '1up', name: '1-Up (Synth Organ)', octave: 0, isPowerup: true},
       {id: 'spiketop', name: 'Spike Top (Harpsichord)', octave: 0, isPowerup: false},
       {id: 'sledgebro', name: 'Sledge Bro (Bass Guitar)', octave: -2, isPowerup: false},
@@ -151,6 +149,8 @@ var conflictCount = 0;
 var advancedSettings = false;
 var semitoneShifts = [];
 var acceptableBPBs = null;
+var reccBPB;
+var lastBPB;
 
 // Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
@@ -265,7 +265,11 @@ function loadFile(){ // Load file from the file input element
             document.getElementById('octaveshift').value = 0;
             document.getElementById('semitoneshift').value = 0;
             blocksPerBeat = midi.blocksPerBeat;
+            reccBPB = blocksPerBeat;
+            lastBPB = blocksPerBeat;
             document.getElementById('bpbpicker').value = blocksPerBeat;
+            acceptableBPBs = generateAcceptableBPBs();
+            console.log(acceptableBPBs);
             isNewFile = true;
             fileLoaded = true;
             for(i=0;i<midi.trks.length;i++){
@@ -467,6 +471,8 @@ function drawLevel(redrawMini,noDOM){
       conflictCount = 0;
       var j;
       if(fileLoaded && !noDOM){
+            // Enable button if recommended octave shift and actual octave shift don't match
+            document.getElementById('shiftbutton').disabled = (octaveShifts[selectedTrack] == getViewOctaveShift(selectedTrack));
             hasVisibleNotes = new Array(midi.trks.length).fill(false);
             for(i=0;i<midi.trks.length;i++){
                   notesAboveScreen[i] = 0;
@@ -528,8 +534,8 @@ function drawLevel(redrawMini,noDOM){
                                           entityCount++;
                                     }
                               }
-                              if((entityCount > 100 || powerupCount > 100) && (limitLine == null || x < limitLine)){
-                                    limitLine = x;
+                              if((entityCount > 100 || powerupCount > 100) && (limitLine == null || i < limitLine)){
+                                    limitLine = i+1;
                               }
                                  
                         }
@@ -547,7 +553,7 @@ function drawLevel(redrawMini,noDOM){
                   /*if(!noDOM){
                         if(i<ofsX+240 && i>=ofsX+27 && j<=ofsY+27 && j>ofsY && ijtile >= 2){
                               var k;
-                              if(ijoccupants.length > 1){console.log(ijoccupants);} // FIXME: Wrong count in ATDefault.mid
+                              if(ijoccupants.length > 1){console.log(ijoccupants);}
                               for(k=0;k<ijoccupants.length;k++){
                                     if(ijoccupants[k] < 2){continue;}
                                     if(instruments[ijoccupants[k]-2].isPowerup){
@@ -864,8 +870,10 @@ function pickBPB(){
       }
       if(val < 1){val = 1;}
       if(val > 8){val = 8;}
-      document.getElementById('bpbpicker').value = val;
       blocksPerBeat = val;
+      if(!advancedSettings){filterBPB();}
+      document.getElementById('bpbpicker').value = blocksPerBeat;
+      lastBPB = blocksPerBeat;
       changeBPB();
 }
 
@@ -1024,6 +1032,7 @@ function selectTrack(trkID){
       selectedTrack = trkID;
       document.getElementById('octaveshift').value = octaveShifts[selectedTrack];
       document.getElementById('semitoneshift').value = semitoneShifts[selectedTrack];
+      document.getElementById('shiftbutton').disabled = (octaveShifts[selectedTrack] == getViewOctaveShift(selectedTrack));
       if(midi.trks[selectedTrack].hasPercussion || advancedSettings){
             document.getElementById('semishiftdiv').style.display = 'inline';
       }
@@ -1240,4 +1249,58 @@ function toggleAdvancedMode(){
             }
             softRefresh();
       }
+      if(!advancedSettings){
+            blocksPerBeat = reccBPB;
+            document.getElementById('bpbpicker').value = blocksPerBeat;
+            lastBPB = blocksPerBeat;
+            changeBPB();
+      }
+}
+
+function generateAcceptableBPBs(){
+      if(Math.ceil(Math.log2(reccBPB)) == Math.floor(Math.log2(reccBPB))){ // Check if the number is a power of 2
+            return [1,2,4,8];
+      }
+      else if(reccBPB%3 == 0){return [3,6]}
+      else{return [reccBPB];} // For BPBs 5 and 7
+}
+
+function filterBPB(){
+      var i;
+      for(i=0;i<acceptableBPBs.length;i++){
+            if(blocksPerBeat == acceptableBPBs[i]){return;}
+      }
+      var delta = blocksPerBeat - lastBPB;
+      var last = acceptableBPBs[0];
+      for(i=0;i<acceptableBPBs.length;i++){
+            if(acceptableBPBs[i] > blocksPerBeat){
+                  if(delta < 0){
+                        blocksPerBeat = last;
+                        return;
+                  }
+                  else{
+                        blocksPerBeat = acceptableBPBs[i];
+                        return;
+                  }
+            }
+            last = acceptableBPBs[i];
+      }
+}
+
+function getViewOctaveShift(trkID){
+      var sum = 0;
+      var i;
+      for(i=0;i<midi.trks[trkID].notes.length;i++){
+            sum += midi.trks[trkID].notes[i].pitch;
+      }
+      var avg = sum/midi.trks[trkID].notes.length;
+      return Math.round((avg - (60 + (ofsY-48)))/12)*-1;
+}
+
+function shiftTrackIntoView(){
+      var shift = getViewOctaveShift(selectedTrack);
+      octaveShifts[selectedTrack] = shift;
+      document.getElementById('octaveshift').value = shift;
+      level.areas[selectedTrack].ofsY = (octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack])*-1;
+      softRefresh();
 }

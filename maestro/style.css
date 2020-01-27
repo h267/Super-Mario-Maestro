@@ -67,7 +67,7 @@ button::-moz-focus-inner {
       color: #3a3a3a;
       height: 30px;
       padding-left: 12px;
-      padding-right: 12px;
+      padding-right: 30px;
       -webkit-appearance: none;
       -moz-appearance: none;
 }
