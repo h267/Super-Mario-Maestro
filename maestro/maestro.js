@@ -1,8 +1,6 @@
 // Super Mario Maestro v1.3
 // made by h267
 
-// FIXME: Disappearing tracks when using octave shift
-
 /* TODO: New features:
 1.3:
  1. Make minimap larger and/or more usable for Hermit
@@ -431,7 +429,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                         level.areas[i].setTile(roundX,y+1,instrument);
                   }
             }
-            level.areas[i].ofsY = octaveShifts[i]*-12;
+            level.areas[i].ofsY = octaveShifts[i]*12;
             //console.log('error = '+error);
       }
       if(!limitedUpdate){
@@ -480,7 +478,7 @@ function drawLevel(redrawMini,noDOM){
                   for(j=0;j<midi.trks[i].notes.length;j++){
                         var note = midi.trks[i].notes[j];
                         x = Math.round((note.time/midi.timing)*blocksPerBeat);
-                        if(note.channel!=9){y = note.pitch + 1 - level.areas[i].ofsY;}
+                        if(note.channel!=9){y = note.pitch + 1 + level.areas[i].ofsY;}
                         else{y = 54;}
                         // y = note.pitch - level.areas[i].ofsY
                         if(y <= ofsY){notesBelowScreen[i]++;}
@@ -1013,9 +1011,9 @@ function changeNoiseThreshold(){
 }
 
 function shiftTrackOctave(){
-      octaveShifts[selectedTrack] = parseInt(document.getElementById('octaveshift').value);
+      octaveShifts[selectedTrack] = parseInt(document.getElementById('octaveshift').value*-1);
       semitoneShifts[selectedTrack] = parseInt(document.getElementById('semitoneshift').value);
-      level.areas[selectedTrack].ofsY = (octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack])*-1;
+      level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack];
       softRefresh();
 }
 
@@ -1244,7 +1242,7 @@ function toggleAdvancedMode(){
             for(i=0;i<midi.trks.length;i++){
                   if(!midi.trks[i].hasPercussion){
                         semitoneShifts[i] = 0;
-                        level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*-12;
+                        level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*12;
                   }
             }
             softRefresh();
@@ -1300,7 +1298,7 @@ function getViewOctaveShift(trkID){
 function shiftTrackIntoView(){
       var shift = getViewOctaveShift(selectedTrack);
       octaveShifts[selectedTrack] = shift;
-      document.getElementById('octaveshift').value = shift;
-      level.areas[selectedTrack].ofsY = (octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack])*-1;
+      document.getElementById('octaveshift').value = shift*-1;
+      level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack];
       softRefresh();
 }

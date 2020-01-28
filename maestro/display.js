@@ -20,6 +20,15 @@ function drawCircle(x,y,r,style){
       ctx.fill();
 }
 
+function miniCircle(x,y,r,style){
+      if(style == undefined){style = 'black';}
+      ctxMini.fillStyle = style;
+      ctxMini.beginPath();
+      ctxMini.arc(x,y,r,0,2*Math.PI,false);
+      ctxMini.lineWidth = 1;
+      ctxMini.fill();
+}
+
 function drawLine(x1,y1,x2,y2,style,width){
       if(style == undefined){style = 'black';}
       if(width == undefined){width = 1;}
@@ -93,7 +102,8 @@ function drawTile(image,x,y){
 function miniPlot(x,y,style){
       if(style == undefined){style = 'black';}
       ctxMini.fillStyle = style;
-      ctxMini.fillRect(x,minimap.height-y,1,1);
+      //ctxMini.fillRect(x,minimap.height-y,2,2);
+      miniCircle(x,y,1,style);
 }
 
 // Minimap graphics functions

@@ -62,6 +62,7 @@ class Level{
                         for(k=0;k<this.areas[i].h;k++){
                               var thisTile = this.areas[i].getTile(j,k,true);
                               if(thisTile!=null){
+                                    if(k>100){console.log(k);}
                                     this.overview.setTile(j,k,thisTile);
                                     this.isTrackOccupant[j][k][i] = true;
                                     this.numberOfOccupants[j][k]++;
@@ -69,7 +70,6 @@ class Level{
                         }
                   }
             }
-            var i;
       }
 
 }
@@ -84,7 +84,7 @@ class Area{
       }
       getTile(x,y,useOfs){
             if(!this.isInBounds(x,y)){return null;}
-            if(useOfs){return this.grid[x+this.ofsX][y+this.ofsY];}
+            if(useOfs){return this.grid[x+this.ofsX][y-this.ofsY];}
             else{return this.grid[x][y];}
       }
       isOccupied(x,y){
