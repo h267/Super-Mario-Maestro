@@ -62,7 +62,6 @@ class Level{
                         for(k=0;k<this.areas[i].h;k++){
                               var thisTile = this.areas[i].getTile(j,k,true);
                               if(thisTile!=null){
-                                    if(k>100){console.log(k);}
                                     this.overview.setTile(j,k,thisTile);
                                     this.isTrackOccupant[j][k][i] = true;
                                     this.numberOfOccupants[j][k]++;

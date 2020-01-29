@@ -291,8 +291,9 @@ function stopAudio(){
 function resetPlayback(){
       enableMouse();
       document.getElementById('playbtn').disabled = false;
-      clearDisplayOverlays();
+      clearDisplayLayer(5);
       scrollDisplayTo(0);
+      refreshCanvas();
 }
 
 function addNote(note,instrument){
@@ -312,9 +313,10 @@ function advanceSchTime(delta){
             var curNotes = notes[pos];
             //if(notes.length!=0){console.log(curNotes);}
             //if(curNotes.length>0){console.log('ye');}
-            clearDisplayOverlays();
+            clearDisplayLayer(5);
             highlightCol(pos+27,'rgba(255,0,0,0.5)');
             scrollDisplayTo(pos*16);
+            refreshCanvas();
             if(curNotes != undefined){playNotes(curNotes);} // Prevent weird crash
             if(pos >= Math.min(239-27,level.width)-1){
                   resetPlayback();

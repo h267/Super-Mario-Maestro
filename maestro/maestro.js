@@ -3,6 +3,7 @@
 
 /* TODO: New features:
 1.3:
+ 0. Use multiple canvasses as layers, redefine display functions
  1. Make minimap larger and/or more usable for Hermit
  2. A group of common tempos at the top of the tempo dropdown
  3. A group of recommended instruments at the top of the dropdown
@@ -149,6 +150,7 @@ var semitoneShifts = [];
 var acceptableBPBs = null;
 var reccBPB;
 var lastBPB;
+var trkDrawLayers;
 
 // Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
@@ -239,8 +241,11 @@ function loadFile(){ // Load file from the file input element
             midi = new MIDIfile(new Uint8Array(reader.result));
             document.getElementById('advbox').checked = false;
             resetOffsets();
-            miniClear();
-            miniBox(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
+            if(fileLoaded){
+                  miniClear();
+                  drawScrubber(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
+                  refreshMini();
+            }
             document.getElementById('trkcontainer').innerHTML = '';
             //document.getElementById('trkselect').innerHTML = '';
             selectedTrack = 0;
@@ -267,7 +272,6 @@ function loadFile(){ // Load file from the file input element
             lastBPB = blocksPerBeat;
             document.getElementById('bpbpicker').value = blocksPerBeat;
             acceptableBPBs = generateAcceptableBPBs();
-            console.log(acceptableBPBs);
             isNewFile = true;
             fileLoaded = true;
             for(i=0;i<midi.trks.length;i++){
@@ -452,23 +456,27 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
       console.log('Completed in '+((new Date).getTime()-t0)+' ms');
 }
 
+function drawBG(){
+      setBG('#00B2EE');
+      drawGrid(16);
+      var i;
+      for(i=0;i<240;i++){
+            drawTile(tiles[0],i*16,canvas.height-16,0);
+      }
+      decorateBG();
+}
+
 function drawLevel(redrawMini,noDOM){
       if(tiles==undefined){return;}
       if(redrawMini==undefined){redrawMini=false;}
       if(noDOM==undefined){noDOM=false;}
-      miniClear();
-      fillRect(0,0,canvas.clientWidth,canvas.clientHeight,'#00B2EE');
-      drawGrid(16);
-      var i;
-      for(i=0;i<240;i++){
-            drawTile(tiles[0],i*16,canvas.height-16);
-      }
-      decorateBG();
+      if(fileLoaded && redrawMini){miniClear(0);}
+      if(isNewFile || !fileLoaded){drawBG();}
       entityCount = 0;
       powerupCount = 0;
       conflictCount = 0;
       var j;
-      if(fileLoaded && !noDOM){
+      if(fileLoaded && !noDOM){ // Update offscreen note count (and octave shift button)
             // Enable button if recommended octave shift and actual octave shift don't match
             document.getElementById('shiftbutton').disabled = (octaveShifts[selectedTrack] == getViewOctaveShift(selectedTrack));
             hasVisibleNotes = new Array(midi.trks.length).fill(false);
@@ -503,6 +511,13 @@ function drawLevel(redrawMini,noDOM){
       var x;
       var y;
       if(!noDOM){limitLine = null;}
+      if(redrawMini){
+            clearDisplayLayer(4);
+            clearDisplayLayer(3);
+      }
+      else{
+            //if(fileLoaded){miniClear(0);}
+      }
       powerupCount = 0;
       entityCount = 0;
       for(i=27;i<level.width+27;i++){
@@ -516,7 +531,7 @@ function drawLevel(redrawMini,noDOM){
                         if(level.numberOfOccupants[x][y] > 1){ // Highlight any overalapping tiles in red
                               //console.log('h '+x+','+y);
                               conflictCount++;
-                              highlightTile(i,27-j,'rgba(255,0,0,0.4)');
+                              highlightTile(i,27-j,{style: 'rgba(255,0,0,0.4)'});
                         }
                         if(tile == 1 && level.isTrackOccupant[x][y][selectedTrack]){ // Outline note blocks of the selected track in blue
                               outlineTile(i,27-j,2,'rgb(102,205,170)');
@@ -621,16 +636,12 @@ function drawLevel(redrawMini,noDOM){
             else{document.getElementById('PLtext').style.color = '';}
             updateOutOfBoundsNoteCounts();
       }
-      displayData = captureDisplay();
-      if(redrawMini){minimapData = captureMini();}
-      else{setMiniData(minimapData);}
       if(fileLoaded){
-            miniBox(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
+            miniClear(1);
+            drawScrubber(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
       }
-}
-
-function clearDisplayOverlays(){
-      setDisplayData(displayData);
+      refreshCanvas();
+      if(fileLoaded){refreshMini();}
 }
 
 function moveOffsetTo(ox,oy){ // Offsets are given as percentages of the level
@@ -645,7 +656,9 @@ function moveOffsetTo(ox,oy){ // Offsets are given as percentages of the level
       if(ofsX<0){ofsX=0;}
       ofsX = Math.floor(ofsX/(blocksPerBeat*bbar))*blocksPerBeat*bbar; // Quantize to the nearest measure
       if(oy!=null){ofsY = oy*127;}
-      drawLevel();
+      clearDisplayLayer(3);
+      clearDisplayLayer(4);
+      drawLevel(false);
 }
 
 function nudgeY(){
@@ -765,7 +778,7 @@ function handleClick(e){
       if(noMouse){return;}
       if(clickedTile!=null){
             clickedTile = null;
-            clearDisplayOverlays();
+            clearDisplayLayer(5);
             //drawLevel(false,true);
             return;
       }
@@ -794,9 +807,10 @@ function handleMove(e){
       var refresh = false;
 
       if(currentHighlight.x!=tilePos.x || currentHighlight.y!=tilePos.y){
-            clearDisplayOverlays();
-            highlightTile(tilePos.x,27-tilePos.y,'rgba(0,0,0,0.1)'); // Lightly highlight the tile the cursor is on
-            drawTile(cursor,(tilePos.x-1)*16,(27-(tilePos.y+1))*16); // Draw the cursor icon
+            clearDisplayLayer(5);
+            highlightTile(tilePos.x,27-tilePos.y,{style:'rgba(0,0,0,0.1)', layer:5}); // Lightly highlight the tile the cursor is on
+            drawTile(cursor,(tilePos.x-1)*16,(27-(tilePos.y+1))*16,5); // Draw the cursor icon
+            refreshCanvas();
             currentHighlight = {x: tilePos.x, y: tilePos.y};
             refresh = true;
       }
@@ -822,13 +836,13 @@ function handleMove(e){
                   if(i-levelPos.x > 0){
                         dirStr.h = 'Right'
                         for(k=0;k<i-levelPos.x;k++){
-                              highlightTile(tilePos.x+k+1,27-tilePos.y);
+                              highlightTile(tilePos.x+k+1,27-tilePos.y,{layer:5});
                         }
                   }
                   else if(i-levelPos.x < 0){
                         dirStr.h = 'Left';
                         for(k=0;k<(i-levelPos.x)*-1;k++){
-                              highlightTile(tilePos.x-k-1,27-tilePos.y);
+                              highlightTile(tilePos.x-k-1,27-tilePos.y,{layer:5});
                         }                        
                   }
                   
@@ -836,28 +850,28 @@ function handleMove(e){
                         dirStr.v = 'Up';
                         for(k=0;k<j-levelPos.y;k++){
                               //console.log('h '+(tilePos.x+(i-levelPos.x))+', '+(27-(j-ofsY-k)));
-                              highlightTile((tilePos.x+(i-levelPos.x)),27-(j-ofsY-k),'rgba(0,191,0,0.5)');
+                              highlightTile((tilePos.x+(i-levelPos.x)),27-(j-ofsY-k),{style: 'rgba(0,191,0,0.5)', layer:5});
                         }
                   }
                   else if(j-levelPos.y < 0){
                         dirStr.v = 'Down';
                         for(k=0;k<(j-levelPos.y)*-1;k++){
                               //console.log('h '+(tilePos.x+(i-levelPos.x))+', '+(27-(j-ofsY-k)));
-                              highlightTile((tilePos.x+(i-levelPos.x)),27-(j-ofsY+k),'rgba(0,191,0,0.5)');
+                              highlightTile((tilePos.x+(i-levelPos.x)),27-(j-ofsY+k),{style: 'rgba(0,191,0,0.5)', layer: 5});
                         }
                   }
                   if(dirStr.h!=''&&dirStr.v!=''){
-                        text(realTpos.x*16-24,(27-realTpos.y)*16-8,dirStr.h+' '+Math.abs(i-levelPos.x)+', '+dirStr.v+' '+Math.abs(j-levelPos.y));
+                        drawLabel(realTpos.x*16-24,(27-realTpos.y)*16-8,dirStr.h+' '+Math.abs(i-levelPos.x)+', '+dirStr.v+' '+Math.abs(j-levelPos.y));
                   }
                   else if(dirStr.h==''&&dirStr.v!=''){
-                        text(realTpos.x*16-24,(27-realTpos.y)*16-8,dirStr.v+' '+Math.abs(j-levelPos.y));
+                        drawLabel(realTpos.x*16-24,(27-realTpos.y)*16-8,dirStr.v+' '+Math.abs(j-levelPos.y));
                   }
                   else{
-                        text(realTpos.x*16-24,(27-realTpos.y)*16-8,dirStr.h+' '+Math.abs(i-levelPos.x));
+                        drawLabel(realTpos.x*16-24,(27-realTpos.y)*16-8,dirStr.h+' '+Math.abs(i-levelPos.x));
                   }
-                  return;
             }
       //}
+      refreshCanvas();
 }
 
 function pickBPB(){
@@ -900,7 +914,8 @@ function changeBPB(moveOfs){
             stopAudio();
             var ratio = (ofsX/2)/minimap.width;
             moveOffsetTo(ratio,null);
-            miniBox(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
+            miniClear(1);
+            drawScrubber(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
             hardRefresh(true, true);
       }
 }
@@ -968,7 +983,8 @@ function enableMouse(){
 
 function handleOut(){
       if(noMouse){return;}
-      clearDisplayOverlays();
+      clearDisplayLayer(5);
+      refreshCanvas();
       //drawLevel(false,true);
 }
 
@@ -994,10 +1010,11 @@ function selectTempo(){
       bpm = bpms[selected]*(4/blocksPerBeat);
 }
 
-function softRefresh(noDOM){ // Refresh changes to track layers
+function softRefresh(noDOM, redrawMini){ // Refresh changes to track layers
       if(noDOM == undefined){noDOM = false;}
+      if(redrawMini == undefined){redrawMini = true;}
       level.refresh();
-      drawLevel(true,noDOM);
+      drawLevel(redrawMini,noDOM);
 }
 
 function hardRefresh(reccTempo, limitUpdate){ // Refresh changes to the entire MIDI
