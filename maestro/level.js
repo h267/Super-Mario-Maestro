@@ -102,13 +102,9 @@ class Area{
       }
       clear(){
             var i;
-            var j;
             this.grid = [];
             for(i=0;i<this.w;i++){
-                  this.grid[i] = [];
-                  for(j=0;j<this.h;j++){
-                        this.grid[i][j] = null;
-                  }
+                  this.grid[i] = new Array(this.h).fill(null);
             }
       }
       setVisibility(v){

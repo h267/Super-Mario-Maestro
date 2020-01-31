@@ -65,11 +65,18 @@ var mx = 0;
 var my = 0;
 var bgs = null;
 var lastMiniData = null;
+const dlayer = {
+      bgLayer: 0,
+      noteLayer: 3,
+      overlayLayer: 4,
+      outlineLayer: 5,
+      mouseLayer: 6
+};
 
 const canvasWidth = 3840;
 const canvasHeight = 432;
 const miniHeight = 64;
-const numCanvasLayers = 6;
+const numCanvasLayers = 7;
 const numMiniLayers = 2;
 
 var canvasLayers = makeLayers(numCanvasLayers,canvasWidth, canvasHeight); // 0: BG, 1: Semisolids, 2: One-ways, 3: Notes, 4: Overlays, 5: Cursor and tools
@@ -91,7 +98,7 @@ function getImg(loc){
 
 function miniPlot(x,y,style){
       y = minimap.height - y;
-      miniLayers[0].fillRect(x,y,1,1,style);
+      miniLayers[dlayer.bgLayer].fillRect(x,y,1,1,style);
 }
 
 function miniClear(layer){
@@ -186,7 +193,7 @@ function getRealMiniOfs(e){
 function highlightTile(tx,ty,opts){
       var style = 'rgba(0,255,0,0.5)';
       if(opts.style != undefined){style = opts.style;}
-      var layer = 4;
+      var layer = dlayer.overlayLayer;
       if(opts.layer != undefined){layer = opts.layer;}
       canvasLayers[layer].fillRect(tx*16,ty*16,16,16,style);
 }
@@ -194,16 +201,22 @@ function highlightTile(tx,ty,opts){
 function outlineTile(tx,ty,thickness,style){
       if(thickness==undefined){thickness = 1;}
       if(style==undefined){style='rgba(0,255,0,0.5)';}
-      canvasLayers[4].drawBox(tx*16,ty*16,16,16,thickness,style);
+      canvasLayers[dlayer.overlayLayer].drawBox(tx*16,ty*16,16,16,thickness,style);
+}
+
+function outlineTileOnDrawLayer(layer, tx, ty, thickness, style){
+      if(thickness==undefined){thickness = 1;}
+      if(style==undefined){style='rgba(0,255,0,0.5)';}
+      layer.drawBox(tx*16,ty*16,16,16,thickness,style);
 }
 
 function highlightCol(tx,style){
       if(style==undefined){style='rgba(0,255,0,0.5)';}
-      canvasLayers[5].fillRect(tx*16,0,16,canvas.height,style);
+      canvasLayers[dlayer.mouseLayer].fillRect(tx*16,0,16,canvas.height,style);
 }
 
 function drawTile(image,x,y,layer){
-      if(layer == undefined){layer=3;}
+      if(layer == undefined){layer=dlayer.noteLayer;}
       canvasLayers[layer].ctx.drawImage(image, x, y);
 }
 
@@ -213,27 +226,27 @@ function decorateBG(){
 }
 
 function drawLimitLine(x){
-      canvasLayers[4].drawLine(x*16,0,x*16,27*16,'rgba(255,0,0,1)',3);
+      canvasLayers[dlayer.overlayLayer].drawLine(x*16,0,x*16,27*16,'rgba(255,0,0,1)',3);
 }
 
 function setBG(style){
-      canvasLayers[0].fillRect(0,0,canvas.width,canvas.height,style);
+      canvasLayers[dlayer.bgLayer].fillRect(0,0,canvas.width,canvas.height,style);
 }
 
 function drawGrid(){
       var i;
       for(i=0;i<canvas.width/16;i++){
-            canvasLayers[0].drawLine(i*16,0,i*16,canvas.height-1,'rgba(0,0,0,0.2)');
-            if(i%24==0){canvasLayers[0].drawLine(i*16,0,i*16,canvas.height-1,'rgba(0,0,0,0.25)',2);}
+            canvasLayers[dlayer.bgLayer].drawLine(i*16,0,i*16,canvas.height-1,'rgba(0,0,0,0.2)');
+            if(i%24==0){canvasLayers[dlayer.bgLayer].drawLine(i*16,0,i*16,canvas.height-1,'rgba(0,0,0,0.25)',2);}
       }
       for(i=0;i<canvas.height/16;i++){
-            canvasLayers[0].drawLine(0,i*16,canvas.width-1,i*16,'rgba(0,0,0,0.2)');
-            if(i%13==0){canvasLayers[0].drawLine(0,i*16,canvas.width-1,i*16,'rgba(0,0,0,0.25)',2);}
+            canvasLayers[dlayer.bgLayer].drawLine(0,i*16,canvas.width-1,i*16,'rgba(0,0,0,0.2)');
+            if(i%13==0){canvasLayers[dlayer.bgLayer].drawLine(0,i*16,canvas.width-1,i*16,'rgba(0,0,0,0.25)',2);}
       }
 }
 
 function drawLabel(x,y,str){
-      canvasLayers[5].text(x,y,str);
+      canvasLayers[dlayer.mouseLayer].text(x,y,str);
 }
 
 function loadBGs(){

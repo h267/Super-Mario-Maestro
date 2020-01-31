@@ -291,7 +291,7 @@ function stopAudio(){
 function resetPlayback(){
       enableMouse();
       document.getElementById('playbtn').disabled = false;
-      clearDisplayLayer(5);
+      clearDisplayLayer(dlayer.mouseLayer);
       scrollDisplayTo(0);
       refreshCanvas();
 }
@@ -313,7 +313,7 @@ function advanceSchTime(delta){
             var curNotes = notes[pos];
             //if(notes.length!=0){console.log(curNotes);}
             //if(curNotes.length>0){console.log('ye');}
-            clearDisplayLayer(5);
+            clearDisplayLayer(dlayer.mouseLayer);
             highlightCol(pos+27,'rgba(255,0,0,0.5)');
             scrollDisplayTo(pos*16);
             refreshCanvas();

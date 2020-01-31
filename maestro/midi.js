@@ -242,7 +242,7 @@ class MIDIfile{
             }
             else{
                   switch(eventType){
-                        case 0x9:
+                        case 0x9: // TODO: Used instruments for percussion
                               if(!rs){data.push(this.fetchBytes(1));}
                               data.push(this.fetchBytes(1));
                               var note = new Note(trackDuration,data[0],data[1],currentInstrument[channel],channel);

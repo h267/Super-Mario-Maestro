@@ -1,19 +1,19 @@
 // Super Mario Maestro v1.3
 // made by h267
 
+// FIXME: None yet
+
 /* TODO: New features:
 1.3:
- 0. Use multiple canvasses as layers, redefine display functions
  1. Make minimap larger and/or more usable for Hermit
- 2. A group of common tempos at the top of the tempo dropdown
- 3. A group of recommended instruments at the top of the dropdown
- 4. More specific percussion suggestions
- 5. Separate persussion tracks into different instruments
- 6. Put the instruments in alphabetical order
- 7. Give the Discord button actual animation in the background, make it pop out on hover
- 8. Finish CSS for now
+ 2. A group of recommended instruments at the top of the dropdown
+ 3. Separate percussion tracks into different instruments
+ 4. Put the instruments in alphabetical order
+ 5. Give the Discord button actual animation in the background, make it pop out on hover
+ 6. Finish CSS for now
  
  1.3.1:
+ - Get rid of level grid system for speed
  - Pre-rendered audio
  - Full level playback
  - CSS loading animation
@@ -35,36 +35,38 @@
 */
 
 var reader = new FileReader;
+var numCommonTempos = 0;
 var midi;
 // blocks per beat: 4
-var bpms = [
-      28, // Slow Autoscroll
-      // 28, // Backwards Normal Conveyor, Walking
-      32, // Underwater Walking
-      56, // Normal Conveyor, Idle
-      // 56, // Medium Autoscroll
-      // 56, // Backwards Fast Conveyor, Running
-      64, // Swimming
-      84, // Walking
-      // 84, // Blaster in a Cloud, Idle
-      88, // Normal Conveyor, Underwater Walking
-      101, // Swimming Holding an Item
-      112, // Fast Autoscroll
-      // 112, // Backwards Normal Conveyor, Running
-      // 112, // Fast Conveyor, Idle
-      116, // Blaster in a Cloud, Underwater Walking
-      140, // Normal Conveyor, Walking
-      // 140 // Blue Skull Ride, Idle
-      144, // Fast Conveyor, Underwater Walking
-      148, // Blaster in a Cloud, Swimming
-      166, // Blaster in a Cloud, Walking
-      169, // Running
-      186, // Blaster in a Cloud, Swimming Holding an Item
-      194, // Fast Conveyor, Walking  
-      227, // Normal Conveyor, Running
-      256, // Blaster in a Cloud, Running
-      279, // Fast Conveyor, Running
+var tempos = [
+      {name: 'Slow Autoscroll', bpm: 28, isCommon: false},
+      {name: 'Backwards Normal Conveyor - Walking', bpm: 28, isCommon: false},
+      {name: 'Underwater - Walking', bpm: 32, isCommon: false},
+      {name: 'Normal Conveyor - Idle', bpm: 56, isCommon: false},
+      {name: 'Medium Autoscroll', bpm: 56, isCommon: true},
+      {name: 'Backwards Fast Conveyor - Running', bpm: 56, isCommon: false},
+      {name: 'Swimming', bpm: 64, isCommon: false},
+      {name: 'Walking', bpm: 84, isCommon: true},
+      {name: 'Blaster in Cloud - Idle', bpm: 84, isCommon: false},
+      {name: 'Normal Underwater Conveyor - Walking', bpm: 88, isCommon: false},
+      {name: 'Swimming Holding Item', bpm: 101, isCommon: false},
+      {name: 'Fast Autoscroll', bpm: 112, isCommon: true},
+      {name: 'Backwards Normal Conveyor - Running', bpm: 112, isCommon: false},
+      {name: 'Fast Conveyor - Idle', bpm: 112, isCommon: false},
+      {name: 'Underwater Blaster in Cloud - Walking', bpm: 116, isCommon: false},
+      {name: 'Normal Conveyor - Walking', bpm: 140, isCommon: false},
+      {name: 'Fast Lava Lift', bpm: 140, isCommon: true},
+      {name: 'Fast Underwater Conveyor - Walking', bpm: 144, isCommon: false},
+      {name: 'Underwater Blaster in Cloud - Swimming', bpm: 148, isCommon: false},
+      {name: 'Blaster in Cloud - Walking', bpm: 166, isCommon: false},
+      {name: 'Running', bpm: 169, isCommon: true},
+      {name: 'Underwater Blaster in Cloud - Swimming Holding Item', bpm: 186, isCommon: false},
+      {name: 'Fast Conveyor - Walking', bpm: 194, isCommon: false},
+      {name: 'Normal Conveyor - Running', bpm: 227, isCommon: false},
+      {name: 'Blaster in Cloud - Running', bpm: 256, isCommon: false},
+      {name: 'Fast Conveyor - Running', bpm: 279, isCommon: false}
 ];
+
 var instruments = [
       {id: 'goomba', name: 'Goomba (Grand Piano)', octave: 1, isPowerup: false},
       {id: 'buzzybeetle', name: 'Shellmet (Detuned Bell)', octave: 1, isPowerup: false},
@@ -112,6 +114,7 @@ var instruments = [
       {id: 'sword', name: 'Master Sword (Synth Horn)', octave: 0, isPowerup: false},/*
       {id: 'toad', name: 'Toad (Suffering)', octave: 0, isPowerup: false},*/ // If you uncomment this, only pain and suffering awaits
 ];
+var alphabetizedInstruments = alphabetizeById(instruments);
 var tiles;
 var bgs;
 var speed = 10;
@@ -150,7 +153,7 @@ var semitoneShifts = [];
 var acceptableBPBs = null;
 var reccBPB;
 var lastBPB;
-var trkDrawLayers;
+var outlineLayers;
 
 // Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
@@ -366,11 +369,6 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
             level.addArea(new Area(width,height));
             //x = 0;
             if(midi.firstTempo != 0){songBPM = 60000000/midi.firstTempo;}
-            if(reccTempo){
-                  refreshTempos(blocksPerBeat);
-                  bpm = recommendTempo(songBPM,blocksPerBeat,true);
-                  haveTempo = true;
-            }
             for(j=0;j<midi.trks[i].events.length;j++){ // This code is still here for if I add dynamic tempo/time signature options
                   break;
                   //x+=tempo*midi.tracks[i][j].deltaTime;
@@ -435,6 +433,11 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
             }
             level.areas[i].ofsY = octaveShifts[i]*12;
             //console.log('error = '+error);
+      }
+      if(reccTempo){
+            refreshTempos(blocksPerBeat);
+            bpm = recommendTempo(songBPM,blocksPerBeat,true);
+            haveTempo = true;
       }
       if(!limitedUpdate){
             updateInstrumentContainer();
@@ -512,16 +515,23 @@ function drawLevel(redrawMini,noDOM){
       var y;
       if(!noDOM){limitLine = null;}
       if(redrawMini){
-            clearDisplayLayer(4);
-            clearDisplayLayer(3);
+            clearDisplayLayer(dlayer.overlayLayer);
+            clearDisplayLayer(dlayer.noteLayer);
       }
       else{
             //if(fileLoaded){miniClear(0);}
       }
+      if(fileLoaded){
+            clearDisplayLayer(dlayer.outlineLayer);
+            outlineLayers = new Array(midi.trks.length);
+            for(var i=0;i<midi.trks.length;i++){
+                  outlineLayers[i] = new DrawLayer(canvas.width, canvas.height);
+            }
+      }
       powerupCount = 0;
       entityCount = 0;
       for(i=27;i<level.width+27;i++){
-            for(j=0;j<level.height;j++){ // This code is very confusing... probably should fix it later
+            for(j=0;j<level.height;j++){ // This code is very confusing AND very slow // TODO: Why...
                   if(!redrawMini && i>ofsX+240){break;}
                   x = ofsX + i - 27;
                   y = ofsY + j;
@@ -533,8 +543,9 @@ function drawLevel(redrawMini,noDOM){
                               conflictCount++;
                               highlightTile(i,27-j,{style: 'rgba(255,0,0,0.4)'});
                         }
-                        if(tile == 1 && level.isTrackOccupant[x][y][selectedTrack]){ // Outline note blocks of the selected track in blue
+                        if(tile == 1 && level.isTrackOccupant[x][y][selectedTrack]){ // Outline note blocks of the selected track
                               outlineTile(i,27-j,2,'rgb(102,205,170)');
+                              //outlineTileOnDrawLayer(outlineLayers[selectedTrack],i,27-j,2,'rgb(102,205,170)'); // TODO: Loop through tracks, make minimap work
                         }
                         if(!noDOM){
                               var occupants = level.getTileOccupants(x,y);
@@ -640,6 +651,7 @@ function drawLevel(redrawMini,noDOM){
             miniClear(1);
             drawScrubber(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
       }
+      if(fileLoaded){canvasLayers[dlayer.outlineLayer].ctx.drawImage(outlineLayers[selectedTrack].canvas,0,0,canvas.width,canvas.height);}
       refreshCanvas();
       if(fileLoaded){refreshMini();}
 }
@@ -656,8 +668,9 @@ function moveOffsetTo(ox,oy){ // Offsets are given as percentages of the level
       if(ofsX<0){ofsX=0;}
       ofsX = Math.floor(ofsX/(blocksPerBeat*bbar))*blocksPerBeat*bbar; // Quantize to the nearest measure
       if(oy!=null){ofsY = oy*127;}
-      clearDisplayLayer(3);
-      clearDisplayLayer(4);
+      clearDisplayLayer(dlayer.noteLayer);
+      clearDisplayLayer(dlayer.overlayLayer);
+      clearDisplayLayer(dlayer.outlineLayer);
       drawLevel(false);
 }
 
@@ -675,36 +688,11 @@ function resetOffsets(){
       document.getElementById('yofspicker').value = 0;
 }
 
-function bpmIDtoStr(id){
-      const bpms = [
-            'Slow Autoscroll OR Backwards Normal Conveyor - Walking',
-            'Underwater Walking',
-            'Medium Autoscroll OR Normal Conveyor - Idle OR Backwards Fast Conveyor - Running',
-            'Swimming',
-            'Walking OR Blaster in a Cloud - Idle',
-            'Normal Conveyor - Underwater Walking',
-            'Swimming Holding an Item',
-            'Fast Autoscroll OR Fast Conveyor - Idle OR Backwards Normal Conveyor - Running',
-            'Blaster in a Cloud - Underwater Walking',
-            'Blue Skulls OR Normal Conveyor - Walking',
-            'Fast Conveyor, Underwater Walking',
-            'Blaster in a Cloud - Swimming',
-            'Blaster in a Cloud - Walking',
-            'Running',
-            'Blaster in a Cloud - Swimming Holding an Item',
-            'Fast Conveyor - Walking',
-            'Normal Conveyor - Running',
-            'Blaster in a Cloud - Running',
-            'Fast Conveyor - Running',
-      ];
-      return bpms[id];
-}
-
 function recommendTempo(songBPM,bpb,print){
       var closestDist = 10000;
       var recc = -1;
-      for(i=0;i<bpms.length;i++){
-            var dist = Math.abs((bpms[i]*(4/bpb))-songBPM);
+      for(i=0;i<tempos.length;i++){
+            var dist = Math.abs((tempos[i].bpm*(4/bpb))-songBPM);
             //console.log((bpms[i]*(4/bpqn))+' is dist of '+dist);
             if(dist<closestDist){
                   closestDist = dist;
@@ -713,8 +701,8 @@ function recommendTempo(songBPM,bpb,print){
       }
       //console.log(bpmIDtoStr(recc));
       //console.log(songBPM+' -> '+bpms[recc]*(4/res));
-      if(print){document.getElementById('temposelect').selectedIndex = recc;}
-      return bpms[recc]*(4/bpb);
+      if(print){document.getElementById('temposelect').selectedIndex = numCommonTempos+recc;}
+      return tempos[recc].bpm*(4/bpb);
 }
 
 function chkRefresh(){
@@ -778,7 +766,7 @@ function handleClick(e){
       if(noMouse){return;}
       if(clickedTile!=null){
             clickedTile = null;
-            clearDisplayLayer(5);
+            clearDisplayLayer(dlayer.mouseLayer);
             //drawLevel(false,true);
             return;
       }
@@ -807,9 +795,9 @@ function handleMove(e){
       var refresh = false;
 
       if(currentHighlight.x!=tilePos.x || currentHighlight.y!=tilePos.y){
-            clearDisplayLayer(5);
-            highlightTile(tilePos.x,27-tilePos.y,{style:'rgba(0,0,0,0.1)', layer:5}); // Lightly highlight the tile the cursor is on
-            drawTile(cursor,(tilePos.x-1)*16,(27-(tilePos.y+1))*16,5); // Draw the cursor icon
+            clearDisplayLayer(dlayer.mouseLayer);
+            highlightTile(tilePos.x,27-tilePos.y,{style:'rgba(0,0,0,0.1)', layer: dlayer.mouseLayer}); // Lightly highlight the tile the cursor is on
+            drawTile(cursor,(tilePos.x-1)*16,(27-(tilePos.y+1))*16,dlayer.mouseLayer); // Draw the cursor icon
             refreshCanvas();
             currentHighlight = {x: tilePos.x, y: tilePos.y};
             refresh = true;
@@ -836,13 +824,13 @@ function handleMove(e){
                   if(i-levelPos.x > 0){
                         dirStr.h = 'Right'
                         for(k=0;k<i-levelPos.x;k++){
-                              highlightTile(tilePos.x+k+1,27-tilePos.y,{layer:5});
+                              highlightTile(tilePos.x+k+1,27-tilePos.y,{layer: dlayer.mouseLayer});
                         }
                   }
                   else if(i-levelPos.x < 0){
                         dirStr.h = 'Left';
                         for(k=0;k<(i-levelPos.x)*-1;k++){
-                              highlightTile(tilePos.x-k-1,27-tilePos.y,{layer:5});
+                              highlightTile(tilePos.x-k-1,27-tilePos.y,{layer: dlayer.mouseLayer});
                         }                        
                   }
                   
@@ -850,14 +838,14 @@ function handleMove(e){
                         dirStr.v = 'Up';
                         for(k=0;k<j-levelPos.y;k++){
                               //console.log('h '+(tilePos.x+(i-levelPos.x))+', '+(27-(j-ofsY-k)));
-                              highlightTile((tilePos.x+(i-levelPos.x)),27-(j-ofsY-k),{style: 'rgba(0,191,0,0.5)', layer:5});
+                              highlightTile((tilePos.x+(i-levelPos.x)),27-(j-ofsY-k),{style: 'rgba(0,191,0,0.5)', layer: dlayer.mouseLayer});
                         }
                   }
                   else if(j-levelPos.y < 0){
                         dirStr.v = 'Down';
                         for(k=0;k<(j-levelPos.y)*-1;k++){
                               //console.log('h '+(tilePos.x+(i-levelPos.x))+', '+(27-(j-ofsY-k)));
-                              highlightTile((tilePos.x+(i-levelPos.x)),27-(j-ofsY+k),{style: 'rgba(0,191,0,0.5)', layer: 5});
+                              highlightTile((tilePos.x+(i-levelPos.x)),27-(j-ofsY+k),{style: 'rgba(0,191,0,0.5)', layer: dlayer.mouseLayer});
                         }
                   }
                   if(dirStr.h!=''&&dirStr.v!=''){
@@ -983,7 +971,7 @@ function enableMouse(){
 
 function handleOut(){
       if(noMouse){return;}
-      clearDisplayLayer(5);
+      clearDisplayLayer(dlayer.mouseLayer);
       refreshCanvas();
       //drawLevel(false,true);
 }
@@ -994,20 +982,31 @@ function showEverything(){
 
 function refreshTempos(){
       var i;
-      var sel = document.getElementById('temposelect');
-      sel.innerHTML = '';
-      for(i=0;i<bpms.length;i++){
+      var commonGroup = document.getElementById('comtempos');
+      var allGroup = document.getElementById('alltempos');
+      commonGroup.innerHTML = '';
+      allGroup.innerHTML = '';
+      if(isNewFile){numCommonTempos = 0;}
+      for(i=0;i<tempos.length;i++){
             var opt = document.createElement('option');
             opt.value = i;
-            opt.innerHTML = bpmIDtoStr(i)+' ('+Math.round(bpms[i]*(4/blocksPerBeat))+' bpm)';
-            sel.appendChild(opt);        
+            opt.innerHTML = tempos[i].name+' ('+Math.round(tempos[i].bpm*(4/blocksPerBeat))+' bpm)';
+            allGroup.appendChild(opt);
+            if(tempos[i].isCommon){
+                  if(isNewFile){numCommonTempos++;}
+                  var opt2 = document.createElement('option');
+                  opt2.value = i;
+                  opt2.innerHTML = tempos[i].name+' ('+Math.round(tempos[i].bpm*(4/blocksPerBeat))+' bpm)';
+                  commonGroup.appendChild(opt2);
+            }
       }
 }
 
 function selectTempo(){
       var sel = document.getElementById('temposelect');
       var selected = sel.value;
-      bpm = bpms[selected]*(4/blocksPerBeat);
+      console.log(sel.selectedIndex);
+      bpm = tempos[selected].bpm*(4/blocksPerBeat);
 }
 
 function softRefresh(noDOM, redrawMini){ // Refresh changes to track layers
@@ -1072,6 +1071,7 @@ function selectTrack(trkID){
                   
             }
       }
+      //if(!isNewFile){refreshOutlines();}
       softRefresh(true);
       updateInstrumentContainer();
 }
@@ -1318,4 +1318,14 @@ function shiftTrackIntoView(){
       document.getElementById('octaveshift').value = shift*-1;
       level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack];
       softRefresh();
+}
+
+function refreshOutlines(){
+      clearDisplayLayer(dlayer.outlineLayer);
+      canvasLayers[dlayer.outlineLayer].ctx.drawImage(outlineLayers[selectedTrack].canvas,0,0,canvas.width,canvas.height);
+      refreshCanvas();
+}
+
+function alphabetizeById(arr){ // TODO: Sort names and store as a separate array of labels and pointers to the corresponding location in the other array
+
 }
