@@ -227,27 +227,27 @@ select::-moz-focus-inner{
             transform: translateY(0px);
       }
       25%{
-            box-shadow: #1a5586 0px 2px;
-            transform: translateY(6px);
+            box-shadow: #1a5586 0px 14px;
+            transform: translateY(-6px);
       }
       50%{
-            box-shadow: #1a5586 0px 5px;
-            transform: translateY(3px);
+            box-shadow: #1a5586 0px 11px;
+            transform: translateY(-3px);
       }
       75%{
-            box-shadow: #1a5586 0px 4px;
-            transform: translateY(4px);
+            box-shadow: #1a5586 0px 12px;
+            transform: translateY(-4px);
       }
       100%{
-            box-shadow: #1a5586 0px 4px;
-            transform: translateY(4px);
+            box-shadow: #1a5586 0px 12px;
+            transform: translateY(-4px);
       }
 }
 
 @keyframes discordout{
       0%{
-            box-shadow: #1a5586 0px 4px;
-            transform: translateY(4px);  
+            box-shadow: #1a5586 0px 12px;
+            transform: translateY(-4px);  
       }
       100%{
             box-shadow: #1a5586 0px 8px;
@@ -257,8 +257,8 @@ select::-moz-focus-inner{
 
 @keyframes discordpress{
       0%{
-            box-shadow: #1a5586 0px 4px;
-            transform: translateY(4px);       
+            box-shadow: #1a5586 0px 12px;
+            transform: translateY(-4px);       
       }
       100%{
             box-shadow: #1a5586 0px 0px;

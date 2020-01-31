@@ -5,12 +5,11 @@
 
 /* TODO: New features:
 1.3:
- 1. Make minimap larger and/or more usable for Hermit
+ 1. Put the instruments in alphabetical order
  2. A group of recommended instruments at the top of the dropdown
  3. Separate percussion tracks into different instruments
- 4. Put the instruments in alphabetical order
- 5. Give the Discord button actual animation in the background, make it pop out on hover
- 6. Finish CSS for now
+ 4. Make minimap larger and/or more usable for Hermit
+ {}. Re-enable Discord link, erase unecessary console logs
  
  1.3.1:
  - Get rid of level grid system for speed
@@ -1027,7 +1026,7 @@ function changeNoiseThreshold(){
 }
 
 function shiftTrackOctave(){
-      octaveShifts[selectedTrack] = parseInt(document.getElementById('octaveshift').value*-1);
+      octaveShifts[selectedTrack] = parseInt(document.getElementById('octaveshift').value);
       semitoneShifts[selectedTrack] = parseInt(document.getElementById('semitoneshift').value);
       level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack];
       softRefresh();
@@ -1128,20 +1127,19 @@ function triggerInstrChange(selectedInstrument){
 function updateOutOfBoundsNoteCounts(){
       var nasText = document.getElementById('NASText');
       var nbsText = document.getElementById('NBSText');
-      var denom = midi.noteCount/midi.trks.length;
-      nasText.innerHTML = 'Notes above screen: ' + notesAboveScreen[selectedTrack];
-      // console.log('Math.floor(255*'+notesAboveScreen[selectedTrack]+'/'+denom+')');
-      var red = Math.floor(255*notesAboveScreen[selectedTrack]/denom);
-      var green = 255-Math.floor(510*notesAboveScreen[selectedTrack]/denom);
-      if(red > 255){red = 255;}
-      if(green < 0){green = 0;}
-      nasText.style.color = 'rgb('+red+','+green+',0)';
-      nbsText.innerHTML = 'Notes below screen: ' + notesBelowScreen[selectedTrack];
-      red = Math.floor(255*notesBelowScreen[selectedTrack]/denom);
-      green = 255-Math.floor(510*notesBelowScreen[selectedTrack]/denom);
-      if(red > 255){red = 255;}
-      if(green < 0){green = 0;}
-      nbsText.style.color = 'rgb('+red+','+green+',0)';
+      var denom = midi.trks[selectedTrack].notes.length;
+      var nasPercent = Math.round(notesAboveScreen[selectedTrack]*100/denom);
+      nasText.innerHTML = 'Notes above screen: ' + nasPercent +'%';
+      if(nasPercent == 0) nasText.style.color = 'lime';
+      else if(nasPercent <= 15) nasText.style.color = 'limegreen';
+      else if(nasPercent <= 30) nasText.style.color = 'orange';
+      else nasText.style.color = 'red';
+      var nbsPercent = Math.round(notesBelowScreen[selectedTrack]*100/denom);
+      nbsText.innerHTML = 'Notes below screen: ' + nbsPercent +'%';
+      if(nbsPercent == 0) nbsText.style.color = 'lime';
+      else if(nbsPercent <= 15) nbsText.style.color = 'limegreen';
+      else if(nbsPercent <= 30) nbsText.style.color = 'orange';
+      else nbsText.style.color = 'red';
 }
 
 function getInstrumentById(name){ // Not the fastest solution, but it's convenient
@@ -1229,8 +1227,7 @@ function handleDiscordPress(){
             btn.disabled = true;
             btn.style.animation = 'discorddisappear 0.5s';
             btn.style.animationFillMode = 'both';
-            smoothScrollTo(900,10);
-            //window.open('https://google.com'); // TODO: Replace with Discord invite link
+            //window.open('https://discord.gg/KhmXzfp'); // TODO: Enable
       }, 600);
       /*setTimeout(function(){
             btn.style.animationPlayState = 'running';
@@ -1315,7 +1312,7 @@ function getViewOctaveShift(trkID){
 function shiftTrackIntoView(){
       var shift = getViewOctaveShift(selectedTrack);
       octaveShifts[selectedTrack] = shift;
-      document.getElementById('octaveshift').value = shift*-1;
+      document.getElementById('octaveshift').value = shift;
       level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack];
       softRefresh();
 }
