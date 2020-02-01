@@ -8,24 +8,28 @@
  1. Separate percussion tracks into different instruments
  2. Make minimap larger and/or more usable for Hermit
  
- 1.3.1:
- - Get rid of level grid system for speed
- - Pre-rendered audio
- - Full level playback
- - Example MIDI
- - A tutorial
+1.3.1 (By Feb 14th):
+- Get rid of level grid system for speed
+- Pre-rendered audio
+- Full level playback
+- Example MIDI
+- Animation during playback
+- Better percussion splitting
+- A tutorial
 
-1.4 and After:
+1.4:
+ - Animated entities with physics simulation
+ - Partition system where different settings can apply
+ - Toolbar for display tools
+ - Manual note editing
  - CSS loading animation
- - Spatial Management
- - Track-Channel Management
+ - Spatial Management, com_poser tricks, maybe autoscroll tracks
+ - Warning system
+ - Theme, style, day/night indicators
  - Highlight enemies that don't have much room, maybe overlay exclamation point [New UI]
- - Better error messages to alleviate confusion and allow for better debugging
- - Playback line optionally drags the scrollbar with it (maybe a play all button)
  - A small info button that shows how to use everything and shows patch notes [New UI]
  - Handle dynamic tempo changes [New UI]
  - x-offset number input or other way to nudge x-offset [New UI]
- - Music levels on tracks: Loup's Algorithms, then Ren's once acceleration is known
  - Start music playback from anywhere in the blueprint
 */
 
@@ -562,10 +566,10 @@ function drawLevel(redrawMini,noDOM){
                   //var ijoccupants = level.getTileOccupants(i-27,j);
                   if(ijtile == 1 && redrawMini){
                         if(level.isTrackOccupant[i-27][j][selectedTrack]){
-                              miniPlot((i-27)/2,j/2,'mediumturquoise');
+                              miniPlot(Math.round((i-27)/2),Math.round(j/2),'mediumturquoise');
                         }
                         else{
-                              miniPlot((i-27)/2,j/2);
+                              miniPlot(Math.round((i-27)/2),Math.round(j/2));
                         }
                   }
                   /*if(!noDOM){
@@ -1084,6 +1088,13 @@ function changeInstrument(trk, ins, newIns){
 }
 
 function updateInstrumentContainer(){
+      if(midi.trks[selectedTrack].hasPercussion){
+            document.getElementById('instrumentcontainer').style.display = 'none';
+            return;
+      }
+      else{
+            document.getElementById('instrumentcontainer').style.display = '';
+      }
       var container = document.getElementById('instrumentcontainer');
       container.innerHTML = '';
       var targetOctave = -octaveShifts[selectedTrack];
@@ -1221,6 +1232,7 @@ function sepInsFromTrk(trk){ // Create new
       for(i=0;i<trk.usedInstruments.length;i++){
             newTrks[i] = new MIDItrack();
             newTrks[i].usedInstruments = [trk.usedInstruments[i]];
+            newTrks[i].hasPercussion = trk.hasPercussion; // TODO: Imperfect conversion
       }
       var j;
       for(i=0;i<trk.notes.length;i++){
@@ -1232,7 +1244,13 @@ function sepInsFromTrk(trk){ // Create new
             }
       }
       for(i=0;i<newTrks.length;i++){
-            var labl = getInstrumentLabel(newTrks[i].usedInstruments[0]);
+            var labl;
+            if(newTrks[i].hasPercussion){
+                  labl = 'Percussion';
+            }
+            else{
+                  labl = getInstrumentLabel(newTrks[i].usedInstruments[0]);
+            }
             newTrks[i].label = labl+' '+midi.getLabelNumber(labl);
             addTrack(newTrks[i]);
       }

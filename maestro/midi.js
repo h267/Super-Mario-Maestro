@@ -108,7 +108,7 @@ class MIDIfile{
                   }
             }
             this.blocksPerBeat = bestBPB;
-            //console.log(this);
+            console.log(this);
             //console.log(this.noteCount+' notes');
             //console.log('MIDI data loaded in '+((new Date).getTime() - t0)+' ms');
       }
@@ -242,14 +242,21 @@ class MIDIfile{
             }
             else{
                   switch(eventType){
-                        case 0x9: // TODO: Used instruments for percussion
+                        case 0x9:
                               if(!rs){data.push(this.fetchBytes(1));}
                               data.push(this.fetchBytes(1));
-                              var note = new Note(trackDuration,data[0],data[1],currentInstrument[channel],channel);
-                              this.trks[tpos].notes.push(note);
-                              if(notInArr(this.trks[tpos].usedInstruments,currentInstrument[channel])){this.trks[tpos].usedInstruments.push(currentInstrument[channel]);}
+                              var ins;
                               if(channel == 9){
                                     this.trks[tpos].hasPercussion = true;
+                                    ins = data[0];
+                              }
+                              else{
+                                    ins = currentInstrument[channel];
+                              }
+                              var note = new Note(trackDuration,data[0],data[1],ins,channel);
+                              this.trks[tpos].notes.push(note);
+                              if(notInArr(this.trks[tpos].usedInstruments,ins)){
+                                    this.trks[tpos].usedInstruments.push(ins);
                               }
                               break;
                         case 0xC:
@@ -462,10 +469,10 @@ function getInstrumentLabel(program){ // Return a label name for the track based
       if(program>=73 && program<=80){return 'Dry Bones Shell';} // Pipe
       if(program>=81 && program<=88){return 'Mushroom';} // Synth Lead
       if(program>=89 && program<=96){return 'Rotten Mushroom';} // Synth Pad
-      if(program>=97 && program<=104){return 'Green No-Shell Koopa';} // Synth Effects
+      if(program>=97 && program<=104){return 'Green Beach Koopa';} // Synth Effects
       if(program>=105 && program<=112){return 'Monty Mole';} // Ethnic
       if(program>=113 && program<=120){return 'P-Switch';} // Percussive
-      if(program>=121 && program<=128){return 'Red No-Shell Koopa';} // Sound Effects
+      if(program>=121 && program<=128){return 'Red Beach Koopa';} // Sound Effects
       
       return 'Unintentional Goomba'; // You should not see this in regular use
 }
