@@ -5,22 +5,18 @@
 
 /* TODO: New features:
 1.3:
- 1. Put the instruments in alphabetical order
- 2. A group of recommended instruments at the top of the dropdown
- 3. Separate percussion tracks into different instruments
- 4. Make minimap larger and/or more usable for Hermit
- {}. Re-enable Discord link, erase unecessary console logs
+ 1. Separate percussion tracks into different instruments
+ 2. Make minimap larger and/or more usable for Hermit
  
  1.3.1:
  - Get rid of level grid system for speed
  - Pre-rendered audio
  - Full level playback
- - CSS loading animation
- - Faster loading on track selection
  - Example MIDI
  - A tutorial
 
 1.4 and After:
+ - CSS loading animation
  - Spatial Management
  - Track-Channel Management
  - Highlight enemies that don't have much room, maybe overlay exclamation point [New UI]
@@ -113,7 +109,7 @@ var instruments = [
       {id: 'sword', name: 'Master Sword (Synth Horn)', octave: 0, isPowerup: false},/*
       {id: 'toad', name: 'Toad (Suffering)', octave: 0, isPowerup: false},*/ // If you uncomment this, only pain and suffering awaits
 ];
-var alphabetizedInstruments = alphabetizeById(instruments);
+var alphabetizedInstruments = alphabetizeInstruments(instruments);
 var tiles;
 var bgs;
 var speed = 10;
@@ -153,6 +149,8 @@ var acceptableBPBs = null;
 var reccBPB;
 var lastBPB;
 var outlineLayers;
+var numRecommendedInstruments = 0;
+var entityOverflowStatus = {entity: false, powerup: false};
 
 // Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
@@ -297,7 +295,7 @@ function loadFile(){ // Load file from the file input element
 }
 
 function placeNoteBlocks(limitedUpdate, reccTempo){
-      console.log('rebuilding level');
+      //console.log('rebuilding level');
       var t0 = (new Date).getTime();
       var i;
       var j;
@@ -438,9 +436,6 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
             bpm = recommendTempo(songBPM,blocksPerBeat,true);
             haveTempo = true;
       }
-      if(!limitedUpdate){
-            updateInstrumentContainer();
-      }
       //console.log(blocksPerBeat+' bpqn chosen');
       if(!haveTempo && reccTempo){ // Use default tempo if none was found
             refreshTempos(blocksPerBeat);
@@ -455,7 +450,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
       else{
             softRefresh();
       }
-      console.log('Completed in '+((new Date).getTime()-t0)+' ms');
+      //console.log('Completed in '+((new Date).getTime()-t0)+' ms');
 }
 
 function drawBG(){
@@ -651,6 +646,10 @@ function drawLevel(redrawMini,noDOM){
             drawScrubber(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
       }
       if(fileLoaded){canvasLayers[dlayer.outlineLayer].ctx.drawImage(outlineLayers[selectedTrack].canvas,0,0,canvas.width,canvas.height);}
+      if(!noDOM && fileLoaded && (!(entityOverflowStatus.entity == entityCount > 100) || !(entityOverflowStatus.powerup == powerupCount > 100))){
+            updateInstrumentContainer();
+      }
+      entityOverflowStatus = {entity: entityCount > 100, powerup: powerupCount > 100};
       refreshCanvas();
       if(fileLoaded){refreshMini();}
 }
@@ -1030,6 +1029,7 @@ function shiftTrackOctave(){
       semitoneShifts[selectedTrack] = parseInt(document.getElementById('semitoneshift').value);
       level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack];
       softRefresh();
+      updateInstrumentContainer();
 }
 
 function selectTrack(trkID){
@@ -1071,7 +1071,7 @@ function selectTrack(trkID){
             }
       }
       //if(!isNewFile){refreshOutlines();}
-      softRefresh(true);
+      softRefresh(false);
       updateInstrumentContainer();
 }
 
@@ -1086,6 +1086,7 @@ function changeInstrument(trk, ins, newIns){
 function updateInstrumentContainer(){
       var container = document.getElementById('instrumentcontainer');
       container.innerHTML = '';
+      var targetOctave = -octaveShifts[selectedTrack];
       var i;
       for(i=0;i<midi.trks[selectedTrack].usedInstruments.length;i++){
             var div = document.createElement('div');
@@ -1095,33 +1096,71 @@ function updateInstrumentContainer(){
             picker.id = 'inspicker'+i;
             picker.setAttribute('onchange','triggerInstrChange('+i+');');
             picker.setAttribute('class','dropdown');
+            var isPowerupOverflow = entityCount > 100;
+            var isEntityOverflow = powerupCount > 100;
+            var hasOctaveRec = false;
+            var hasEntityRec = false;
+            var recOctGroup = document.createElement('optgroup');
+            recOctGroup.setAttribute('label','Recommended: Complementary Octave');
+            var recEntGroup = document.createElement('optgroup');
+            if(isEntityOverflow && !isPowerupOverflow){recEntGroup.setAttribute('label','Recommended - General Entities');}
+            else if(isPowerupOverflow && !isEntityOverflow){recEntGroup.setAttribute('label','Recommended - Powerups');}
+            var allGroup = document.createElement('optgroup');
+            allGroup.setAttribute('label','All Instruments');
+            numRecommendedInstruments = 0;
             var j;
-            for(j=0;j<instruments.length;j++){
+            for(j=0;j<alphabetizedInstruments.length;j++){
                   var opt = document.createElement('option');
-                  opt.value = j+2;
-                  opt.innerHTML = instruments[j].name + ' (';
-                  if(instruments[j].octave >= 0){
-                        opt.innerHTML += '+' + instruments[j].octave + ' 8va)';
+                  opt.value = j;
+                  opt.innerHTML = alphabetizedInstruments[j].name + ' (';
+                  if(alphabetizedInstruments[j].octave >= 0){
+                        opt.innerHTML += '+' + alphabetizedInstruments[j].octave + ' 8va)';
                   } else {
-                        opt.innerHTML += '' + instruments[j].octave + ' 8vb)';
+                        opt.innerHTML += '' + alphabetizedInstruments[j].octave + ' 8vb)';
                   }
-                  picker.appendChild(opt);
+                  if(alphabetizedInstruments[j].octave == targetOctave){
+                        var optClone = opt.cloneNode(true);
+                        recOctGroup.appendChild(optClone);
+                        numRecommendedInstruments++;
+                        hasOctaveRec = true;
+                  }
+                  if(isEntityOverflow && !isPowerupOverflow){
+                        if(!alphabetizedInstruments[j].isPowerup){
+                              var optClone = opt.cloneNode(true);
+                              recEntGroup.appendChild(optClone);
+                              numRecommendedInstruments++;
+                              hasEntityRec = true;
+                        }
+                  }
+                  else if(isPowerupOverflow && !isEntityOverflow){
+                        if(alphabetizedInstruments[j].isPowerup){
+                              var optClone = opt.cloneNode(true);
+                              recEntGroup.appendChild(optClone);
+                              numRecommendedInstruments++;
+                              hasEntityRec = true;
+                        }
+                  }
+                  allGroup.appendChild(opt);
             }
-            picker.selectedIndex = instrumentChanges[selectedTrack][i];
             var labl = document.createElement('label');
             labl.id = 'inspickerlabl'+i;
             labl.for = 'inspicker'+i;
             labl.innerHTML = getMidiInstrumentName(midi.trks[selectedTrack].usedInstruments[i])+' ➞ ';
             div.appendChild(labl);
             div.appendChild(picker);
+            if(hasOctaveRec){picker.appendChild(recOctGroup);}
+            if(hasEntityRec){picker.appendChild(recEntGroup);}
+            picker.appendChild(allGroup);
+            picker.selectedIndex = getUnsortedInstrumentIndex(instrumentChanges[selectedTrack][i]) + numRecommendedInstruments;
             container.appendChild(div);
             updateOutOfBoundsNoteCounts();
       }
 }
 
 function triggerInstrChange(selectedInstrument){
-      changeInstrument(selectedTrack,getMM2Instrument(midi.trks[selectedTrack].usedInstruments[selectedInstrument]),document.getElementById('inspicker'+selectedInstrument).selectedIndex+2);
-      instrumentChanges[selectedTrack][selectedInstrument] = document.getElementById('inspicker'+selectedInstrument).selectedIndex;
+      var selectedInsIndex = alphabetizedInstruments[document.getElementById('inspicker'+selectedInstrument).value].pos;
+      changeInstrument(selectedTrack,getMM2Instrument(midi.trks[selectedTrack].usedInstruments[selectedInstrument]),selectedInsIndex+2);
+      instrumentChanges[selectedTrack][selectedInstrument] = selectedInsIndex;
 }
 
 function updateOutOfBoundsNoteCounts(){
@@ -1148,7 +1187,7 @@ function getInstrumentById(name){ // Not the fastest solution, but it's convenie
       }
 }
 
-function getPercussionInstrument(pitch){ // TODO: More/better suggstions
+function getPercussionInstrument(pitch){
       pitch++;
       switch(pitch){
             case 35: return getInstrumentById('pow'); break;
@@ -1227,7 +1266,7 @@ function handleDiscordPress(){
             btn.disabled = true;
             btn.style.animation = 'discorddisappear 0.5s';
             btn.style.animationFillMode = 'both';
-            //window.open('https://discord.gg/KhmXzfp'); // TODO: Enable
+            window.open('https://discord.gg/KhmXzfp');
       }, 600);
       /*setTimeout(function(){
             btn.style.animationPlayState = 'running';
@@ -1315,6 +1354,7 @@ function shiftTrackIntoView(){
       document.getElementById('octaveshift').value = shift;
       level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack];
       softRefresh();
+      updateInstrumentContainer();
 }
 
 function refreshOutlines(){
@@ -1323,6 +1363,21 @@ function refreshOutlines(){
       refreshCanvas();
 }
 
-function alphabetizeById(arr){ // TODO: Sort names and store as a separate array of labels and pointers to the corresponding location in the other array
+function alphabetizeInstruments(arr){
+      var newArr = new Array(arr.length);
+      for(var i=0;i<arr.length;i++){
+            newArr[i] = { id: arr[i].id, name: arr[i].name, octave: arr[i].octave, pos: i, isPowerup: arr[i].isPowerup };
+      }
+      newArr.sort(function(a,b){
+            if(a.id > b.id){return 1;}
+            else{return -1;}
+      });
+      return newArr;
+}
 
+function getUnsortedInstrumentIndex(sortedIndex){
+      var i;
+      for(i=0;i<alphabetizedInstruments.length;i++){
+            if(sortedIndex == alphabetizedInstruments[i].pos){return i;}
+      }
 }

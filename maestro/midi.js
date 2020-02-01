@@ -108,9 +108,9 @@ class MIDIfile{
                   }
             }
             this.blocksPerBeat = bestBPB;
-            console.log(this);
+            //console.log(this);
             //console.log(this.noteCount+' notes');
-            console.log('MIDI data loaded in '+((new Date).getTime() - t0)+' ms');
+            //console.log('MIDI data loaded in '+((new Date).getTime() - t0)+' ms');
       }
       parseHeader(){
             if(this.parseString(4) == 'MThd'){/*console.log('MThd');*/}
@@ -248,7 +248,9 @@ class MIDIfile{
                               var note = new Note(trackDuration,data[0],data[1],currentInstrument[channel],channel);
                               this.trks[tpos].notes.push(note);
                               if(notInArr(this.trks[tpos].usedInstruments,currentInstrument[channel])){this.trks[tpos].usedInstruments.push(currentInstrument[channel]);}
-                              if(channel == 9){this.trks[tpos].hasPercussion = true;}
+                              if(channel == 9){
+                                    this.trks[tpos].hasPercussion = true;
+                              }
                               break;
                         case 0xC:
                               if(!rs){data.push(this.fetchBytes(1));}
