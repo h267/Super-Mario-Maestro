@@ -1,14 +1,12 @@
 // Super Mario Maestro v1.3
 // made by h267
 
-// FIXME: None yet
+// FIXME: scrubber visual bug on file change
 
 /* TODO: New features:
-1.3:
- 1. Separate percussion tracks into different instruments
- 2. Make minimap larger and/or more usable for Hermit
- 
+
 1.3.1 (By Feb 14th):
+- Dynamic zoom toggle
 - Get rid of level grid system for speed
 - Pre-rendered audio
 - Full level playback
@@ -155,6 +153,8 @@ var lastBPB;
 var outlineLayers;
 var numRecommendedInstruments = 0;
 var entityOverflowStatus = {entity: false, powerup: false};
+var noteRange = 0;
+var defaultZoom = 1;
 
 // Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
@@ -247,7 +247,7 @@ function loadFile(){ // Load file from the file input element
             resetOffsets();
             if(fileLoaded){
                   miniClear();
-                  drawScrubber(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
+                  drawScrubber(ofsX,ofsY+27,canvas.width/16-27,canvas.height/16);
                   refreshMini();
             }
             document.getElementById('trkcontainer').innerHTML = '';
@@ -278,15 +278,22 @@ function loadFile(){ // Load file from the file input element
             acceptableBPBs = generateAcceptableBPBs();
             isNewFile = true;
             fileLoaded = true;
+            noteRange = 0;
             for(i=0;i<midi.trks.length;i++){
                   if(midi.trks[i].usedInstruments.length > 1){
                         sepInsFromTrk(midi.trks[i]);
                   }
                   if(midi.trks[i].usedInstruments.length == 0 || midi.trks[i].hasPercussion){continue;}
                   octaveShifts[i] = instruments[getMM2Instrument(midi.trks[i].usedInstruments[0])-2].octave*-1;
+                  if(midi.trks[i].highestNote == null || midi.trks[i].highestNote == null){continue;}
+                  var thisRange = Math.max(Math.abs(64-midi.trks[i].lowestNote),Math.abs(64-midi.trks[i].highestNote));
+                  if(thisRange > noteRange){noteRange = thisRange;}
             }
+            //console.log(noteRange);
             placeNoteBlocks(false, true);
             isNewFile = false;
+            calculateNoteRange();
+            defaultZoom = adjustZoom();
             document.getElementById('yofspicker').disabled = false;
             document.getElementById('bpbpicker').disabled = false;
             document.getElementById('tempotext').innerHTML = 'Original: '+Math.round(songBPM)+' bpm';
@@ -306,7 +313,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
       var x;
       var y;
       var width = Math.ceil((midi.duration/midi.timing)*blocksPerBeat);
-      setMiniWidth(width/2);
+      setMiniWidth(width);
       var height = 128;
       var uspqn = 500000; // Assumed
       var haveTempo = false; // TODO: Get rid of this when adding dynamic tempo
@@ -566,10 +573,10 @@ function drawLevel(redrawMini,noDOM){
                   //var ijoccupants = level.getTileOccupants(i-27,j);
                   if(ijtile == 1 && redrawMini){
                         if(level.isTrackOccupant[i-27][j][selectedTrack]){
-                              miniPlot(Math.round((i-27)/2),Math.round(j/2),'mediumturquoise');
+                              miniPlot(i-27,j,'mediumaquamarine');
                         }
                         else{
-                              miniPlot(Math.round((i-27)/2),Math.round(j/2));
+                              miniPlot(i-27,j);
                         }
                   }
                   /*if(!noDOM){
@@ -647,7 +654,7 @@ function drawLevel(redrawMini,noDOM){
       }
       if(fileLoaded){
             miniClear(1);
-            drawScrubber(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
+            drawScrubber(ofsX,ofsY+27,canvas.width/16-27,canvas.height/16);
       }
       if(fileLoaded){canvasLayers[dlayer.outlineLayer].ctx.drawImage(outlineLayers[selectedTrack].canvas,0,0,canvas.width,canvas.height);}
       if(!noDOM && fileLoaded && (!(entityOverflowStatus.entity == entityCount > 100) || !(entityOverflowStatus.powerup == powerupCount > 100))){
@@ -665,7 +672,7 @@ function moveOffsetTo(ox,oy){ // Offsets are given as percentages of the level
             ofsX = Math.floor(ox*width);
             //console.log(ox+' -> '+ofsX);
       }
-      var limX = (minimap.width-((canvas.width/32)-(27/2)))*2+(blocksPerBeat*bbar);
+      var limX = (minimap.width-(canvas.width/16-27))+(blocksPerBeat*bbar);
       if(ofsX>limX){ofsX = limX;}
       if(ofsX<0){ofsX=0;}
       ofsX = Math.floor(ofsX/(blocksPerBeat*bbar))*blocksPerBeat*bbar; // Quantize to the nearest measure
@@ -902,10 +909,10 @@ function changeBPB(moveOfs){
       if(moveOfs && !isNewFile){
             enableMouse();
             stopAudio();
-            var ratio = (ofsX/2)/minimap.width;
+            var ratio = (ofsX*minimapZoomX)/minimap.width;
             moveOffsetTo(ratio,null);
             miniClear(1);
-            drawScrubber(ofsX/2,(ofsY/2)+(27/2),(canvas.width/32)-(27/2),canvas.height/32);
+            drawScrubber(ofsX,ofsY+27,canvas.width/16-27,canvas.height/16);
             hardRefresh(true, true);
       }
 }
@@ -1032,6 +1039,8 @@ function shiftTrackOctave(){
       octaveShifts[selectedTrack] = parseInt(document.getElementById('octaveshift').value);
       semitoneShifts[selectedTrack] = parseInt(document.getElementById('semitoneshift').value);
       level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack];
+      calculateNoteRange();
+      adjustZoom();
       softRefresh();
       updateInstrumentContainer();
 }
@@ -1371,6 +1380,8 @@ function shiftTrackIntoView(){
       octaveShifts[selectedTrack] = shift;
       document.getElementById('octaveshift').value = shift;
       level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack];
+      calculateNoteRange();
+      adjustZoom();
       softRefresh();
       updateInstrumentContainer();
 }
@@ -1397,5 +1408,24 @@ function getUnsortedInstrumentIndex(sortedIndex){
       var i;
       for(i=0;i<alphabetizedInstruments.length;i++){
             if(sortedIndex == alphabetizedInstruments[i].pos){return i;}
+      }
+}
+
+function adjustZoom(){
+      var range = noteRange;
+      if(range < 18){range = 18;}
+      var lowerBound = 64-range;
+      var zoom = -32/(lowerBound-64);
+      setMiniZoomY(zoom);
+      //console.log('zoom set to '+zoom);
+      return zoom;
+}
+
+function calculateNoteRange(){
+      noteRange = 0;
+      for(var i=0;i<midi.trks.length;i++){
+            if(midi.trks[i].lowestNote == null || midi.trks[i].highestNote == null || !level.areas[i].isVisible){continue;}
+            var thisRange = Math.max(Math.abs(64-(midi.trks[i].lowestNote+level.areas[i].ofsY)),Math.abs(64-(midi.trks[i].highestNote+level.areas[i].ofsY)));
+            if(thisRange > noteRange){noteRange = thisRange;}
       }
 }

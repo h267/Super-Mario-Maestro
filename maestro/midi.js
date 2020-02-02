@@ -108,7 +108,7 @@ class MIDIfile{
                   }
             }
             this.blocksPerBeat = bestBPB;
-            console.log(this);
+            //console.log(this);
             //console.log(this.noteCount+' notes');
             //console.log('MIDI data loaded in '+((new Date).getTime() - t0)+' ms');
       }
@@ -254,6 +254,8 @@ class MIDIfile{
                                     ins = currentInstrument[channel];
                               }
                               var note = new Note(trackDuration,data[0],data[1],ins,channel);
+                              if(data[0] < this.trks[tpos].lowestNote && !this.trks[tpos].hasPercussion || this.trks[tpos].lowestNote == null){this.trks[tpos].lowestNote = data[0];}
+                              if(data[0] > this.trks[tpos].highestNote && !this.trks[tpos].hasPercussion){this.trks[tpos].highestNote = data[0];}
                               this.trks[tpos].notes.push(note);
                               if(notInArr(this.trks[tpos].usedInstruments,ins)){
                                     this.trks[tpos].usedInstruments.push(ins);
@@ -397,6 +399,8 @@ class MIDItrack{
             this.usedInstruments = [];
             this.notes = [];
             this.hasPercussion = false;
+            this.highestNote = null;
+            this.lowestNote = null;
       }
 }
 

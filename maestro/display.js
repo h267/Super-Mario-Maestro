@@ -65,6 +65,10 @@ var mx = 0;
 var my = 0;
 var bgs = null;
 var lastMiniData = null;
+var minimapZoomY = 1;
+var minimapZoomX = 1; // Unused
+var miniPlotSize = 1;
+
 const dlayer = {
       bgLayer: 0,
       noteLayer: 3,
@@ -72,7 +76,6 @@ const dlayer = {
       outlineLayer: 5,
       mouseLayer: 6
 };
-
 const canvasWidth = 3840;
 const canvasHeight = 432;
 const miniHeight = 64;
@@ -97,8 +100,12 @@ function getImg(loc){
 }
 
 function miniPlot(x,y,style){
+      x = Math.round(x*minimapZoomX);
+      y -= 64 - (64/minimapZoomY)/2;
+      y = Math.round(y*minimapZoomY);
       y = minimap.height - y;
-      miniLayers[dlayer.bgLayer].fillRect(x,y,1,1,style);
+      var plotSize = 2;
+      miniLayers[dlayer.bgLayer].fillRect(x,y,plotSize,plotSize,style);
 }
 
 function miniClear(layer){
@@ -115,6 +122,11 @@ function miniClear(layer){
 }
 
 function drawScrubber(x,y,w,h){
+      x = Math.round(x*minimapZoomX);
+      y -= 64 - (64/minimapZoomY)/2;
+      y = Math.round(y*minimapZoomY);
+      w = Math.round(w*minimapZoomX);
+      h = Math.round(h*minimapZoomY);
       y = minimap.height - y;
       miniLayers[1].fillRect(x,y,w,h,'rgba(127,127,255,0.2)');
       miniLayers[1].drawBox(x,y,w,h,1,'rgb(127,127,255)');
@@ -125,7 +137,7 @@ function clearDisplayLayer(layer){
 }
 
 function setMiniWidth(w){
-      minimap.width = w;
+      minimap.width = w*minimapZoomX;
       miniLayers = makeLayers(numMiniLayers,w,miniHeight); // 0: Notes, 1: Scrubber
 }
 
@@ -287,6 +299,10 @@ function refreshMini(){
             if(!miniLayers[i].isVisible){continue;}
             ctxMini.drawImage(miniLayers[i].canvas,0,0,miniLayers[i].width,miniLayers[i].canvas.height);
       }
+}
+
+function setMiniZoomY(zoom){
+      minimapZoomY = zoom;
 }
 
 minimap.onmousedown = function(e){handleMouseDown(e);};
