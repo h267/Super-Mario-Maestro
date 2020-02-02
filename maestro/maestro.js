@@ -1,9 +1,12 @@
-// Super Mario Maestro v1.3
+// Super Mario Maestro v1.3.0.1
 // made by h267
 
-// FIXME: scrubber visual bug on file change
+// FIXME: Mixed track with percussion is read as all percussion
 
 /* TODO: New features:
+
+1.3.0.1:
+- Dynamic zoom toggle
 
 1.3.1 (By Feb 14th):
 - Dynamic zoom toggle
@@ -292,8 +295,6 @@ function loadFile(){ // Load file from the file input element
             //console.log(noteRange);
             placeNoteBlocks(false, true);
             isNewFile = false;
-            calculateNoteRange();
-            defaultZoom = adjustZoom();
             document.getElementById('yofspicker').disabled = false;
             document.getElementById('bpbpicker').disabled = false;
             document.getElementById('tempotext').innerHTML = 'Original: '+Math.round(songBPM)+' bpm';
@@ -455,6 +456,10 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
       }
       haveTempo = true;
       if(!limitedUpdate){selectTrack(-1);}
+      if(isNewFile){
+            calculateNoteRange();
+            defaultZoom = adjustZoom();
+      }
       if(fileLoaded && !isNewFile){
             chkRefresh();
       }
@@ -1014,7 +1019,6 @@ function refreshTempos(){
 function selectTempo(){
       var sel = document.getElementById('temposelect');
       var selected = sel.value;
-      console.log(sel.selectedIndex);
       bpm = tempos[selected].bpm*(4/blocksPerBeat);
 }
 
@@ -1241,16 +1245,27 @@ function sepInsFromTrk(trk){ // Create new
       for(i=0;i<trk.usedInstruments.length;i++){
             newTrks[i] = new MIDItrack();
             newTrks[i].usedInstruments = [trk.usedInstruments[i]];
-            newTrks[i].hasPercussion = trk.hasPercussion; // TODO: Imperfect conversion
       }
       var j;
+      var thisHasPercussion;
+      var thisLowestNote;
+      var thisHighestNote;
       for(i=0;i<trk.notes.length;i++){
+            thisHasPercussion = false;
+            thisHighestNote = null;
+            thisLowestNote = null;
             for(j=0;j<trk.usedInstruments.length;j++){
                   if(trk.notes[i].instrument == trk.usedInstruments[j]){
+                        if(trk.notes[i].channel == 9){thisHasPercussion = true;}
+                        if(trk.notes[i].pitch < thisLowestNote && !thisHasPercussion || thisLowestNote == null){thisLowestNote = trk.notes[i].pitch;}
+                        if(trk.notes[i].pitch > thisHighestNote && !thisHasPercussion){thisHighestNote = trk.notes[i].pitch;}
                         newTrks[j].notes.push(cloneNote(trk.notes[i]));
                         break;
                   }
             }
+            newTrks[j].hasPercussion = thisHasPercussion;
+            newTrks[j].highestNote = thisHighestNote;
+            newTrks[j].lowestNote = thisLowestNote;
       }
       for(i=0;i<newTrks.length;i++){
             var labl;
