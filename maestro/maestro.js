@@ -1,12 +1,7 @@
 // Super Mario Maestro v1.3.0.1
 // made by h267
 
-// FIXME: Mixed track with percussion is read as all percussion
-
 /* TODO: New features:
-
-1.3.0.1:
-- Dynamic zoom toggle
 
 1.3.1 (By Feb 14th):
 - Dynamic zoom toggle
