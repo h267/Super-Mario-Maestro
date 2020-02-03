@@ -143,7 +143,7 @@ var quantizeErrorAggregate = 0;
 var scrollPos = 0;
 var hasVisibleNotes;
 var conflictCount = 0;
-var advancedSettings = false;
+var usingAdvSettings = false;
 var semitoneShifts = [];
 var acceptableBPBs = null;
 var reccBPB;
@@ -293,6 +293,7 @@ function loadFile(){ // Load file from the file input element
             document.getElementById('yofspicker').disabled = false;
             document.getElementById('bpbpicker').disabled = false;
             document.getElementById('tempotext').innerHTML = 'Original: '+Math.round(songBPM)+' bpm';
+            document.getElementById('advbox').checked = usingAdvSettings;
             /*var newTrack = new MIDItrack();
             newTrack.label = 'test'
             newTrack.notes[0] = new Note(0,0,1,0,0);
@@ -721,6 +722,8 @@ function chkRefresh(){
       }
       enableMouse();
       stopAudio();
+      calculateNoteRange();
+      adjustZoom();
       softRefresh();
 }
 
@@ -880,7 +883,7 @@ function pickBPB(){
       if(val < 1){val = 1;}
       if(val > 8){val = 8;}
       blocksPerBeat = val;
-      if(!advancedSettings){filterBPB();}
+      if(!usingAdvSettings){filterBPB();}
       document.getElementById('bpbpicker').value = blocksPerBeat;
       lastBPB = blocksPerBeat;
       changeBPB();
@@ -1058,7 +1061,7 @@ function selectTrack(trkID){
       document.getElementById('octaveshift').value = octaveShifts[selectedTrack];
       document.getElementById('semitoneshift').value = semitoneShifts[selectedTrack];
       document.getElementById('shiftbutton').disabled = (octaveShifts[selectedTrack] == getViewOctaveShift(selectedTrack));
-      if(midi.trks[selectedTrack].hasPercussion || advancedSettings){
+      if(midi.trks[selectedTrack].hasPercussion || usingAdvSettings){
             document.getElementById('semishiftdiv').style.display = 'inline';
       }
       else{
@@ -1320,8 +1323,8 @@ function scrollDisplayTo(pixelsOfs){
 }
 
 function toggleAdvancedMode(){
-      advancedSettings = document.getElementById('advbox').checked;
-      if(midi.trks[selectedTrack].hasPercussion || advancedSettings){
+      usingAdvSettings = document.getElementById('advbox').checked;
+      if(midi.trks[selectedTrack].hasPercussion || usingAdvSettings){
             document.getElementById('semishiftdiv').style.display = 'inline';
       }
       else{
@@ -1337,7 +1340,7 @@ function toggleAdvancedMode(){
             }
             softRefresh();
       }
-      if(!advancedSettings){
+      if(!usingAdvSettings){
             blocksPerBeat = reccBPB;
             document.getElementById('bpbpicker').value = blocksPerBeat;
             lastBPB = blocksPerBeat;
