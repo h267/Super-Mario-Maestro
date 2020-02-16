@@ -3,10 +3,12 @@ var pos = 0;
 var len = 0;
 var notes = [];
 var framesPerColumn = 0;
+var isPlaying = false;
 
-// Load all of the instruments in a very neat and concise way
-// (Why does it have to be this way Tone.js)
-// TODO: Come back to this please
+const restrictPitchRange = true; // Hi Hermit
+
+// TODO: Rewrite this and use Tone.offline
+
 // The octave of each instrument is listed as the same so the playback will match in-game playback
 // (some instruments sound lower than others at the same y value)
 var goomba = new Tone.Sampler({'F3': './wav/goomba.wav'},function(){
@@ -241,20 +243,20 @@ Tone.Transport.PPQ = 2520;
 
 function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY,playConflicts){
       if(playConflicts == undefined){playConflicts = true;}
+      playConflicts = false;
       stopAudio();
       framesPerColumn = 1/(blocksPerBeat*bpm/3600);
       var i;
       var j;
-      for(i=ofsX;i<ofsX+240-27;i++){
+      /*for(i=marginWidth;i<levelWidth;i++){
       //for(i=ofsX;i<i<level.width;i++){
-            if(i>=level.width){break;} // Plays extra music otherwise. Probably should come back to this
+            if(i>=levelWidth){break;} // Plays extra music otherwise. Probably should come back to this
             notes.push([]);
-            for(j=ofsY+1;j<ofsY+27;j++){
+            for(j=0;j<levelHeight;j++){
             //for(j=0;j<level.height;j++){
-                  if(j>=level.height || j<0){continue;}
                   if(!playConflicts){
                         if(level.checkTile(i,j) == 1){
-                              addNote((j-ofsY)+47,level.checkTile(i,j+1)-2);
+                              addNote(j+ofsY,level.checkTile(i,j+1)-2);
                         }
                   }
                   else{
@@ -267,14 +269,31 @@ function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY,playConflicts){
                   }
             }
             advanceSchTime(2520/blocksPerBeat);
-      }
+      }*/
       //console.log(notes);
+      notes = new Array(levelWidth-marginWidth+1);
+      for(i=0;i<levelWidth;i++){
+            notes[i] = [];
+      }
+      for(i=0;i<level.noteGroups.length;i++){
+            if(!level.noteGroups[i].isVisible) continue;
+            for(j=0;j<level.noteGroups[i].notes.length;j++){
+                  var thisNote = level.noteGroups[i].notes[j];
+                  var yPos = thisNote.pitch + level.noteGroups[i].ofsY;
+                  if((yPos < ofsY || yPos >= ofsY+levelHeight-1) && restrictPitchRange) continue;
+                  notes[thisNote.x - ofsX].push({note: yPos - (ofsY - baseOfsY), instrument: getMM2Instrument(thisNote.instrument)-2});
+            }
+      }
+      while(pos < levelWidth-marginWidth+1){
+            advanceSchTime(2520/blocksPerBeat);
+      }
       playAudio(bpm);
 }
 
 function playAudio(bpm){
       if(bpm==undefined){bpm=120;}
       pos = 0;
+      isPlaying = true;
       Tone.Transport.bpm.value = Math.round(bpm);
       //console.log(Tone.Transport.bpm.value+' bpm used');
       Tone.Transport.start('+1');
@@ -283,6 +302,7 @@ function playAudio(bpm){
 function stopAudio(){
       Tone.Transport.stop();
       Tone.Transport.cancel();
+      isPlaying = false;
       schTime = 0;
       pos = 0;
       notes = [];
@@ -318,10 +338,9 @@ function advanceSchTime(delta){
             scrollDisplayTo(pos*16);
             refreshCanvas();
             if(curNotes != undefined){playNotes(curNotes);} // Prevent weird crash
-            if(pos >= Math.min(239-27,level.width)-1){
+            if(pos >= /*Math.min(239-27,level.width)-1*/levelWidth-marginWidth){
                   resetPlayback();
             }
-            //console.log(time);
             pos++;
       }, Math.round(schTime).toString()+'i');
       /*Tone.Draw.schedule(function(time){

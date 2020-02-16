@@ -1,11 +1,12 @@
-// Super Mario Maestro v1.3.0.1
+// Super Mario Maestro v1.3.0.3
 // made by h267
+
+// FIXME: Bug: Percussion turns to all springs when global x or y offsets are changed or when bpb is changed
 
 /* TODO: New features:
 
-1.3.1 (By Feb 14th):
-- Dynamic zoom toggle
-- Get rid of level grid system for speed
+1.3.1:
+- Dynamic zoom toggle?
 - Pre-rendered audio
 - Full level playback
 - Example MIDI
@@ -29,7 +30,12 @@
  - Start music playback from anywhere in the blueprint
 */
 
-var reader = new FileReader;
+const levelWidth = 240;
+const marginWidth = 27;
+const levelHeight = 27;
+const baseOfsY = 48;
+
+var reader = new FileReader();
 var numCommonTempos = 0;
 var midi;
 // blocks per beat: 4
@@ -64,7 +70,7 @@ var tempos = [
 
 var instruments = [
       {id: 'goomba', name: 'Goomba (Grand Piano)', octave: 1, isPowerup: false},
-      {id: 'buzzybeetle', name: 'Shellmet (Detuned Bell)', octave: 1, isPowerup: false},
+      {id: 'buzzybeetle', name: 'Buzzy Shellmet (Detuned Bell)', octave: 1, isPowerup: false},
       {id: '1up', name: '1-Up (Synth Organ)', octave: 0, isPowerup: true},
       {id: 'spiketop', name: 'Spike Top (Harpsichord)', octave: 0, isPowerup: false},
       {id: 'sledgebro', name: 'Sledge Bro (Bass Guitar)', octave: -2, isPowerup: false},
@@ -83,7 +89,7 @@ var instruments = [
       {id: 'shoegoomba', name: 'Shoe Goomba (Low Accordion)', octave: -1, isPowerup: false},
       {id: 'stilettogoomba', name: 'Stiletto Goomba (Accordion)', octave: 0, isPowerup: false},
       {id: 'cannon', name: 'Cannon (Timbales)', octave: 0, isPowerup: false},
-      {id: 'chainchomp', name: 'Unchained Chomp (Synth Piano)', octave: 0, isPowerup: false},
+      {id: 'chainchomp', name: 'Chain Chomp (Unchained) (Synth Piano)', octave: 0, isPowerup: false},
       {id: 'post', name: 'Chain Chomp Post (Wood Block)', octave: 0, isPowerup: false},
       {id: 'coin', name: 'Coin (Sleigh Bells)', octave: 0, isPowerup: false},
       {id: 'firepiranhaplant', name: 'Fire Piranha Plant (Legato Strings)', octave: 0, isPowerup: false},
@@ -115,7 +121,7 @@ var bgs;
 var speed = 10;
 var level = new Level();
 var ofsX = 0;
-var ofsY = 48;
+var ofsY = baseOfsY;
 var bpm = 120;
 var songBPM = 120;
 var fileLoaded = false;
@@ -129,9 +135,6 @@ var displayData = null;
 var bbar = 1;
 var noMouse = false;
 var cursor;
-var limitLine = null;
-var entityCount = 0;
-var powerupCount = 0;
 var isNewFile;
 var noiseThreshold = 0;
 var selectedTrack = 0;
@@ -170,7 +173,7 @@ function loadTiles(){
             Promise.all(
                   [
                   getImg('tiles/ground.png'),
-                  getImg('tiles/note.png'),
+                  getImg('tiles/note-heart.png'),
                   getImg('tiles/goomba.png'),
                   getImg('tiles/shellmet.png'),
                   getImg('tiles/1up.png'),
@@ -236,8 +239,7 @@ function loadFile(){ // Load file from the file input element
       reader.readAsArrayBuffer(document.getElementById('fileinput').files[0]);
 	reader.onload = function(){
             if(fileLoaded){
-                  enableMouse();
-                  stopAudio();
+                  cancelPlayback();
             }
             if(!fileLoaded){showEverything();}
             midi = new MIDIfile(new Uint8Array(reader.result));
@@ -258,7 +260,7 @@ function loadFile(){ // Load file from the file input element
             var i;
             var j;
             for(i=0;i<instrumentChanges.length;i++){
-                  instrumentChanges[i] = new Array();
+                  instrumentChanges[i] = [];
                   for(j=0;j<midi.trks[i].usedInstruments.length;j++){
                         instrumentChanges[i][j] = getMM2Instrument(midi.trks[i].usedInstruments[j])-2;
                   }
@@ -277,10 +279,14 @@ function loadFile(){ // Load file from the file input element
             isNewFile = true;
             fileLoaded = true;
             noteRange = 0;
+            level.noteGroups = [];
+            outlineLayers = new Array(midi.trks.length);
             for(i=0;i<midi.trks.length;i++){
+                  level.addNoteGroup(new PreloadedNoteGroup());
                   if(midi.trks[i].usedInstruments.length > 1){
                         sepInsFromTrk(midi.trks[i]);
                   }
+                  outlineLayers[i] = new DrawLayer(canvas.width, canvas.height);
                   if(midi.trks[i].usedInstruments.length == 0 || midi.trks[i].hasPercussion){continue;}
                   octaveShifts[i] = instruments[getMM2Instrument(midi.trks[i].usedInstruments[0])-2].octave*-1;
                   if(midi.trks[i].highestNote == null || midi.trks[i].highestNote == null){continue;}
@@ -288,7 +294,8 @@ function loadFile(){ // Load file from the file input element
                   if(thisRange > noteRange){noteRange = thisRange;}
             }
             //console.log(noteRange);
-            placeNoteBlocks(false, true);
+            refreshBlocks();
+            updateUI(false, true);
             isNewFile = false;
             document.getElementById('yofspicker').disabled = false;
             document.getElementById('bpbpicker').disabled = false;
@@ -299,27 +306,26 @@ function loadFile(){ // Load file from the file input element
             newTrack.notes[0] = new Note(0,0,1,0,0);
             addTrack(newTrack);*/
             //console.log(midi.noteCount+' notes total');
-      }
+      };
 }
 
-function placeNoteBlocks(limitedUpdate, reccTempo){
+function updateUI(limitedUpdate, reccTempo){
       //console.log('rebuilding level');
-      var t0 = (new Date).getTime();
+      var t0 = (new Date()).getTime();
       var i;
       var j;
       var x;
       var y;
       var width = Math.ceil((midi.duration/midi.timing)*blocksPerBeat);
       setMiniWidth(width);
-      var height = 128;
       var uspqn = 500000; // Assumed
       var haveTempo = false; // TODO: Get rid of this when adding dynamic tempo
-      level = new Level();
       bbar = midi.firstBbar;
       if(!limitedUpdate){
             document.getElementById('trkcontainer').innerHTML = '';
             recommendBPB();
       }
+      if(midi.firstTempo != 0){songBPM = 60000000/midi.firstTempo;}
       for(i=0;i<midi.trks.length;i++){
             // Add checkbox with label for each track
             if(!limitedUpdate){
@@ -371,73 +377,6 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
                         //document.getElementById('trkselect').appendChild(opt);
                   }
             }
-            level.addArea(new Area(width,height));
-            //x = 0;
-            if(midi.firstTempo != 0){songBPM = 60000000/midi.firstTempo;}
-            for(j=0;j<midi.trks[i].events.length;j++){ // This code is still here for if I add dynamic tempo/time signature options
-                  break;
-                  //x+=tempo*midi.tracks[i][j].deltaTime;
-                  //x += (midi.tracks[i][j].deltaTime/midi.timing)*blocksPerBeat;
-                  //console.log('x += '+Math.round((midi.tracks[i][j].deltaTime/midi.timing)*4));
-                  //error += Math.abs(Math.round((midi.tracks[i][j].deltaTime/midi.timing)*4)-((midi.tracks[i][j].deltaTime/midi.timing)*4));
-                  if(midi.tracks[i][j].type == 0xFF51 && !haveTempo){ // Tempo Change
-                        uspqn = midi.tracks[i][j].data[0];
-                        //console.log(midi.tracks[i][j].data[0]+' uspqn');
-                        //console.log((60000000/uspqn)+' bpm');
-                        //setTempoText(Math.round(60000000/uspqn)+' bpm');
-                        songBPM = 60000000/uspqn;
-                        refreshTempos(blocksPerBeat);
-                        bpm = recommendTempo(songBPM,blocksPerBeat,true);
-                        if(!limitedUpdate){recommendBPB();}
-                        haveTempo = true;
-                        //console.log('tempo = '+uspqn+' / '+midi.timing+' = '+uspqn/midi.timing+' microseconds per tick');
-                        //tempo = (uspqn/midi.timing)*bpus[speed];
-                        //console.log(tempo+' blocks per tick');
-                  }
-                  else if(midi.tracks[i][j].type == 0xFF58){ // Time Signature
-                        //console.log('Time Signature');
-                        //console.log(midi.tracks[i][j].data[0]+'/'+Math.pow(2,midi.tracks[i][j].data[1]));
-                        bbar = midi.tracks[i][j].data[0]/Math.pow(2,midi.tracks[i][j].data[1]);
-                        //console.log(midi.tracks[i][j].data[2]+' clocks per beat, '+midi.tracks[i][j].data[3]+' 32nd notes per qn');
-                  }
-                  /*else if(midi.tracks[i][j].type == 12){ // Program Change
-                        //console.log('Program Change: #'+midi.tracks[i][j].data[0]+' on channel '+midi.tracks[i][j].channel);
-                        currentInstrument[midi.tracks[i][j].channel] = midi.tracks[i][j].data[0];
-                  }
-                  else if(midi.tracks[i][j].type == 9&&midi.tracks[i][j].data[1]>0){ // Music Note
-                        if(midi.tracks[i][j].data[1]<=noiseThreshold){continue;} // Skip notes with volume below noise threshold
-                        y = midi.tracks[i][j].data[0];
-                        level.areas[i].setTile(Math.round(x),y,1);
-                        if(y+1<level.height && level.checkTile(Math.round(x),y+1)==null){
-                              level.areas[i].setTile(Math.round(x),y+1,getInstrument(currentInstrument[midi.tracks[i][j].channel]));
-                        }
-
-                        //miniPlot(x/2,y/2);
-                        //drawCircle(x,(y*0.5)+200,1,'black');
-                        //drawTile(tiles[1],Math.round(x)*16,y*16);
-                  }*/
-                  //console.log(advance+' '+tempo+' '+midi.tracks[i][j].deltaTime);
-            }
-            for(j=0;j<midi.trks[i].notes.length;j++){
-                  var note = midi.trks[i].notes[j];
-                  if(note.volume<=noiseThreshold){continue;} // Skip notes with volume below noise threshold
-                  x = (note.time/midi.timing)*blocksPerBeat;
-                  var roundX = Math.round(x);
-                  var instrument = getMM2Instrument(note.instrument);
-                  y = note.pitch+1; // y = note.pitch;
-                  if(note.channel == 9){
-                        instrument = getPercussionInstrument(note.pitch)+2;
-                        note.instrument = getMidiInstrument(instrument);
-                        note.originalInstrument = note.instrument;
-                        y = 54;
-                  }
-                  level.areas[i].setTile(roundX,y,1); // 1 is the ID of a note block tile
-                  if(y+1<level.height && level.checkTile(roundX,y+1)==null){ // Check if there is room for an enemy can be placed on top of a note
-                        level.areas[i].setTile(roundX,y+1,instrument);
-                  }
-            }
-            level.areas[i].ofsY = octaveShifts[i]*12;
-            //console.log('error = '+error);
       }
       if(reccTempo){
             refreshTempos(blocksPerBeat);
@@ -448,7 +387,7 @@ function placeNoteBlocks(limitedUpdate, reccTempo){
       if(!haveTempo && reccTempo){ // Use default tempo if none was found
             refreshTempos(blocksPerBeat);
             bpm = recommendTempo(songBPM,blocksPerBeat,true);
-            if(!limitedUpdate){recommendBPB();} // FIXME: Probably unintentional behavior now
+            if(!limitedUpdate){recommendBPB();} // TODO: Probably unintentional behavior now
       }
       haveTempo = true;
       if(!limitedUpdate){selectTrack(-1);}
@@ -469,7 +408,7 @@ function drawBG(){
       setBG('#00B2EE');
       drawGrid(16);
       var i;
-      for(i=0;i<240;i++){
+      for(i=0;i<levelWidth;i++){
             drawTile(tiles[0],i*16,canvas.height-16,0);
       }
       decorateBG();
@@ -495,12 +434,12 @@ function drawLevel(redrawMini,noDOM){
                   for(j=0;j<midi.trks[i].notes.length;j++){
                         var note = midi.trks[i].notes[j];
                         x = Math.round((note.time/midi.timing)*blocksPerBeat);
-                        if(note.channel!=9){y = note.pitch + 1 + level.areas[i].ofsY;}
+                        if(note.channel!=9){y = note.pitch + 1 + level.noteGroups[i].ofsY;}
                         else{y = 54;}
                         // y = note.pitch - level.areas[i].ofsY
                         if(y <= ofsY){notesBelowScreen[i]++;}
                         else if(y > ofsY+26){notesAboveScreen[i]++;} // Omit the notes on the very top row for now
-                        else if(x >= ofsX && x < ofsX+240){ // Check if notes are visible
+                        else if(x >= ofsX && x < ofsX+levelWidth){ // Check if notes are visible
                               hasVisibleNotes[i] = true;
                         }
                   }
@@ -519,7 +458,6 @@ function drawLevel(redrawMini,noDOM){
       }
       var x;
       var y;
-      if(!noDOM){limitLine = null;}
       if(redrawMini){
             clearDisplayLayer(dlayer.overlayLayer);
             clearDisplayLayer(dlayer.noteLayer);
@@ -527,84 +465,55 @@ function drawLevel(redrawMini,noDOM){
       else{
             //if(fileLoaded){miniClear(0);}
       }
-      if(fileLoaded){
+      if(!isNewFile && fileLoaded){
             clearDisplayLayer(dlayer.outlineLayer);
-            outlineLayers = new Array(midi.trks.length);
-            for(var i=0;i<midi.trks.length;i++){
-                  outlineLayers[i] = new DrawLayer(canvas.width, canvas.height);
+            if(outlineLayers.length != midi.trks.length){
+                  outlineLayers = new Array(midi.trks.length);
+                  for(var i=0;i<midi.trks.length;i++){
+                        outlineLayers[i] = new DrawLayer(canvas.width, canvas.height); 
+                  }
+            }
+            else{
+                  for(i=0;i<midi.trks.length;i++){
+                        if(outlineLayers[i] == undefined){
+                              outlineLayers[i] = new DrawLayer(canvas.width, canvas.height);
+                              continue;
+                        }
+                        if(outlineLayers[i].width != canvas.width || outlineLayers[i].height != canvas.height){
+                              outlineLayers[i] = new DrawLayer(canvas.width, canvas.height);
+                        }
+                        else{
+                              outlineLayers[i].clear();
+                        }
+                  }
             }
       }
       powerupCount = 0;
       entityCount = 0;
-      for(i=27;i<level.width+27;i++){
-            for(j=0;j<level.height;j++){ // This code is very confusing AND very slow // TODO: Why...
-                  if(!redrawMini && i>ofsX+240){break;}
-                  x = ofsX + i - 27;
+      for(i=marginWidth;i<levelWidth;i++){
+            for(j=0;j<27;j++){
+                  x = ofsX + i - marginWidth;
                   y = ofsY + j;
-                  var tile = level.checkTile(x,y); // Tile on the main screen
+                  var tile = level.checkTile(i,j); // Tile on the main screen
+                  var drawY = 27-j-1;
                   if(tile != null && isVisible(x,y,ofsX,ofsY)){
-                        drawTile(tiles[tile],i*16,((27-j)*16));
-                        if(level.numberOfOccupants[x][y] > 1){ // Highlight any overalapping tiles in red
-                              //console.log('h '+x+','+y);
+                        drawTile(tiles[tile],i*16,(drawY*16));
+                        if(level.numberOfOccupants[i][j] > 1){ // Highlight any overalapping tiles in red
                               conflictCount++;
-                              highlightTile(i,27-j,{style: 'rgba(255,0,0,0.4)'});
+                              highlightTile(i,drawY,{style: 'rgba(255,0,0,0.4)'});
                         }
-                        if(tile == 1 && level.isTrackOccupant[x][y][selectedTrack]){ // Outline note blocks of the selected track
-                              outlineTile(i,27-j,2,'rgb(102,205,170)');
-                              //outlineTileOnDrawLayer(outlineLayers[selectedTrack],i,27-j,2,'rgb(102,205,170)'); // TODO: Loop through tracks, make minimap work
-                        }
-                        if(!noDOM){
-                              var occupants = level.getTileOccupants(x,y);
-                              for(k=0;k<occupants.length;k++){
-                                    if(occupants[k] < 2){continue;}
-                                    if(instruments[occupants[k]-2].isPowerup){
-                                          powerupCount++;
-                                    }
-                                    else{
-                                          entityCount++;
-                                    }
-                              }
-                              if((entityCount > 100 || powerupCount > 100) && (limitLine == null || i < limitLine)){
-                                    limitLine = i+1;
-                              }
-                                 
+                        if(tile == 1 && level.isTrackOccupant[i][j][selectedTrack]){ // Outline note blocks of the selected track
+                              outlineTile(i,drawY,2,'rgb(102,205,170)');
                         }
                   }
-                  var ijtile = level.checkTile(i-27,j); // Tile on the minimap
-                  //var ijoccupants = level.getTileOccupants(i-27,j);
-                  if(ijtile == 1 && redrawMini){
-                        if(level.isTrackOccupant[i-27][j][selectedTrack]){
-                              miniPlot(i-27,j,'mediumaquamarine');
-                        }
-                        else{
-                              miniPlot(i-27,j);
-                        }
-                  }
-                  /*if(!noDOM){
-                        if(i<ofsX+240 && i>=ofsX+27 && j<=ofsY+27 && j>ofsY && ijtile >= 2){
-                              var k;
-                              if(ijoccupants.length > 1){console.log(ijoccupants);}
-                              for(k=0;k<ijoccupants.length;k++){
-                                    if(ijoccupants[k] < 2){continue;}
-                                    if(instruments[ijoccupants[k]-2].isPowerup){
-                                          powerupCount++;
-                                    }
-                                    else{
-                                          entityCount++;
-                                    }
-                              }
-                              if((entityCount > 100 || powerupCount > 100) && (limitLine == null || i-ofsX < limitLine)){
-                                    limitLine = i-ofsX;
-                              }
-                        }
-                  }*/
             }
-            if(!redrawMini && i>ofsX+240){break;}
+            if(i>ofsX+levelWidth){break;}
       }
-      if(limitLine != null){drawLimitLine(limitLine);}
+      if(redrawMini){redrawMinimap();}
+      if(level.limitLine != null){drawLimitLine(level.limitLine);}
       if(!noDOM){
-            document.getElementById('ELtext').innerHTML = "Entities in Area: "+entityCount;
-            document.getElementById('PLtext').innerHTML = "Powerups in Area: "+powerupCount;
+            document.getElementById('ELtext').innerHTML = "Entities in Area: "+level.entityCount;
+            document.getElementById('PLtext').innerHTML = "Powerups in Area: "+level.powerupCount;
 
             // console.log(quantizeErrorAggregate / midi.noteCount / blocksPerBeat);
             var qeScore = quantizeErrorAggregate / midi.noteCount / blocksPerBeat;
@@ -633,23 +542,11 @@ function drawLevel(redrawMini,noDOM){
             if(conflictCount > 20){document.getElementById('NCtext').style.color = 'orange';}
             else if(conflictCount > 0){document.getElementById('NCtext').style.color = 'limegreen';}
             else{document.getElementById('NCtext').style.color = 'lime';}
-            /*if(quantizeErrorAggregate / midi.noteCount / blocksPerBeat < 0.05){
-                  if(quantizeErrorAggregate / midi.noteCount / blocksPerBeat == 0){
-                        document.getElementById('QEtext').innerHTML = "Blocks per Beat quality: Perfect";
-                        document.getElementById('QEtext').style.color = 'green';
-                  } else {
-                        document.getElementById('QEtext').innerHTML = "Blocks per Beat quality: OK";
-                        document.getElementById('QEtext').style.color = 'orange';
-                  }
-            } else {
-                  document.getElementById('QEtext').innerHTML = "Blocks per Beat quality: Bad";
-                  document.getElementById('QEtext').style.color = 'red';
-            }*/
 
-            if(entityCount>100){document.getElementById('ELtext').style.color = 'red';}
+            if(level.entityCount>100){document.getElementById('ELtext').style.color = 'red';}
             else{document.getElementById('ELtext').style.color = '';}
 
-            if(powerupCount>100){document.getElementById('PLtext').style.color = 'red';}
+            if(level.powerupCount>100){document.getElementById('PLtext').style.color = 'red';}
             else{document.getElementById('PLtext').style.color = '';}
             updateOutOfBoundsNoteCounts();
       }
@@ -658,10 +555,10 @@ function drawLevel(redrawMini,noDOM){
             drawScrubber(ofsX,ofsY+27,canvas.width/16-27,canvas.height/16);
       }
       if(fileLoaded){canvasLayers[dlayer.outlineLayer].ctx.drawImage(outlineLayers[selectedTrack].canvas,0,0,canvas.width,canvas.height);}
-      if(!noDOM && fileLoaded && (!(entityOverflowStatus.entity == entityCount > 100) || !(entityOverflowStatus.powerup == powerupCount > 100))){
+      if(!noDOM && fileLoaded && (entityOverflowStatus.entity != (level.entityCount > 100)) || (entityOverflowStatus.powerup != (level.powerupCount > 100))){
             updateInstrumentContainer();
       }
-      entityOverflowStatus = {entity: entityCount > 100, powerup: powerupCount > 100};
+      entityOverflowStatus = {entity: level.entityCount > 100, powerup: level.powerupCount > 100};
       refreshCanvas();
       if(fileLoaded){refreshMini();}
 }
@@ -681,20 +578,21 @@ function moveOffsetTo(ox,oy){ // Offsets are given as percentages of the level
       clearDisplayLayer(dlayer.noteLayer);
       clearDisplayLayer(dlayer.overlayLayer);
       clearDisplayLayer(dlayer.outlineLayer);
-      drawLevel(false);
+      refreshBlocks();
+      softRefresh(false,false);
 }
 
 function nudgeY(){
       enableMouse();
-      stopAudio();
+      cancelPlayback();
       var relativeOfs = parseInt(document.getElementById('yofspicker').value)*-1;
       //console.log(relativeOfs+48);
-      moveOffsetTo(null,(relativeOfs+48)/127);
+      moveOffsetTo(null,(relativeOfs+baseOfsY)/127);
 }
 
 function resetOffsets(){
       ofsX = 0;
-      ofsY = 48;
+      ofsY = baseOfsY;
       document.getElementById('yofspicker').value = 0;
 }
 
@@ -718,10 +616,10 @@ function recommendTempo(songBPM,bpb,print){
 function chkRefresh(){
       var i;
       for(i=0;i<midi.trks.length;i++){
-            level.areas[i].setVisibility(document.getElementById('chk'+i).checked);
+            level.noteGroups[i].setVisibility(document.getElementById('chk'+i).checked);
       }
       enableMouse();
-      stopAudio();
+      cancelPlayback();
       calculateNoteRange();
       adjustZoom();
       softRefresh();
@@ -768,7 +666,7 @@ function getMidiInstrument(mm2Instrument){
             case 14: return 105;
             case 15: return 113;
             case 16: return 121;
-            default: return mm2Instrument + 127 - 17
+            default: return mm2Instrument + 127 - 17;
             //case 17: return 128;
             //default: return mm2Instrument + 127 - 16;
       }
@@ -779,20 +677,16 @@ function handleClick(e){
       if(clickedTile!=null){
             clickedTile = null;
             clearDisplayLayer(dlayer.mouseLayer);
-            //drawLevel(false,true);
+            refreshCanvas();
             return;
       }
       var canvasOfs = getOffset(e);
       var div = document.getElementById('displaycontainer');
       var scrollOfs = {x: div.scrollLeft, y: div.scrollTop};
       var offset = {x: canvasOfs.x + scrollOfs.x, y: canvasOfs.y + scrollOfs.y};
-      var tilePos = {x: Math.floor(offset.x/16), y:27-Math.floor(offset.y/16)}
+      var tilePos = {x: Math.floor(offset.x/16), y:27-Math.floor(offset.y/16)};
       var levelPos = {x:tilePos.x + ofsX - 27, y:tilePos.y + ofsY};
-
-      //if(level.checkTile(levelPos.x,levelPos.y) == 1){
-            //console.log('clicked a note!');
-            clickedTile = levelPos;
-      //}
+      clickedTile = levelPos;
 }
 
 function handleMove(e){
@@ -801,7 +695,7 @@ function handleMove(e){
       var div = document.getElementById('displaycontainer');
       var scrollOfs = {x: div.scrollLeft, y: div.scrollTop};
       var offset = {x: canvasOfs.x + scrollOfs.x, y: canvasOfs.y + scrollOfs.y};
-      var tilePos = {x: Math.floor(offset.x/16), y:27-Math.floor(offset.y/16)}
+      var tilePos = {x: Math.floor(offset.x/16), y:27-Math.floor(offset.y/16)};
       var realTpos= tilePos;
       var levelPos = {x:tilePos.x + ofsX - 27, y:tilePos.y + ofsY};
       var refresh = false;
@@ -834,7 +728,7 @@ function handleMove(e){
                   var dirStr = {h: '', v: ''};
                   var k;
                   if(i-levelPos.x > 0){
-                        dirStr.h = 'Right'
+                        dirStr.h = 'Right';
                         for(k=0;k<i-levelPos.x;k++){
                               highlightTile(tilePos.x+k+1,27-tilePos.y,{layer: dlayer.mouseLayer});
                         }
@@ -890,7 +784,6 @@ function pickBPB(){
 }
 
 function changeToRecommendedBPB(){
-      //document.getElementById('bpbrecommend').disabled = true;
       blocksPerBeat = recmdBlocksPerBeat;
       document.getElementById('bpbpicker').value = blocksPerBeat;
       changeBPB();
@@ -898,20 +791,13 @@ function changeToRecommendedBPB(){
 
 function changeBPB(moveOfs){
       if(!fileLoaded){return;}
-      //if(moveOfs == undefined){moveOfs = true;}
       moveOfs = true;
-      /*if(recmdBlocksPerBeat !== blocksPerBeat){
-            document.getElementById('bpbrecommend').disabled = false;
-      } else {
-            document.getElementById('bpbrecommend').disabled = true;
-      }*/
       quantizeErrorAggregate = 0;
       for(var i=0;i<midi.trks.length;i++){
-            if(!level.areas[i] || level.areas[i].isVisible){quantizeErrorAggregate += midi.trks[i].quantizeErrors[blocksPerBeat-1];}
+            if(!level.noteGroups[i] || level.noteGroups[i].isVisible){quantizeErrorAggregate += midi.trks[i].quantizeErrors[blocksPerBeat-1];}
       }
       if(moveOfs && !isNewFile){
-            enableMouse();
-            stopAudio();
+            cancelPlayback();
             var ratio = (ofsX*minimapZoomX)/minimap.width;
             moveOffsetTo(ratio,null);
             miniClear(1);
@@ -922,18 +808,14 @@ function changeBPB(moveOfs){
 
 function playBtn(){
       if(fileLoaded){
-            /*if(noteCount>200){
-                  alert('Too many notes! Try removing tracks to free up space.');
-                  return;
-            }*/
             noMouse = true;
             document.getElementById('playbtn').disabled = true;
             playLvl(level,bpm,blocksPerBeat,ofsX,ofsY);
-            //playLvl(level,songBPM,blocksPerBeat,ofsX,ofsY);
       }
 }
 
-function stopBtn(){
+function cancelPlayback(){
+      if(!isPlaying) return;
       resetPlayback();
       stopAudio();
 }
@@ -941,40 +823,23 @@ function stopBtn(){
 function recommendBPB(){
       var lowestQuantizeError = Infinity;
       var bestBPB = 0;
-      for(var i=0;i<8;i++){ // Iterate to 8 for now
+      for(var i=0;i<8;i++){ // Iterate to 8 for now, maybe double for when semisolid technique becomes a thing
             var total = 0;
             for(var j=0;j<midi.trks.length;j++){
-                  if(!level.areas[j] || level.areas[j].isVisible){total += midi.trks[j].quantizeErrors[i];}
+                  if(!level.noteGroups[j] || level.noteGroups[j].isVisible){total += midi.trks[j].quantizeErrors[i];}
             }
-            // console.log('quantize at ' + (i+1) + 'BPB: ' + total);
             if(total<lowestQuantizeError){
                   lowestQuantizeError = total;
                   bestBPB = i+1;
             }
       }
       var recmd = bestBPB;
-      //var curBPM = bpm;
-      //var diffPercent = Math.abs(curBPM-songBPM)/songBPM;
-      // console.log('S'+bestBPB+': '+diffPercent+' @ '+curBPM);
-      /*while(diffPercent > 0.1){
-            curBPM = recommendTempo(songBPM,recmd,false);
-            diffPercent = Math.abs(curBPM-songBPM)/songBPM;
-            // console.log(recmd+': '+diffPercent+' @ '+curBPM);
-            if(recmd + bestBPB >= 16){break;}
-            recmd += bestBPB;
-      }*.
-      recmdBlocksPerBeat = recmd;
-      /*if(recmdBlocksPerBeat !== blocksPerBeat){
-            var button = document.getElementById('bpbrecommend')
-            button.disabled = "false";
-            button.onclick = function(){document.getElementById('bpbpicker').value = recmdBlocksPerBeat;}
-      }*/
       changeBPB(false);
       return recmd;
 }
 
 function isVisible(x,y,ofsX,ofsY){
-      return (x >= ofsX && x < ofsX+240-27 && y > ofsY && y <= ofsY+27);
+      return (x >= ofsX && x < ofsX+levelWidth-27 && y >= ofsY && y < ofsY+27);
 }
 
 function enableMouse(){
@@ -1018,6 +883,7 @@ function selectTempo(){
       var sel = document.getElementById('temposelect');
       var selected = sel.value;
       bpm = tempos[selected].bpm*(4/blocksPerBeat);
+      cancelPlayback();
 }
 
 function softRefresh(noDOM, redrawMini){ // Refresh changes to track layers
@@ -1029,18 +895,21 @@ function softRefresh(noDOM, redrawMini){ // Refresh changes to track layers
 
 function hardRefresh(reccTempo, limitUpdate){ // Refresh changes to the entire MIDI
       if(limitUpdate == undefined){limitUpdate = true;}
-      placeNoteBlocks(limitUpdate, reccTempo);
+      updateUI(limitUpdate, reccTempo);
+      softRefresh(false,true);
 }
 
 function changeNoiseThreshold(){
       noiseThreshold = document.getElementById('noiseslider').value;
+      refreshBlocks();
       hardRefresh(false);
 }
 
 function shiftTrackOctave(){
+      cancelPlayback();
       octaveShifts[selectedTrack] = parseInt(document.getElementById('octaveshift').value);
       semitoneShifts[selectedTrack] = parseInt(document.getElementById('semitoneshift').value);
-      level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack];
+      level.noteGroups[selectedTrack].ofsY = octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack];
       calculateNoteRange();
       adjustZoom();
       softRefresh();
@@ -1056,7 +925,7 @@ function selectTrack(trkID){
                   if(document.getElementById('chk'+i).style.display != 'none'){break;}
             }
       }
-      if(document.getElementById('chk'+trkID).checked != level.areas[trkID].isVisible && !initSelect){return;} // Check to see if the checkbox is about to update. If yes, return
+      if(document.getElementById('chk'+trkID).checked != level.noteGroups[trkID].isVisible && !initSelect){return;} // Check to see if the checkbox is about to update. If yes, return
       selectedTrack = trkID;
       document.getElementById('octaveshift').value = octaveShifts[selectedTrack];
       document.getElementById('semitoneshift').value = semitoneShifts[selectedTrack];
@@ -1067,8 +936,6 @@ function selectTrack(trkID){
       else{
             document.getElementById('semishiftdiv').style.display = 'none';
       }
-      //console.log(trkID);
-      var i;
       for(i=0;i<midi.trks.length;i++){
             var trkdiv = document.getElementById('item'+i);
             if(i != trkID){
@@ -1095,6 +962,7 @@ function changeInstrument(trk, ins, newIns){
       for(i=0;i<midi.trks[trk].notes.length;i++){
             if(getMM2Instrument(midi.trks[trk].notes[i].originalInstrument) == ins){midi.trks[trk].notes[i].instrument = getMidiInstrument(newIns);}
       }
+      refreshBlocks();
       hardRefresh(false);
 }
 
@@ -1113,13 +981,13 @@ function updateInstrumentContainer(){
       for(i=0;i<midi.trks[selectedTrack].usedInstruments.length;i++){
             var div = document.createElement('div');
             div.id = 'inscontainer'+i;
-            div.style = 'width: max-content;'
+            div.style = 'width: max-content';
             var picker = document.createElement('select');
             picker.id = 'inspicker'+i;
             picker.setAttribute('onchange','triggerInstrChange('+i+');');
             picker.setAttribute('class','dropdown');
-            var isPowerupOverflow = entityCount > 100;
-            var isEntityOverflow = powerupCount > 100;
+            var isPowerupOverflow = level.entityCount > 100;
+            var isEntityOverflow = level.powerupCount > 100;
             var hasOctaveRec = false;
             var hasEntityRec = false;
             var recOctGroup = document.createElement('optgroup');
@@ -1140,15 +1008,16 @@ function updateInstrumentContainer(){
                   } else {
                         opt.innerHTML += '' + alphabetizedInstruments[j].octave + ' 8vb)';
                   }
+                  var optClone;
                   if(alphabetizedInstruments[j].octave == targetOctave){
-                        var optClone = opt.cloneNode(true);
+                        optClone = opt.cloneNode(true);
                         recOctGroup.appendChild(optClone);
                         numRecommendedInstruments++;
                         hasOctaveRec = true;
                   }
                   if(isEntityOverflow && !isPowerupOverflow){
                         if(!alphabetizedInstruments[j].isPowerup){
-                              var optClone = opt.cloneNode(true);
+                              optClone = opt.cloneNode(true);
                               recEntGroup.appendChild(optClone);
                               numRecommendedInstruments++;
                               hasEntityRec = true;
@@ -1156,7 +1025,7 @@ function updateInstrumentContainer(){
                   }
                   else if(isPowerupOverflow && !isEntityOverflow){
                         if(alphabetizedInstruments[j].isPowerup){
-                              var optClone = opt.cloneNode(true);
+                              optClone = opt.cloneNode(true);
                               recEntGroup.appendChild(optClone);
                               numRecommendedInstruments++;
                               hasEntityRec = true;
@@ -1212,27 +1081,27 @@ function getInstrumentById(name){ // Not the fastest solution, but it's convenie
 function getPercussionInstrument(pitch){
       pitch++;
       switch(pitch){
-            case 35: return getInstrumentById('pow'); break;
-            case 36: return getInstrumentById('pow'); break;
-            case 37: return getInstrumentById('pow'); break;
-            case 40: return getInstrumentById('pswitch'); break;
-            case 41: return getInstrumentById('spikeball'); break;
-            case 42: return getInstrumentById('pow'); break;
-            case 43: return getInstrumentById('spikeball'); break;
-            case 44: return getInstrumentById('sidewaysspring'); break;
-            case 45: return getInstrumentById('spikeball'); break;
-            case 46: return getInstrumentById('sidewaysspring'); break;
-            case 47: return getInstrumentById('spikeball'); break;
-            case 48: return getInstrumentById('spring'); break;
-            case 51: return getInstrumentById('spring'); break;
-            case 52: return getInstrumentById('spring'); break;
-            case 55: return getInstrumentById('spring'); break;
-            case 57: return getInstrumentById('spring'); break;
-            case 59: return getInstrumentById('spring'); break;
-            case 65: return getInstrumentById('billblaster'); break;
-            case 66: return getInstrumentById('billblaster'); break;
-            case 76: return getInstrumentById('post'); break;
-            case 77: return getInstrumentById('post'); break;
+            case 35: return getInstrumentById('pow');
+            case 36: return getInstrumentById('pow');
+            case 37: return getInstrumentById('pow');
+            case 40: return getInstrumentById('pswitch');
+            case 41: return getInstrumentById('spikeball');
+            case 42: return getInstrumentById('pow');
+            case 43: return getInstrumentById('spikeball');
+            case 44: return getInstrumentById('sidewaysspring');
+            case 45: return getInstrumentById('spikeball');
+            case 46: return getInstrumentById('sidewaysspring');
+            case 47: return getInstrumentById('spikeball');
+            case 48: return getInstrumentById('spring');
+            case 51: return getInstrumentById('spring');
+            case 52: return getInstrumentById('spring');
+            case 55: return getInstrumentById('spring');
+            case 57: return getInstrumentById('spring');
+            case 59: return getInstrumentById('spring');
+            case 65: return getInstrumentById('billblaster');
+            case 66: return getInstrumentById('billblaster');
+            case 76: return getInstrumentById('post');
+            case 77: return getInstrumentById('post');
             default: return getInstrumentById('pswitch');
       }
 }
@@ -1335,7 +1204,7 @@ function toggleAdvancedMode(){
             for(i=0;i<midi.trks.length;i++){
                   if(!midi.trks[i].hasPercussion){
                         semitoneShifts[i] = 0;
-                        level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*12;
+                        level.noteGroups[selectedTrack].ofsY = octaveShifts[selectedTrack]*12;
                   }
             }
             softRefresh();
@@ -1352,7 +1221,7 @@ function generateAcceptableBPBs(){
       if(Math.ceil(Math.log2(reccBPB)) == Math.floor(Math.log2(reccBPB))){ // Check if the number is a power of 2
             return [1,2,4,8];
       }
-      else if(reccBPB%3 == 0){return [3,6]}
+      else if(reccBPB%3 == 0){return [3,6];}
       else{return [reccBPB];} // For BPBs 5 and 7
 }
 
@@ -1385,14 +1254,16 @@ function getViewOctaveShift(trkID){
             sum += midi.trks[trkID].notes[i].pitch;
       }
       var avg = sum/midi.trks[trkID].notes.length;
-      return Math.round((avg - (60 + (ofsY-48)))/12)*-1;
+      return Math.round((avg - (60 + (ofsY-baseOfsY)))/12)*-1;
 }
 
 function shiftTrackIntoView(){
+      cancelPlayback();
       var shift = getViewOctaveShift(selectedTrack);
       octaveShifts[selectedTrack] = shift;
+      semitoneShifts[selectedTrack] = 0;
       document.getElementById('octaveshift').value = shift;
-      level.areas[selectedTrack].ofsY = octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack];
+      level.noteGroups[selectedTrack].ofsY = octaveShifts[selectedTrack]*12 + semitoneShifts[selectedTrack];
       calculateNoteRange();
       adjustZoom();
       softRefresh();
@@ -1411,7 +1282,7 @@ function alphabetizeInstruments(arr){
             newArr[i] = { id: arr[i].id, name: arr[i].name, octave: arr[i].octave, pos: i, isPowerup: arr[i].isPowerup };
       }
       newArr.sort(function(a,b){
-            if(a.id > b.id){return 1;}
+            if(a.name > b.name){return 1;}
             else{return -1;}
       });
       return newArr;
@@ -1437,8 +1308,48 @@ function adjustZoom(){
 function calculateNoteRange(){
       noteRange = 0;
       for(var i=0;i<midi.trks.length;i++){
-            if(midi.trks[i].lowestNote == null || midi.trks[i].highestNote == null || !level.areas[i].isVisible){continue;}
-            var thisRange = Math.max(Math.abs(64-(midi.trks[i].lowestNote+level.areas[i].ofsY)),Math.abs(64-(midi.trks[i].highestNote+level.areas[i].ofsY)));
+            if(midi.trks[i].lowestNote == null || midi.trks[i].highestNote == null || !level.noteGroups[i].isVisible){continue;}
+            var thisRange = Math.max(Math.abs(64-(midi.trks[i].lowestNote+level.noteGroups[i].ofsY)),Math.abs(64-(midi.trks[i].highestNote+level.noteGroups[i].ofsY)));
             if(thisRange > noteRange){noteRange = thisRange;}
+      }
+}
+
+function redrawMinimap(){
+      miniClear(0);
+      for(var i=0;i<=midi.trks.length;i++){
+            var index = i;
+            if(i == selectedTrack) continue;
+            if(i == midi.trks.length) index = selectedTrack; // Draw the selected track last
+            for(var j=0;j<midi.trks[index].notes.length;j++){
+                  if(!level.noteGroups[index].isVisible || midi.trks[index].notes.length == 0) continue;
+                  var note = midi.trks[index].notes[j];
+                  if(note.volume < noiseThreshold) continue;
+                  var x = Math.round((note.time/midi.timing)*blocksPerBeat);
+                  var y = note.pitch + level.noteGroups[index].ofsY;
+                  if(index == selectedTrack) miniPlot(x,y,'mediumaquamarine');
+                  else miniPlot(x,y);
+            }
+      }
+}
+
+function refreshBlocks(){
+      for(var i=0;i<midi.trks.length;i++){
+            level.clearNoteGroup(i);
+            level.noteGroups[i].ofsY = octaveShifts[i]*12 + semitoneShifts[i];
+            for(var j=0;j<midi.trks[i].notes.length;j++){
+                  var note = midi.trks[i].notes[j];
+                  if(note.volume<noiseThreshold){continue;} // Skip notes with volume below noise threshold
+                  x = (note.time/midi.timing)*blocksPerBeat;
+                  var levelX = Math.round(x);
+                  var instrument = getMM2Instrument(note.instrument);
+                  if(note.channel == 9){
+                        instrument = getPercussionInstrument(note.key)+2; // Use note.key to avoid the pitch overwrite to 54 here
+                        note.instrument = getMidiInstrument(instrument);
+                        note.pitch = 54;
+                  }
+                  if(levelX >= ofsX && levelX < ofsX+levelWidth-27){
+                        level.noteGroups[i].add(note.pitch, note.instrument, levelX);
+                  }
+            }
       }
 }

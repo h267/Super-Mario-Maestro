@@ -1,12 +1,15 @@
 class Level{
       constructor(areas){
             this.areas = areas;
+            this.noteGroups = [];
             if(this.areas == undefined){this.areas = [];}
-            this.setDims();
             this.overview = new Area(this.width,this.height);
             this.isTrackOccupant = new Array(this.width);
             this.numberOfOccupants = new Array(this.width);
-            this.refresh;
+            this.entityCount = 0;
+            this.powerupCount = 0;
+            this.limitLine = null;
+            this.refresh();
       }
       checkTile(x,y){
             return this.overview.getTile(x,y,true);
@@ -21,57 +24,77 @@ class Level{
             }
             return occupants;
       }
-      setDims(){
-            var max = {w: 0, h: 0};
-            var i;
-            for(i=0;i<this.areas.length;i++){
-                  if(this.areas[i].w > max.w){max.w = this.areas[i].w;}
-                  if(this.areas[i].h > max.h){max.h = this.areas[i].h;}
-            }
-            this.width = max.w;
-            this.height = max.h;
+      addNoteGroup(group){
+            this.noteGroups.push(group);
       }
-      addArea(area){
-            this.areas.push(area);
-            this.setDims();
-      }
-      reset(){
-            var i;
-            for(i=0;i<this.areas.length;i++){
-                  this.areas[i].clear();
-            }
+      clearNoteGroup(index){
+            if(index >= this.noteGroups.length) return;
+            this.noteGroups[index].notes = [];
       }
       refresh(){
-            this.overview = new Area(this.width,this.height);
-            this.isTrackOccupant = new Array(this.width);
-            this.numberOfOccupants = new Array(this.width);
+            this.overview = new Area(levelWidth,levelHeight);
+            this.isTrackOccupant = new Array(levelWidth);
+            this.numberOfOccupants = new Array(levelWidth);
+            this.entityCount = 0;
+            this.powerupCount = 0;
+            this.limitLine = null;
+            var columnCounts = [];
             var i;
             var j;
-            for(i=0;i<this.width;i++){
-                  this.isTrackOccupant[i] = new Array(this.height);
-                  this.numberOfOccupants[i] = new Array(this.height);
-                  for(j=0;j<this.height;j++){
+            for(i=0;i<levelWidth;i++){
+                  this.isTrackOccupant[i] = new Array(levelHeight);
+                  this.numberOfOccupants[i] = new Array(levelHeight);
+                  for(j=0;j<levelHeight;j++){
                         this.isTrackOccupant[i][j] = new Array(this.areas.length).fill(false);
                         this.numberOfOccupants[i][j] = 0;
                   }
             }
-            var k;
-            for(i=0;i<this.areas.length;i++){
-                  if(!this.areas[i].isVisible){continue;}
-                  for(j=0;j<this.areas[i].w;j++){
-                        for(k=0;k<this.areas[i].h;k++){
-                              var thisTile = this.areas[i].getTile(j,k,true);
-                              if(thisTile!=null){
-                                    this.overview.setTile(j,k,thisTile);
-                                    this.isTrackOccupant[j][k][i] = true;
-                                    this.numberOfOccupants[j][k]++;
+            for(i=0;i<this.noteGroups.length;i++){ // TODO: Array that keeps track of the number of entities and powerups in one column, determine lim line w/ it
+                  if(!this.noteGroups[i].isVisible){continue;}
+                  for(j=0;j<this.noteGroups[i].notes.length;j++){
+                        var thisNote = this.noteGroups[i].notes[j];
+                        var x = thisNote.x + marginWidth - ofsX;
+                        var y = thisNote.pitch + this.noteGroups[i].ofsY - ofsY;
+                        if(!isVisible(x,y,marginWidth,0)){continue;}
+
+                        // Set note
+                        this.overview.setTile(x,y,1);
+                        this.isTrackOccupant[x][y][i] = true;
+                        this.numberOfOccupants[x][y]++;
+
+                        // Set instrument
+                        if(y<26){
+                              if(columnCounts[x] == undefined){
+                                    columnCounts[x] = {entities: 0, powerups: 0};
                               }
+                              var ins = getMM2Instrument(thisNote.instrument)-2;
+                              if(instruments[ins].isPowerup){
+                                    this.powerupCount++;
+                                    columnCounts[x].powerups++;
+                              }
+                              else{
+                                    this.entityCount++;
+                                    columnCounts[x].entities++;
+                              }
+                              //if((this.powerupCount > 100 || this.entityCount > 100) && (this.limitLine == null)) this.limitLine = x + marginWidth + 1;
+                              this.overview.setTile(x,y+1,ins+2);
+                              this.isTrackOccupant[x][y+1][i] = true;
+                              this.numberOfOccupants[x][y+1]++;
                         }
                   }
             }
+            var curCount = {entities: 0, powerups: 0};
+            for(i=0;i<columnCounts.length;i++){
+                  if(columnCounts[i] == undefined) continue;
+                  if(columnCounts[i].entities != undefined) curCount.entities += columnCounts[i].entities;
+                  if(columnCounts[i].powerups != undefined) curCount.powerups += columnCounts[i].powerups;
+                  if((curCount.entities > 100 || curCount.powerups > 100) && this.limitLine == null){
+                        this.limitLine = i;
+                  }
+            }
       }
-
 }
+
 class Area{
       constructor(w,h){
             this.w = w;
@@ -93,7 +116,7 @@ class Area{
       setTile(x,y,n){
             if(!this.isInBounds(x,y)){return;}
             this.grid[x][y] = n;
-            if(x>=this.w){console.log('AA'+x+' v '+this.w);this.w=x+1;}
+            if(x>=this.w){this.w=x+1;}
             if(y>=this.h){this.h=y+1;}
       }
       clearTile(x,y){
@@ -115,32 +138,38 @@ class Area{
       }
 }
 
-class Instructions{
-      constructor(){
-            this.paths = [];
-      }
-      addPath(path){
-            this.paths.push(path);
+class PreloadedNote{
+      constructor(pitch, instrument, x){
+            this.pitch = pitch;
+            this.instrument = instrument;
+            this.x = x;
       }
 }
 
-class Path{
-      constructor(x1,y1,x2,y2){
-            this.sx = x1;
-            this.sy = y1;
-            this.ex = x2;
-            this.ey = y2;
+class PreloadedNoteGroup{
+      constructor(){
+            this.notes = [];
+            this.ofsY = 0;
+            this.isVisible = true;
       }
-      getXLength(){
-            return Math.abs(this.ex-this.sx);
+      add(pitch, instrument, x){
+            this.notes.push(new PreloadedNote(pitch, instrument, x));
       }
-      getYLength(){
-            return Math.abs(this.ey-this.sy);
+      setVisibility(visible){
+            this.isVisible = visible;
       }
-      isRight(){
-            return this.ey-this.sy >= 0;
-      }
-      isUp(){
-            return this.ey-this.sy >= 0;
+}
+
+function binarySearchNoteIndex(arr, queryX){ // Return the index of first instance of a note at the specified x-coordinate
+      var lowBound = 0;
+      var highBound = arr.length;
+      var index = 0;
+      var found = false;
+      while(!found){
+            if(lowBound == highBound){return -1;}
+            index = Math.floor((highBound+lowBound)/2);
+            if(arr[index].x == queryX && arr[index-1].x != queryX){return index;}
+            else if(arr[index].x > queryX || (arr[index].x == queryX && arr[index-1].x == queryX)){highBound = index;}
+            else if(arr[index].x < queryX){lowBound = index;}
       }
 }

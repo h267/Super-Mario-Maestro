@@ -1,3 +1,5 @@
+/* Thanks Loup&Snoop */
+
 body{
       background-color: #086a9a;
 }
@@ -9,15 +11,15 @@ body{
 
 .dispcontainer{
       overflow: auto;
-      border: 3px solid steelblue;
+      border: 3px solid #164770;
       border-radius: 3px;
       margin-bottom: 4px;
 }
 
 input#fileinput{
 	color: white;
-	background-color: steelblue;
-	border: 3px solid steelblue;
+	background-color: #164770;
+	border: 3px solid #164770;
 	border-radius: 5px;
       font-weight: bold;
       padding-right: 5px;
@@ -95,8 +97,8 @@ p, label{
 }
 
 .controlcontainer{
-      background-color: steelblue;
-	border: 3px solid steelblue;
+      background-color: #164770;
+	border: 3px solid #164770;
       border-radius: 5px;
       width: max-content;
 }

@@ -5,7 +5,7 @@ var runningStatus = null;
 var trackDuration = 0;
 var noteDelta = Array(16).fill(0);
 var isNewTrack = true;
-var currentLabel = 'Goomba'
+var currentLabel = 'Goomba';
 var midiInstrumentNames = ['Acoustic Grand Piano', 'Bright Acoustic Piano', // Thank you to the person who already did this for me
 'Electric Grand Piano', 'Honky-tonk Piano',
 'Electric Piano 1', 'Electric Piano 2', 'Harpsichord',
@@ -50,7 +50,7 @@ var midiInstrumentNames = ['Acoustic Grand Piano', 'Bright Acoustic Piano', // T
 class MIDIfile{
       constructor(file){
             this.bytes = file;
-            this.trks;
+            this.trks = null;
             this.error = null;
             this.debug = 0;
             this.timingFormat = 0;
@@ -68,7 +68,7 @@ class MIDIfile{
             trackDuration = 0;
             noteDelta = Array(16).fill(0);
             isNewTrack = true;
-            currentLabel = 'Goomba'
+            currentLabel = 'Goomba';
             this.parse();
             if(this.error!=null){alert('An error occurred while attempting to read the file:\n'+this.error.msg+'\nPosition 0x'+this.error.pos.toString(16));}
       }
@@ -83,7 +83,7 @@ class MIDIfile{
                   }
             }
             this.trks = new Array(this.ntrks);
-            var t0 = (new Date).getTime();
+            var t0 = (new Date()).getTime();
             var i;
             for(i=0;i<this.ntrks;i++){
                   this.trks[i] = new MIDItrack();
@@ -96,7 +96,7 @@ class MIDIfile{
             }
             var lowestQuantizeError = Infinity;
             var bestBPB = 0;
-            for(var i=0;i<16;i++){
+            for(i=0;i<16;i++){
                   var total = 0;
                   for(var j=0;j<this.trks.length;j++){
                         total += this.trks[j].quantizeErrors[i];
@@ -127,7 +127,7 @@ class MIDIfile{
             this.fmt = this.fetchBytes(2);
             if(this.fmt > 2){
                   console.log('ERROR: Unrecognized format number.');
-                  this.error = {code: 3, pos: ppos, msg: 'Unrecognized MIDI format number.'};;
+                  this.error = {code: 3, pos: ppos, msg: 'Unrecognized MIDI format number.'};
             }
             this.ntrks = this.fetchBytes(2);
             //console.log('Format '+this.fmt+', '+this.ntrks+' tracks');
@@ -149,7 +149,7 @@ class MIDIfile{
             var done = false;
             if(this.parseString(4) != 'MTrk'){
                   console.log('ERROR: No MTrk');
-                  this.error = {code: 4, pos: ppos, msg: 'Failed to find MIDI track.'};;
+                  this.error = {code: 4, pos: ppos, msg: 'Failed to find MIDI track.'};
                   return;
             }
             //this.trks.push(new MIDItrack());
@@ -209,6 +209,7 @@ class MIDIfile{
                         case 0xF: // Meta events: where some actually important non-music stuff happens
                               var metaType = this.fetchBytes(1);
                               var i;
+                              var len;
                               switch(metaType){
                                     case 0x2F: // End of track
                                           this.skip(1);
@@ -217,19 +218,19 @@ class MIDIfile{
                                           break;
 
                                     case 0x51:
-                                          var len = this.fetchBytes(1);
+                                          len = this.fetchBytes(1);
                                           data.push(this.fetchBytes(len)); // All one value
                                           if(this.firstTempo == 0){this.firstTempo = data[0];}
                                           break;
                                     case 0x58:
-                                          var len = this.fetchBytes(1);
+                                          len = this.fetchBytes(1);
                                           for(i=0;i<len;i++){
                                                 data.push(this.fetchBytes(1));
                                           }
                                           if(this.firstBbar == 0){this.firstBbar = data[0]/Math.pow(2,data[1]);}
                                           break;
                                     default:
-                                          var len = this.fetchBytes(1);
+                                          len = this.fetchBytes(1);
                                           //console.log('Mlen = '+len);
                                           for(i=0;i<len;i++){
                                                 data.push(this.fetchBytes(1));
@@ -245,10 +246,12 @@ class MIDIfile{
                         case 0x9:
                               if(!rs){data.push(this.fetchBytes(1));}
                               data.push(this.fetchBytes(1));
-                              var ins;
+                              if(data[1] == 0){break;}
+                              //var ins;
+                              var ins = currentInstrument[channel]; // Patch out percussion splitting
                               if(channel == 9){
                                     this.trks[tpos].hasPercussion = true;
-                                    ins = data[0];
+                                    //ins = data[0];
                               }
                               else{
                                     ins = currentInstrument[channel];
@@ -277,7 +280,6 @@ class MIDIfile{
                               if(!rs){data.push(this.fetchBytes(1));}
                               data.push(this.fetchBytes(1));
                   }
-                  var i;
                   for(i=0;i<noteDelta.length;i++){
                         noteDelta[i] += delta;
                   }
@@ -285,7 +287,7 @@ class MIDIfile{
                         var bpbStuff = getThisBPB(noteDelta[channel],this.timing);
                     
                         // console.log(bpbStuff);
-                        for(var i=1;i<=16;i++){
+                        for(i=1;i<=16;i++){
                               var x = i*noteDelta[channel]/this.timing; // TODO: Better algorithm needed?
                               var roundX = Math.round(x);
                               // console.log("Rounded by: " + roundX-x);
@@ -408,6 +410,7 @@ class Note{
       constructor(time, pitch, volume, instrument, channel){
             this.time = time;
             this.pitch = pitch;
+            this.key = pitch; // For percussion
             this.volume = volume;
             this.originalInstrument = instrument;
             this.instrument = instrument;
@@ -438,7 +441,7 @@ function getIntFromBytes(arr,pad){ // Gets an integer value from an arbitrary nu
       var n = 0;
       var i;
       for(i=0;i<arr.length;i++){
-            n = n << pad | arr[i]
+            n = n << pad | arr[i];
       }
       return n;
 }

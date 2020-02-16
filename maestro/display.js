@@ -46,7 +46,7 @@ class DrawLayer{
       text(x,y,str){
             this.ctx.font = '11px Arial';
             var size = {h: 11, w: this.ctx.measureText(str).width};
-            this.ctx.fillStyle = 'white'
+            this.ctx.fillStyle = 'white';
             this.ctx.fillRect(x,(y-size.h)+2,size.w,size.h);
             this.ctx.fillStyle='black';
             this.ctx.fillText(str,x,y);
@@ -67,7 +67,6 @@ var bgs = null;
 var lastMiniData = null;
 var minimapZoomY = 1;
 var minimapZoomX = 1; // Unused
-var miniPlotSize = 1;
 
 const dlayer = {
       bgLayer: 0,
@@ -81,6 +80,7 @@ const canvasHeight = 432;
 const miniHeight = 64;
 const numCanvasLayers = 7;
 const numMiniLayers = 2;
+const miniPlotSize = 2;
 
 var canvasLayers = makeLayers(numCanvasLayers,canvasWidth, canvasHeight); // 0: BG, 1: Semisolids, 2: One-ways, 3: Notes, 4: Overlays, 5: Cursor and tools
 var miniLayers;
@@ -94,7 +94,7 @@ function getImg(loc){
             img.onerror = function(){
                   console.log('Failed to load: '+loc);
                   reject(img);
-            }
+            };
             img.src = loc;
       });
 }
@@ -104,8 +104,7 @@ function miniPlot(x,y,style){
       y -= 64 - (64/minimapZoomY)/2;
       y = Math.round(y*minimapZoomY);
       y = minimap.height - y;
-      var plotSize = 2;
-      miniLayers[dlayer.bgLayer].fillRect(x,y,plotSize,plotSize,style);
+      miniLayers[dlayer.bgLayer].fillRect(x,y,miniPlotSize,miniPlotSize,style);
 }
 
 function miniClear(layer){

@@ -25,7 +25,7 @@
                <div id="toolbox" style="display: none; height: 24px;">
                     <div class="smallspacedcontainer">
                          <div>
-                              <button id="playbtn" class="button" type="button" onclick="playBtn()" style="margin-right: 4px;">Play</button><button id="stopbtn" class="button" type="button" onclick="stopBtn()">Stop</button>
+                              <button id="playbtn" class="button" type="button" onclick="playBtn()" style="margin-right: 4px;">Play</button><button id="stopbtn" class="button" type="button" onclick="cancelPlayback()">Stop</button>
                          </div>
                          <select id="temposelect" class="dropdown" onchange="selectTempo()">
                               <optgroup id="comtempos" label="Common Tempos">
@@ -65,7 +65,7 @@
                     </div>
                     <div style="display: flex;">
                          <div id="lefttools">
-                              <div class="controlcontainer" id="trkcontainer" style="border:3px solid steelblue; width:220px; height: 160px; overflow-y: auto; margin-right: 4px;">
+                              <div class="controlcontainer" id="trkcontainer" style="border:3px solid #164770; width:220px; height: 160px; overflow-y: auto; margin-right: 4px;">
                                    <!-- To be populated with track checkboxes -->
                               </div>
                          </div>
