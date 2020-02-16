@@ -4,8 +4,9 @@ var len = 0;
 var notes = [];
 var framesPerColumn = 0;
 var isPlaying = false;
+var endBound;
 
-const restrictPitchRange = true; // Hi Hermit
+var restrictPitchRange = true; // Make this var so Hermit can change it with his epic hacking skillz
 
 // TODO: Rewrite this and use Tone.offline
 
@@ -245,32 +246,10 @@ function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY,playConflicts){
       if(playConflicts == undefined){playConflicts = true;}
       playConflicts = false;
       stopAudio();
+      endBound = level.width;
       framesPerColumn = 1/(blocksPerBeat*bpm/3600);
       var i;
       var j;
-      /*for(i=marginWidth;i<levelWidth;i++){
-      //for(i=ofsX;i<i<level.width;i++){
-            if(i>=levelWidth){break;} // Plays extra music otherwise. Probably should come back to this
-            notes.push([]);
-            for(j=0;j<levelHeight;j++){
-            //for(j=0;j<level.height;j++){
-                  if(!playConflicts){
-                        if(level.checkTile(i,j) == 1){
-                              addNote(j+ofsY,level.checkTile(i,j+1)-2);
-                        }
-                  }
-                  else{
-                        for(var k=0;k<level.areas.length;k++){
-                              if(!level.areas[k].isVisible){continue;}
-                              if(level.areas[k].getTile(i,j,true) == 1){
-                                    addNote((j-ofsY)+47,level.areas[k].getTile(i,j+1,true)-2);
-                              }    
-                        }
-                  }
-            }
-            advanceSchTime(2520/blocksPerBeat);
-      }*/
-      //console.log(notes);
       notes = new Array(levelWidth-marginWidth+1);
       for(i=0;i<levelWidth;i++){
             notes[i] = [];
@@ -324,21 +303,13 @@ function addNote(note,instrument){
 
 function advanceSchTime(delta){
       Tone.Transport.schedule(function(time){
-            //console.log('p '+pos);
-            //console.log(notes);
-            /*if(pos==0){
-                  //smoothScrollCont(framesPerColumn, duration);
-                  smoothScrollCont(framesPerColumn);
-            }*/
             var curNotes = notes[pos];
-            //if(notes.length!=0){console.log(curNotes);}
-            //if(curNotes.length>0){console.log('ye');}
             clearDisplayLayer(dlayer.mouseLayer);
             highlightCol(pos+27,'rgba(255,0,0,0.5)');
             scrollDisplayTo(pos*16);
             refreshCanvas();
             if(curNotes != undefined){playNotes(curNotes);} // Prevent weird crash
-            if(pos >= /*Math.min(239-27,level.width)-1*/levelWidth-marginWidth){
+            if(pos >= endBound-marginWidth){
                   resetPlayback();
             }
             pos++;

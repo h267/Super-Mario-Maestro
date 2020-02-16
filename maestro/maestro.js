@@ -1,4 +1,4 @@
-// Super Mario Maestro v1.3.0.3
+// Super Mario Maestro v1.3.0.4
 // made by h267
 
 // FIXME: Bug: Percussion turns to all springs when global x or y offsets are changed or when bpb is changed
@@ -565,6 +565,7 @@ function drawLevel(redrawMini,noDOM){
 
 function moveOffsetTo(ox,oy){ // Offsets are given as percentages of the level
       if(!fileLoaded){return;}
+      cancelPlayback();
       var width = Math.ceil((midi.duration/midi.timing)*blocksPerBeat);
       if(ox!=null){
             ofsX = Math.floor(ox*width);

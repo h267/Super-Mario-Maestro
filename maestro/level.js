@@ -8,6 +8,7 @@ class Level{
             this.numberOfOccupants = new Array(this.width);
             this.entityCount = 0;
             this.powerupCount = 0;
+            this.width = levelWidth;
             this.limitLine = null;
             this.refresh();
       }
@@ -37,6 +38,7 @@ class Level{
             this.numberOfOccupants = new Array(levelWidth);
             this.entityCount = 0;
             this.powerupCount = 0;
+            this.width = 0;
             this.limitLine = null;
             var columnCounts = [];
             var i;
@@ -75,6 +77,7 @@ class Level{
                               else{
                                     this.entityCount++;
                                     columnCounts[x].entities++;
+                                    if(x > this.width) this.width = x;
                               }
                               //if((this.powerupCount > 100 || this.entityCount > 100) && (this.limitLine == null)) this.limitLine = x + marginWidth + 1;
                               this.overview.setTile(x,y+1,ins+2);
