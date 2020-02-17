@@ -1,7 +1,5 @@
-// Super Mario Maestro v1.3.0.4
+// Super Mario Maestro v1.3.0.5
 // made by h267
-
-// FIXME: Bug: Percussion turns to all springs when global x or y offsets are changed or when bpb is changed
 
 /* TODO: New features:
 
@@ -84,7 +82,7 @@ var instruments = [
       {id: 'montymole', name: 'Monty Mole (Banjo)', octave: 0, isPowerup: false},
       {id: 'pswitch', name: 'P-Switch (Snare Drum)', octave: 0, isPowerup: false},
       {id: 'redbeachkoopa', name: 'Red Beach Koopa (Meow)', octave: 0, isPowerup: false},
-      {id: 'bigmushroom', name: 'Big Mushroom (Shamisen)', octave: 0, isPowerup: false},
+      {id: 'bigmushroom', name: 'Big Mushroom (Shamisen)', octave: 0, isPowerup: true},
       {id: 'billblaster', name: 'Bill Blaster (Timpani)', octave: 0, isPowerup: false},
       {id: 'shoegoomba', name: 'Shoe Goomba (Low Accordion)', octave: -1, isPowerup: false},
       {id: 'stilettogoomba', name: 'Stiletto Goomba (Accordion)', octave: 0, isPowerup: false},
@@ -104,7 +102,7 @@ var instruments = [
       {id: 'spring', name: 'Trampoline (Crash Cymbal)', octave: 0, isPowerup: false},
       {id: 'sidewaysspring', name: 'Sideways Trampoline (Hi-Hat)', octave: 0, isPowerup: false},
       {id: 'star', name: 'Super Star (Music Box)', octave: 1, isPowerup: true},
-      {id: 'superball', name: 'Superball Flower (Organ)', octave: 1, isPowerup: false},
+      {id: 'superball', name: 'Superball Flower (Organ)', octave: 1, isPowerup: true},
       {id: 'thwomp', name: 'Thwomp (Ethnic Drum)', octave: 0, isPowerup: false},
       {id: 'wiggler', name: 'Wiggler (Tubular Bells)', octave: 1, isPowerup: false},
       {id: 'spike', name: 'Spike (Acoustic Bass Guitar)', octave: -2, isPowerup: false},
@@ -112,7 +110,7 @@ var instruments = [
       {id: 'snowball', name: 'Snowball (Tom-Tom Drum)', octave: 0, isPowerup: false},
       {id: 'pokey', name: 'Pokey (Acoustic Guitar)', octave: 0, isPowerup: false},
       {id: 'snowpokey', name: 'Snow Pokey (Kazoo)', octave: 1, isPowerup: false},
-      {id: 'sword', name: 'Master Sword (Synth Horn)', octave: 0, isPowerup: false},/*
+      {id: 'sword', name: 'Master Sword (Synth Horn)', octave: 0, isPowerup: true},/*
       {id: 'toad', name: 'Toad (Suffering)', octave: 0, isPowerup: false},*/ // If you uncomment this, only pain and suffering awaits
 ];
 var alphabetizedInstruments = alphabetizeInstruments(instruments);
@@ -173,7 +171,7 @@ function loadTiles(){
             Promise.all(
                   [
                   getImg('tiles/ground.png'),
-                  getImg('tiles/note-heart.png'),
+                  getImg('tiles/note.png'),
                   getImg('tiles/goomba.png'),
                   getImg('tiles/shellmet.png'),
                   getImg('tiles/1up.png'),

@@ -77,8 +77,8 @@ class Level{
                               else{
                                     this.entityCount++;
                                     columnCounts[x].entities++;
-                                    if(x > this.width) this.width = x;
                               }
+                              if(x > this.width) this.width = x;
                               //if((this.powerupCount > 100 || this.entityCount > 100) && (this.limitLine == null)) this.limitLine = x + marginWidth + 1;
                               this.overview.setTile(x,y+1,ins+2);
                               this.isTrackOccupant[x][y+1][i] = true;
