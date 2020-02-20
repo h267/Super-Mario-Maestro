@@ -4,13 +4,11 @@
 /* TODO: New features:
 
 1.3.1:
-- Dynamic zoom toggle?
-- Pre-rendered audio
 - Full level playback
 - Example MIDI
 - Animation during playback
 - Better percussion splitting
-- A tutorial
+- A tutorial link
 
 1.4:
  - Animated entities with physics simulation
