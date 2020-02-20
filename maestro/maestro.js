@@ -1,4 +1,4 @@
-// Super Mario Maestro v1.3.0.5
+// Super Mario Maestro v1.3.1
 // made by h267
 
 /* TODO: New features:
@@ -643,7 +643,8 @@ function getMM2Instrument(midiInstrument){
       if(midiInstrument>=105 && midiInstrument<=112){return 14;} // Ethnic
       if(midiInstrument>=113 && midiInstrument<=120){return 15;} // Percussive
       if(midiInstrument>=121 && midiInstrument<=127){return 16;} // Sound Effects
-      else{return midiInstrument - 127 + 16;} // For new instruments
+
+      else return midiInstrument - 127 + 16; // For new instruments
 }
 
 function getMidiInstrument(mm2Instrument){
@@ -807,7 +808,8 @@ function playBtn(){
       if(fileLoaded){
             noMouse = true;
             document.getElementById('playbtn').disabled = true;
-            playLvl(level,bpm,blocksPerBeat,ofsX,ofsY);
+            //playLvl(level,bpm,blocksPerBeat,ofsX,ofsY);
+            playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY);
       }
 }
 
@@ -1349,4 +1351,17 @@ function refreshBlocks(){
                   }
             }
       }
+}
+
+function scrollByX(ox){ // Offsets are given as percentages of the level
+      if(!fileLoaded){return;}
+      ofsX += ox;
+      var limX = (minimap.width-(canvas.width/16-27))+(blocksPerBeat*bbar);
+      if(ofsX>limX){ofsX = limX;}
+      if(ofsX<0){ofsX=0;}
+      clearDisplayLayer(dlayer.noteLayer);
+      clearDisplayLayer(dlayer.overlayLayer);
+      clearDisplayLayer(dlayer.outlineLayer);
+      refreshBlocks();
+      softRefresh(false,false);
 }

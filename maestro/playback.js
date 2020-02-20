@@ -58,7 +58,7 @@ var endBound;
 var outputBuffer;
 var samplers = [];
 
-var restrictPitchRange = true; // Make this var so Hermit can change it with his epic hacking skillz
+var restrictPitchRange = false; // Make this var so Hermit can change it with his epic hacking skillz
 
 Tone.Transport.PPQ = 2520;
 
@@ -80,16 +80,14 @@ function loadInstruments(){
       });
 }
 
-async function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY,playConflicts){
-      if(playConflicts == undefined){playConflicts = true;}
-      playConflicts = false;
+async function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY){
       stopAudio();
       endBound = level.width;
       framesPerColumn = 1/(blocksPerBeat*bpm/3600);
       var i;
       var j;
-      notes = new Array(levelWidth-marginWidth+1);
-      for(i=0;i<levelWidth;i++){
+      notes = [];
+      for(i=0;i<endBound;i++){
             notes[i] = [];
       }
       for(i=0;i<level.noteGroups.length;i++){
@@ -101,8 +99,35 @@ async function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY,playConflicts){
                   notes[thisNote.x - ofsX].push({note: noteNumToStr(yPos - (ofsY - baseOfsY)), instrument: getMM2Instrument(thisNote.instrument)-2});
             }
       }
-      while(pos < levelWidth-marginWidth+1){
+      while(pos < endBound-marginWidth+1){
             advanceSchTime(2520/blocksPerBeat);
+      }
+      playAudio(bpm);
+}
+
+async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
+      stopAudio();
+      var trks = midi.trks;
+      endBound = Math.floor((midi.duration/midi.timing)*blocksPerBeat);
+      framesPerColumn = 1/(blocksPerBeat*bpm/3600);
+      notes = [];
+      for(i=0;i<endBound;i++){
+            notes[i] = [];
+      }
+      for(i=0;i<level.noteGroups.length;i++){
+            if(!level.noteGroups[i].isVisible) continue;
+            for(j=0;j<midi.trks[i].notes.length;j++){
+                  var thisNote = midi.trks[i].notes[j];
+                  var x = Math.floor((thisNote.time/midi.timing)*blocksPerBeat);
+                  if(x < ofsX) continue;
+                  var yPos = thisNote.pitch + level.noteGroups[i].ofsY;
+                  if((yPos < ofsY || yPos >= ofsY+levelHeight-1) && restrictPitchRange) continue;
+                  // FIXME: Changing BPB breaks x-ofsX
+                  notes[x - ofsX].push({note: noteNumToStr(yPos - (ofsY - baseOfsY)), instrument: getMM2Instrument(thisNote.instrument)-2});
+            }
+      }
+      while(pos < endBound){
+            advanceSchTimeCont(2520/blocksPerBeat);
       }
       playAudio(bpm);
 }
@@ -145,10 +170,24 @@ function advanceSchTime(delta){
             }
             pos++;
       }, Math.round(schTime).toString()+'i');
-      /*Tone.Draw.schedule(function(time){
-            //highlightTile(pos+27,0);
-            //highlightTile(Math.floor((240-27)*(time/Tone.Ticks(schTime).toSeconds()))+27,0);
-      },schTime.toString()+'i');*/
+      schTime += delta;
+      pos++;
+}
+
+function advanceSchTimeCont(delta){
+      Tone.Transport.schedule(function(time){
+            var curNotes = notes[pos];
+            clearDisplayLayer(dlayer.mouseLayer);
+            highlightCol(27,'rgba(255,0,0,0.5)');
+            //scrollDisplayTo(pos*16);
+            scrollLevel(1);
+            //refreshCanvas();
+            if(curNotes != undefined){playNotes(curNotes);}
+            if(pos >= endBound-marginWidth){
+                  resetPlayback();
+            }
+            pos++;
+      }, Math.round(schTime).toString()+'i');
       schTime += delta;
       pos++;
 }
@@ -177,4 +216,8 @@ function playNotes(curNotes){
       for(i=0;i<curNotes.length;i++){
             samplers[curNotes[i].instrument].triggerAttackRelease(curNotes[i].note,'4n');
       }
+}
+
+function scrollLevel(dx){
+      scrollByX(dx);
 }
