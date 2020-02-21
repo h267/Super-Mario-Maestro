@@ -57,8 +57,9 @@ var isPlaying = false;
 var endBound;
 var outputBuffer;
 var samplers = [];
+var isContinuousPlayback = false;
 
-var restrictPitchRange = false; // Make this var so Hermit can change it with his epic hacking skillz
+var restrictPitchRange = true; // Make this var so Hermit can change it with his epic hacking skillz
 
 Tone.Transport.PPQ = 2520;
 
@@ -82,6 +83,7 @@ function loadInstruments(){
 
 async function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY){
       stopAudio();
+      isContinuousPlayback = false;
       endBound = level.width;
       framesPerColumn = 1/(blocksPerBeat*bpm/3600);
       var i;
@@ -107,7 +109,7 @@ async function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY){
 
 async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       stopAudio();
-      var trks = midi.trks;
+      isContinuousPlayback = true;
       endBound = Math.floor((midi.duration/midi.timing)*blocksPerBeat);
       framesPerColumn = 1/(blocksPerBeat*bpm/3600);
       notes = [];
@@ -122,13 +124,16 @@ async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
                   if(x < ofsX) continue;
                   var yPos = thisNote.pitch + level.noteGroups[i].ofsY;
                   if((yPos < ofsY || yPos >= ofsY+levelHeight-1) && restrictPitchRange) continue;
-                  // FIXME: Changing BPB breaks x-ofsX
+                  // FIXME: Changing BPB breaks x-ofsX when ??
+                  // FIXME: Need end scrolling behavior
                   notes[x - ofsX].push({note: noteNumToStr(yPos - (ofsY - baseOfsY)), instrument: getMM2Instrument(thisNote.instrument)-2});
             }
       }
       while(pos < endBound){
             advanceSchTimeCont(2520/blocksPerBeat);
       }
+      clearDisplayLayer(dlayer.overlayLayer);
+      clearDisplayLayer(dlayer.outlineLayer);
       playAudio(bpm);
 }
 
@@ -137,7 +142,7 @@ function playAudio(bpm){
       pos = 0;
       isPlaying = true;
       Tone.Transport.bpm.value = Math.round(bpm);
-      Tone.Transport.start('+0.05');
+      Tone.Transport.start('+0.15');
 }
 
 function stopAudio(){
@@ -147,6 +152,10 @@ function stopAudio(){
       schTime = 0;
       pos = 0;
       notes = [];
+      if(isContinuousPlayback){
+            refreshBlocks();
+            hardRefresh();
+      }
 }
 
 function resetPlayback(){
@@ -175,7 +184,7 @@ function advanceSchTime(delta){
 }
 
 function advanceSchTimeCont(delta){
-      Tone.Transport.schedule(function(time){
+      Tone.Transport.schedule(function(time){ // FIXME: The lag
             var curNotes = notes[pos];
             clearDisplayLayer(dlayer.mouseLayer);
             highlightCol(27,'rgba(255,0,0,0.5)');
@@ -219,5 +228,5 @@ function playNotes(curNotes){
 }
 
 function scrollLevel(dx){
-      scrollByX(dx);
+      scrollLevelByX(dx);
 }

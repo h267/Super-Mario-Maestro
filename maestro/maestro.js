@@ -916,6 +916,7 @@ function shiftTrackOctave(){
 }
 
 function selectTrack(trkID){
+      if(isPlaying && isContinuousPlayback) cancelPlayback();
       var initSelect = (trkID == -1);
       if(trkID == -1){
             var i;
@@ -1353,15 +1354,40 @@ function refreshBlocks(){
       }
 }
 
-function scrollByX(ox){ // Offsets are given as percentages of the level
+function scrollLevelByX(ox){ // Offsets are given as percentages of the level
       if(!fileLoaded){return;}
       ofsX += ox;
       var limX = (minimap.width-(canvas.width/16-27))+(blocksPerBeat*bbar);
       if(ofsX>limX){ofsX = limX;}
       if(ofsX<0){ofsX=0;}
+      quickLevelRefresh();
+}
+
+function quickLevelRefresh(){ // Redraw the level with only the bare necessities - the notes, and the entities on top of them
       clearDisplayLayer(dlayer.noteLayer);
-      clearDisplayLayer(dlayer.overlayLayer);
-      clearDisplayLayer(dlayer.outlineLayer);
-      refreshBlocks();
-      softRefresh(false,false);
+      for(var i=0;i<midi.trks.length;i++){
+            if(!level.noteGroups[i].isVisible) continue;
+            for(var j=0;j<midi.trks[i].notes.length;j++){
+                  var note = midi.trks[i].notes[j];
+                  if(note.volume<noiseThreshold) continue; // Skip notes with volume below noise threshold
+                  var levelX = Math.round((note.time/midi.timing)*blocksPerBeat);
+                  if(levelX > ofsX+levelWidth+marginWidth) break;
+                  var instrument = getMM2Instrument(note.instrument);
+                  if(note.channel == 9){
+                        instrument = getPercussionInstrument(note.key)+2; // Use note.key to avoid the pitch overwrite to 54 here
+                        note.instrument = getMidiInstrument(instrument);
+                        note.pitch = 54;
+                  }
+                  var levelY = note.pitch + level.noteGroups[i].ofsY - ofsY + 1;
+                  if(levelX >= ofsX && levelX < ofsX+levelWidth-marginWidth && levelY >=0 && levelY <= 27){
+                        var drawY = 27-levelY;
+                        drawTile(tiles[1],(levelX-ofsX+marginWidth)*16,(drawY*16));
+                        drawTile(tiles[instrument],(levelX-ofsX+marginWidth)*16,((drawY-1)*16));
+                  }
+            }
+      }
+      miniClear(1);
+      drawScrubber(ofsX,ofsY+27,canvas.width/16-27,canvas.height/16);
+      refreshMini();
+      refreshCanvas();
 }
