@@ -1,19 +1,19 @@
 const insPlayData = [
       {file: 'goomba'},
-      {file: 'shellmet'},
+      {file: 'shellmet', baseNote: KEY_F3},
       {file: '1up'},
       {file: 'spiketop'},
       {file: 'sledgebro'},
       {file: 'piranha'},
       {file: 'bobomb'},
-      {file: 'spikedshellmet'},
-      {file: 'drybones'},
+      {file: 'spiny'},
+      {file: 'drybones', hasLongSustain: true},
       {file: 'shroom'},
       {file: 'rottenshroom'},
-      {file: 'bark'},
+      {file: 'bark', baseNote: KEY_F3},
       {file: 'mole'},
       {file: 'pswitch'},
-      {file: 'zuls'},
+      {file: 'meow', baseNote: KEY_F3},
       {file: 'bigshroom'},
       {file: 'blaster'},
       {file: 'boot'},
@@ -22,12 +22,12 @@ const insPlayData = [
       {file: 'chomp'},
       {file: 'post'},
       {file: 'coin'},
-      {file: 'fireplant'},
+      {file: 'fireplant', hasLongSustain: true},
       {file: 'flower'},
       {file: 'goombrat'},
       {file: 'greenkoopa'},
       {file: 'redkoopa'},
-      {file: 'hammerbro'},
+      {file: 'hammerbro', hasLongSustain: true},
       {file: 'magikoopa'},
       {file: 'muncher'},
       {file: 'pow'},
@@ -43,9 +43,9 @@ const insPlayData = [
       {file: 'pokey'},
       {file: 'snowpokey'},
       {file: 'sword'},
-      {file: 'toad', baseNote: 'C4'}
+      {file: 'toad'}
 ];
-const defaultInsPlayData = {file: 'goomba', baseNote: 'F3', volumeOffset: 0};
+const defaultInsPlayData = {file: 'goomba', baseNote: KEY_C4, volumeOffset: 0};
 const masterVolume = -5;
 
 var schTime = 0;
@@ -57,32 +57,40 @@ var isPlaying = false;
 var endBound;
 var outputBuffer;
 var samplers = [];
+var buffers = [];
 var isContinuousPlayback = false;
+var noteSchedule = new NoteSchedule();
 
 var restrictPitchRange = true; // Make this var so Hermit can change it with his epic hacking skillz
 
-Tone.Transport.PPQ = 2520;
-
-loadInstruments();
-
 // TODO: Import new sounds
+// TODO: Bring back real time for non-full map playback
 
-function loadInstruments(){
+function loadBuffers(){
+      buffers = [];
+      var promises = [];
       insPlayData.forEach(function(n,i){
-            var vol = masterVolume;
-            if(n.volumeOffset != undefined) vol += n.volumeOffset;
-            var thisSampler = new Tone.Sampler({'F3':'./wav/'+n.file+'.wav'},function(){
-                  thisSampler.toMaster();
-                  thisSampler.volume.value = vol;
-                  thisSampler.curve = 'linear';
-                  thisSampler.label = n.file;
-                  samplers[i] = thisSampler;
-            });
+            promises.push(new Promise(async function(resolve, reject){
+                  let baseNote;
+                  if(n.baseNote == undefined) baseNote = defaultInsPlayData.baseNote;
+                  else baseNote = n.baseNote;
+                  let hasLongSustain;
+                  if(!n.hasLongSustain) hasLongSustain = false;
+                  else hasLongSustain = true;
+                  await noteSchedule.addInstrument(i, './wav/'+n.file+'.wav', {baseNote: baseNote, hasLongSustain: hasLongSustain});
+                  for(let j = 0; j < levelHeight - 1; j++){
+                        await noteSchedule.instruments[i].generateBufferForNote(baseOfsY + j);
+                  }
+                  resolve();
+            }));
+            // TODO: Only load instruments that are CURRENTLY being used in range (possibly trigger during level overview construction)
       });
+      return Promise.all(promises);
 }
 
-async function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY){
+async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       stopAudio();
+      await loadBuffers();
       isContinuousPlayback = false;
       endBound = level.width;
       framesPerColumn = 1/(blocksPerBeat*bpm/3600);
@@ -98,7 +106,7 @@ async function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY){
                   var thisNote = level.noteGroups[i].notes[j];
                   var yPos = thisNote.pitch + level.noteGroups[i].ofsY;
                   if((yPos < ofsY || yPos >= ofsY+levelHeight-1) && restrictPitchRange) continue;
-                  notes[thisNote.x - ofsX].push({note: noteNumToStr(yPos - (ofsY - baseOfsY)), instrument: getMM2Instrument(thisNote.instrument)-2});
+                  notes[thisNote.x - ofsX].push({note: yPos - (ofsY - baseOfsY), instrument: getMM2Instrument(thisNote.instrument)-2});
             }
       }
       while(pos < endBound-marginWidth+1){
@@ -107,10 +115,11 @@ async function playLvl(level,bpm,blocksPerBeat,ofsX,ofsY){
       playAudio(bpm);
 }
 
-async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
+async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintroduce
       stopAudio();
       isContinuousPlayback = true;
       endBound = Math.floor((midi.duration/midi.timing)*blocksPerBeat);
+      console.log(endBound-ofsX);
       framesPerColumn = 1/(blocksPerBeat*bpm/3600);
       notes = [];
       for(i=0;i<endBound;i++){
@@ -126,10 +135,10 @@ async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
                   if((yPos < ofsY || yPos >= ofsY+levelHeight-1) && restrictPitchRange) continue;
                   // FIXME: Changing BPB breaks x-ofsX when ??
                   // FIXME: Need end scrolling behavior
-                  notes[x - ofsX].push({note: noteNumToStr(yPos - (ofsY - baseOfsY)), instrument: getMM2Instrument(thisNote.instrument)-2});
+                  notes[x - ofsX].push({note: yPos - (ofsY - baseOfsY), instrument: getMM2Instrument(thisNote.instrument)-2});
             }
       }
-      while(pos < endBound){
+      while(pos <= endBound-ofsX){
             advanceSchTimeCont(2520/blocksPerBeat);
       }
       clearDisplayLayer(dlayer.overlayLayer);
@@ -141,13 +150,13 @@ function playAudio(bpm){
       if(bpm==undefined){bpm=120;}
       pos = 0;
       isPlaying = true;
-      Tone.Transport.bpm.value = Math.round(bpm);
-      Tone.Transport.start('+0.15');
+      noteSchedule.setBPM(bpm);
+      noteSchedule.play();
 }
 
 function stopAudio(){
-      Tone.Transport.stop();
-      Tone.Transport.cancel();
+      noteSchedule.stop();
+      noteSchedule.clear();
       isPlaying = false;
       schTime = 0;
       pos = 0;
@@ -167,64 +176,17 @@ function resetPlayback(){
 }
 
 function advanceSchTime(delta){
-      Tone.Transport.schedule(function(time){
-            var curNotes = notes[pos];
-            clearDisplayLayer(dlayer.mouseLayer);
-            highlightCol(pos+27,'rgba(255,0,0,0.5)');
-            scrollDisplayTo(pos*16);
-            refreshCanvas();
-            if(curNotes != undefined){playNotes(curNotes);}
-            if(pos >= endBound-marginWidth){
-                  resetPlayback();
-            }
-            pos++;
-      }, Math.round(schTime).toString()+'i');
+      var curNotes = notes[pos];
+      if(curNotes != undefined){
+            curNotes.forEach(function(n,i){
+                  noteSchedule.addNote({value: n.note, instrument: n.instrument, time: schTime});
+            });
+      }
+      /*if(pos >= endBound-ofsX){ // FIXME: Triggering incorrectly
+            resetPlayback();
+      }*/
       schTime += delta;
       pos++;
-}
-
-function advanceSchTimeCont(delta){
-      Tone.Transport.schedule(function(time){ // FIXME: The lag
-            var curNotes = notes[pos];
-            clearDisplayLayer(dlayer.mouseLayer);
-            highlightCol(27,'rgba(255,0,0,0.5)');
-            //scrollDisplayTo(pos*16);
-            scrollLevel(1);
-            //refreshCanvas();
-            if(curNotes != undefined){playNotes(curNotes);}
-            if(pos >= endBound-marginWidth){
-                  resetPlayback();
-            }
-            pos++;
-      }, Math.round(schTime).toString()+'i');
-      schTime += delta;
-      pos++;
-}
-
-function noteNumToStr(n){
-      var octave = Math.floor(n/12)-1;
-      var key = n%12;
-      switch(key){
-            case 0: return 'C'+octave;
-            case 1: return 'C#'+octave;
-            case 2: return 'D'+octave;
-            case 3: return 'D#'+octave;
-            case 4: return 'E'+octave;
-            case 5: return 'F'+octave;
-            case 6: return 'F#'+octave;
-            case 7: return 'G'+octave;
-            case 8: return 'G#'+octave;
-            case 9: return 'A'+octave;
-            case 10: return 'A#'+octave;
-            case 11: return 'B'+octave;
-      }
-}
-
-function playNotes(curNotes){
-      var i;
-      for(i=0;i<curNotes.length;i++){
-            samplers[curNotes[i].instrument].triggerAttackRelease(curNotes[i].note,'4n');
-      }
 }
 
 function scrollLevel(dx){

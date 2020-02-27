@@ -808,8 +808,7 @@ function playBtn(){
       if(fileLoaded){
             noMouse = true;
             document.getElementById('playbtn').disabled = true;
-            //playLvl(level,bpm,blocksPerBeat,ofsX,ofsY);
-            playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY);
+            playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY);
       }
 }
 

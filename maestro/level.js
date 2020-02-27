@@ -51,7 +51,7 @@ class Level{
                         this.numberOfOccupants[i][j] = 0;
                   }
             }
-            for(i=0;i<this.noteGroups.length;i++){ // TODO: Array that keeps track of the number of entities and powerups in one column, determine lim line w/ it
+            for(i=0;i<this.noteGroups.length;i++){
                   if(!this.noteGroups[i].isVisible){continue;}
                   for(j=0;j<this.noteGroups[i].notes.length;j++){
                         var thisNote = this.noteGroups[i].notes[j];

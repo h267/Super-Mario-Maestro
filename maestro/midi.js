@@ -288,7 +288,7 @@ class MIDIfile{
                     
                         // console.log(bpbStuff);
                         for(i=1;i<=16;i++){
-                              var x = i*noteDelta[channel]/this.timing; // TODO: Better algorithm needed?
+                              var x = i*noteDelta[channel]/this.timing;
                               var roundX = Math.round(x);
                               // console.log("Rounded by: " + roundX-x);
                               this.trks[tpos].quantizeErrors[i-1] += Math.round(Math.abs((roundX-x)/i)*100);
