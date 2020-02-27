@@ -112,7 +112,7 @@ async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       while(pos < endBound-marginWidth+1){
             advanceSchTime(2520/blocksPerBeat);
       }
-      playAudio(bpm);
+      playAudio(bpm, blocksPerBeat);
 }
 
 async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintroduce
@@ -143,20 +143,22 @@ async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintro
       }
       clearDisplayLayer(dlayer.overlayLayer);
       clearDisplayLayer(dlayer.outlineLayer);
-      playAudio(bpm);
+      playAudio(bpm, blocksPerBeat);
 }
 
-function playAudio(bpm){
+function playAudio(bpm, bpb){
       if(bpm==undefined){bpm=120;}
       pos = 0;
       isPlaying = true;
       noteSchedule.setBPM(bpm);
       noteSchedule.play();
+      animatePlayback(bpm * bpb / 3600);
 }
 
 function stopAudio(){
       noteSchedule.stop();
       noteSchedule.clear();
+      stopPlaybackAnimation();
       isPlaying = false;
       schTime = 0;
       pos = 0;

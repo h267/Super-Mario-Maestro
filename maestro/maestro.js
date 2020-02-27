@@ -114,6 +114,7 @@ var instruments = [
 var alphabetizedInstruments = alphabetizeInstruments(instruments);
 var tiles;
 var bgs;
+var marioSprites;
 var speed = 10;
 var level = new Level();
 var ofsX = 0;
@@ -155,74 +156,13 @@ var defaultZoom = 1;
 
 // Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
-getImg('icon/ruler.png').then(function(cursorImg){
+getImg('icon/ruler.png').then(async function(cursorImg){
       cursor = cursorImg;
-      loadTiles().then(function(){
-            loadBGs().then(function(){
-                  drawLevel(false,true);
-            });
-      });
+      tiles = await loadTiles();
+      bgs = await loadBGs();
+      marioSprites = await loadMario();
+      drawLevel(false,true);
 });
-
-function loadTiles(){
-      return new Promise(function(resolve,reject){
-            Promise.all(
-                  [
-                  getImg('tiles/ground.png'),
-                  getImg('tiles/note.png'),
-                  getImg('tiles/goomba.png'),
-                  getImg('tiles/shellmet.png'),
-                  getImg('tiles/1up.png'),
-                  getImg('tiles/spike-top.png'),
-                  getImg('tiles/sledge-bro.png'),
-                  getImg('tiles/piranha.png'),
-                  getImg('tiles/bob-omb.png'),
-                  getImg('tiles/spiked-shellmet.png'),
-                  getImg('tiles/dry-bones.png'),
-                  getImg('tiles/mushroom.png'),
-                  getImg('tiles/poison.png'),
-                  getImg('tiles/woof.png'),
-                  getImg('tiles/monty-mole.png'),
-                  getImg('tiles/p-switch.png'),
-                  getImg('tiles/mew.png'),
-                  getImg('tiles/big-mushroom.png'),
-                  getImg('tiles/bill-blaster.png'),
-                  getImg('tiles/goomba-shoe.png'),
-                  getImg('tiles/goomba-stiletto.png'),
-                  getImg('tiles/cannon.png'),
-                  getImg('tiles/chain-chomp.png'),
-                  getImg('tiles/peg.png'),
-                  getImg('tiles/coin.png'),
-                  getImg('tiles/fire-piranha.png'),
-                  getImg('tiles/flower.png'),
-                  getImg('tiles/goombud.png'),
-                  getImg('tiles/green-koopa.png'),
-                  getImg('tiles/red-koopa.png'),
-                  getImg('tiles/hammer-bro.png'),
-                  getImg('tiles/magikoopa.png'),
-                  getImg('tiles/muncher.png'),
-                  getImg('tiles/pow.png'),
-                  getImg('tiles/spring.png'),
-                  getImg('tiles/sideways-spring.png'),
-                  getImg('tiles/star.png'),
-                  getImg('tiles/superball.png'),
-                  getImg('tiles/thwomp.png'),
-                  getImg('tiles/wiggler.png'),
-                  getImg('tiles/spike.png'),
-                  getImg('tiles/spikeball.png'),
-                  getImg('tiles/snowball.png'),
-                  getImg('tiles/pokey.png'),
-                  getImg('tiles/snow-pokey.png'),
-                  getImg('tiles/sword.png'),
-                  getImg('tiles/toad.png')
-                  ]
-            ).then(function(loaded){
-                  //console.log('All tiles loaded');
-                  tiles = loaded;
-                  resolve();
-            });
-      });
-}
 
 function loadFile(){ // Load file from the file input element
       var fname = document.getElementById('fileinput').files[0].name;
@@ -1389,4 +1329,8 @@ function quickLevelRefresh(){ // Redraw the level with only the bare necessities
       drawScrubber(ofsX,ofsY+27,canvas.width/16-27,canvas.height/16);
       refreshMini();
       refreshCanvas();
+}
+
+function getFraction(n){
+      return n - Math.floor(n);
 }

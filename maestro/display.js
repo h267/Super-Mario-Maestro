@@ -260,6 +260,65 @@ function drawLabel(x,y,str){
       canvasLayers[dlayer.mouseLayer].text(x,y,str);
 }
 
+function loadTiles(){
+      return new Promise(function(resolve,reject){
+            Promise.all(
+                  [
+                  getImg('tiles/ground.png'),
+                  getImg('tiles/note.png'),
+                  getImg('tiles/goomba.png'),
+                  getImg('tiles/shellmet.png'),
+                  getImg('tiles/1up.png'),
+                  getImg('tiles/spike-top.png'),
+                  getImg('tiles/sledge-bro.png'),
+                  getImg('tiles/piranha.png'),
+                  getImg('tiles/bob-omb.png'),
+                  getImg('tiles/spiked-shellmet.png'),
+                  getImg('tiles/dry-bones.png'),
+                  getImg('tiles/mushroom.png'),
+                  getImg('tiles/poison.png'),
+                  getImg('tiles/woof.png'),
+                  getImg('tiles/monty-mole.png'),
+                  getImg('tiles/p-switch.png'),
+                  getImg('tiles/mew.png'),
+                  getImg('tiles/big-mushroom.png'),
+                  getImg('tiles/bill-blaster.png'),
+                  getImg('tiles/goomba-shoe.png'),
+                  getImg('tiles/goomba-stiletto.png'),
+                  getImg('tiles/cannon.png'),
+                  getImg('tiles/chain-chomp.png'),
+                  getImg('tiles/peg.png'),
+                  getImg('tiles/coin.png'),
+                  getImg('tiles/fire-piranha.png'),
+                  getImg('tiles/flower.png'),
+                  getImg('tiles/goombud.png'),
+                  getImg('tiles/green-koopa.png'),
+                  getImg('tiles/red-koopa.png'),
+                  getImg('tiles/hammer-bro.png'),
+                  getImg('tiles/magikoopa.png'),
+                  getImg('tiles/muncher.png'),
+                  getImg('tiles/pow.png'),
+                  getImg('tiles/spring.png'),
+                  getImg('tiles/sideways-spring.png'),
+                  getImg('tiles/star.png'),
+                  getImg('tiles/superball.png'),
+                  getImg('tiles/thwomp.png'),
+                  getImg('tiles/wiggler.png'),
+                  getImg('tiles/spike.png'),
+                  getImg('tiles/spikeball.png'),
+                  getImg('tiles/snowball.png'),
+                  getImg('tiles/pokey.png'),
+                  getImg('tiles/snow-pokey.png'),
+                  getImg('tiles/sword.png'),
+                  getImg('tiles/toad.png')
+                  ]
+            ).then(function(loaded){
+                  //console.log('All tiles loaded');
+                  resolve(loaded);
+            });
+      });
+}
+
 function loadBGs(){
       return new Promise(function(resolve,reject){
             Promise.all([
@@ -267,7 +326,19 @@ function loadBGs(){
                   getImg('bg/goal.png')
             ]).then(function(loaded){
                   //console.log('BGs loaded');
-                  bgs = loaded;
+                  resolve(loaded);
+            });
+      });
+}
+
+function loadMario(){
+      return new Promise(function(resolve,reject){
+            Promise.all([
+                  getImg('anim/mario/idle.png'),
+                  getImg('anim/mario/walk.png'),
+                  getImg('anim/mario/run1.png'),
+                  getImg('anim/mario/run2.png')
+            ]).then(function(loaded){
                   resolve(loaded);
             });
       });
