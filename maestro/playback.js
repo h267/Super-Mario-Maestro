@@ -81,6 +81,7 @@ function loadBuffers(){
                   for(let j = 0; j < levelHeight - 1; j++){
                         await noteSchedule.instruments[i].generateBufferForNote(baseOfsY + j);
                   }
+                  document.getElementById('fileinput').disabled = false;
                   resolve();
             }));
             // TODO: Only load instruments that are CURRENTLY being used in range (possibly trigger during level overview construction)
@@ -90,7 +91,6 @@ function loadBuffers(){
 
 async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       stopAudio();
-      await loadBuffers();
       isContinuousPlayback = false;
       endBound = level.width;
       framesPerColumn = 1/(blocksPerBeat*bpm/3600);
@@ -112,7 +112,7 @@ async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       while(pos < endBound-marginWidth+1){
             advanceSchTime(2520/blocksPerBeat);
       }
-      playAudio(bpm, blocksPerBeat);
+      playAudio(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth));
 }
 
 async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintroduce
@@ -146,13 +146,13 @@ async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintro
       playAudio(bpm, blocksPerBeat);
 }
 
-function playAudio(bpm, bpb){
+function playAudio(bpm, bpb, maxX){
       if(bpm==undefined){bpm=120;}
       pos = 0;
       isPlaying = true;
       noteSchedule.setBPM(bpm);
       noteSchedule.play();
-      animatePlayback(bpm * bpb / 3600);
+      animatePlayback(bpm * bpb / 3600, maxX + marginWidth + 5 ); // FIXME: A good calculation for the last x-coord to be played
 }
 
 function stopAudio(){

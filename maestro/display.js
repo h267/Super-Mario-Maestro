@@ -231,6 +231,15 @@ function drawTile(image,x,y,layer){
       canvasLayers[layer].ctx.drawImage(image, x, y);
 }
 
+function drawSprite(image,x,y,layer){
+      if(layer == undefined){layer=dlayer.noteLayer;}
+      let layerCtx = canvasLayers[layer].ctx;
+      layerCtx.shadowColor = 'rgba(0,0,0,0.4)';
+      layerCtx.shadowOffsetX = 4;
+      layerCtx.drawImage(image, x, y);
+      layerCtx.shadowOffsetX = 0;
+}
+
 function decorateBG(){
       drawTile(bgs[0],16,canvas.height-64,0);
       drawTile(bgs[1],(240-10)*16,17*16,0);

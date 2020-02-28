@@ -1,14 +1,16 @@
 // Super Mario Maestro v1.3.1
 // made by h267
 
+// FIXME: Bugs:
+// 1. Instrument volume discrepancies
+// 2. Long notes do not properly terminate
+
 /* TODO: New features:
 
 1.3.1:
-- Full level playback
-- Example MIDI
-- Animation during playback
-- Better percussion splitting
-- A tutorial link
+- 3. Full level playback with smooth scroll (via forcing the scrollbar to the center every frame)
+- 4. Example MIDI
+- 5. Better percussion splitting
 
 1.4:
  - Animated entities with physics simulation
@@ -163,6 +165,8 @@ getImg('icon/ruler.png').then(async function(cursorImg){
       marioSprites = await loadMario();
       drawLevel(false,true);
 });
+
+loadBuffers();
 
 function loadFile(){ // Load file from the file input element
       var fname = document.getElementById('fileinput').files[0].name;
@@ -1160,29 +1164,43 @@ function generateAcceptableBPBs(){
       if(Math.ceil(Math.log2(reccBPB)) == Math.floor(Math.log2(reccBPB))){ // Check if the number is a power of 2
             return [1,2,4,8];
       }
-      else if(reccBPB%3 == 0){return [3,6];}
-      else{return [reccBPB];} // For BPBs 5 and 7
+      else if(reccBPB % 3 == 0 || reccBPB == 5){return [3,5,6];}
+      else{return [reccBPB];} // For BPB 7
 }
 
-function filterBPB(){
-      var i;
-      for(i=0;i<acceptableBPBs.length;i++){
-            if(blocksPerBeat == acceptableBPBs[i]){return;}
+function filterBPB(){ // Correct BPB if it ia out
+
+      // Return the minimum or maxiumum BPB if the current BPB is out of range of recommened BPBs
+
+      if(blocksPerBeat > acceptableBPBs[acceptableBPBs.length - 1]){
+            blocksPerBeat = acceptableBPBs[acceptableBPBs.length - 1];
+            return;
       }
-      var delta = blocksPerBeat - lastBPB;
+      if(blocksPerBeat < acceptableBPBs[0]){
+            blocksPerBeat = acceptableBPBs[0];
+            return;
+      }
+
+      // Handle when BPB is between the min and max recommended BPBs
+
+      var i;
+      for(i=0;i<acceptableBPBs.length;i++){ // Loop through the acceptable BPBs and check for a match
+            if(blocksPerBeat == acceptableBPBs[i]){return;} // If there is, return; no correction needed
+      }
+      var delta = blocksPerBeat - lastBPB; // +1 or -1; whether the bpb was increased or decreased
       var last = acceptableBPBs[0];
-      for(i=0;i<acceptableBPBs.length;i++){
+      for(i=0;i<acceptableBPBs.length;i++){ // Loop through the recommended BPBs, stopping when it exceeds the current uncorrected bpb
             if(acceptableBPBs[i] > blocksPerBeat){
-                  if(delta < 0){
+                  if(delta < 0){ // Pick the lesser BPB if the BPB was decreased
                         blocksPerBeat = last;
                         return;
                   }
-                  else{
+                  else{ // Pick the greater BPB if the BPB was increased
                         blocksPerBeat = acceptableBPBs[i];
                         return;
                   }
             }
-            last = acceptableBPBs[i];
+            last = acceptableBPBs[i]; // Save the last recommended BPB looped through
       }
 }
 
@@ -1272,6 +1290,7 @@ function redrawMinimap(){
 }
 
 function refreshBlocks(){
+      let highestX = 0;
       for(var i=0;i<midi.trks.length;i++){
             level.clearNoteGroup(i);
             level.noteGroups[i].ofsY = octaveShifts[i]*12 + semitoneShifts[i];
@@ -1280,6 +1299,7 @@ function refreshBlocks(){
                   if(note.volume<noiseThreshold){continue;} // Skip notes with volume below noise threshold
                   x = (note.time/midi.timing)*blocksPerBeat;
                   var levelX = Math.round(x);
+                  if(levelX > highestX) highestX = levelX;
                   var instrument = getMM2Instrument(note.instrument);
                   if(note.channel == 9){
                         instrument = getPercussionInstrument(note.key)+2; // Use note.key to avoid the pitch overwrite to 54 here
@@ -1291,6 +1311,7 @@ function refreshBlocks(){
                   }
             }
       }
+      level.maxWidth = highestX;
 }
 
 function scrollLevelByX(ox){ // Offsets are given as percentages of the level

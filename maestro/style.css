@@ -1,4 +1,4 @@
-/* Thanks Loup&Snoop */
+/* Thanks Loup&Snoop (for the colors) */
 
 body{
       background-color: #086a9a;
@@ -48,10 +48,6 @@ button::-moz-focus-inner {
 }
 
 .button:enabled:active{
-      /*animation-name: buttonpress;
-      animation-duration: 50ms;
-      animation-timing-function: ease-in;
-      animation-fill-mode: both;*/
       box-shadow: #1a5586 0px 0px;
       transform: translateY(4px);
 }
@@ -89,6 +85,12 @@ p, label{
       font-size: 12px;
       font-family: Arial, Helvetica, sans-serif;
       color: white;
+}
+
+a{
+      font-size: 12px;
+      font-family: Arial, Helvetica, sans-serif;
+      color: rgb(130, 255, 213);
 }
 
 .displaytext{

@@ -9,6 +9,7 @@ class Level{
             this.entityCount = 0;
             this.powerupCount = 0;
             this.width = levelWidth;
+            this.maxWidth = 0;
             this.limitLine = null;
             this.refresh();
       }
