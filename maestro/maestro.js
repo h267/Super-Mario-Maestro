@@ -3,7 +3,11 @@
 
 // FIXME: Bugs:
 // 1. Instrument volume discrepancies
-// 2. Long notes do not properly terminate
+// 2A. Specific playback thing
+// 2B. THE CLICKING
+
+// TODO: Upon release, re-enable gtag
+// TODO: Document every function
 
 /* TODO: New features:
 
@@ -32,12 +36,16 @@ const levelWidth = 240;
 const marginWidth = 27;
 const levelHeight = 27;
 const baseOfsY = 48;
+const discordInviteLink = 'https://discord.gg/KhmXzfp';
 
 var reader = new FileReader();
 var numCommonTempos = 0;
 var midi;
-// blocks per beat: 4
-var tempos = [
+
+/**
+ * Data on the various scroll speeds in Mario Maker 2. Tempos are stored in their 4 block per beat equivalents.
+ */
+const MM2Tempos = [
       {name: 'Slow Autoscroll', bpm: 28, isCommon: false},
       {name: 'Backwards Normal Conveyor - Walking', bpm: 28, isCommon: false},
       {name: 'Underwater - Walking', bpm: 32, isCommon: false},
@@ -66,7 +74,10 @@ var tempos = [
       {name: 'Fast Conveyor - Running', bpm: 279, isCommon: false}
 ];
 
-var instruments = [
+/**
+ * Data on the instruments available in Mario Maker 2.
+ */
+const MM2Instruments = [
       {id: 'goomba', name: 'Goomba (Grand Piano)', octave: 1, isPowerup: false},
       {id: 'buzzybeetle', name: 'Buzzy Shellmet (Detuned Bell)', octave: 1, isPowerup: false},
       {id: '1up', name: '1-Up (Synth Organ)', octave: 0, isPowerup: true},
@@ -113,7 +124,7 @@ var instruments = [
       {id: 'sword', name: 'Master Sword (Synth Horn)', octave: 0, isPowerup: true},/*
       {id: 'toad', name: 'Toad (Suffering)', octave: 0, isPowerup: false},*/ // If you uncomment this, only pain and suffering awaits
 ];
-var alphabetizedInstruments = alphabetizeInstruments(instruments);
+var alphabetizedInstruments = alphabetizeInstruments(MM2Instruments);
 var tiles;
 var bgs;
 var marioSprites;
@@ -168,6 +179,9 @@ getImg('icon/ruler.png').then(async function(cursorImg){
 
 loadBuffers();
 
+/**
+ * Loads a MIDI file and initializes the state of the level.
+ */
 function loadFile(){ // Load file from the file input element
       var fname = document.getElementById('fileinput').files[0].name;
       if(fname.substring(fname.length-8,fname.length).toLowerCase()=='.mp3.mid'){ // Detect MP3 MIDIs
@@ -228,7 +242,7 @@ function loadFile(){ // Load file from the file input element
                   }
                   outlineLayers[i] = new DrawLayer(canvas.width, canvas.height);
                   if(midi.trks[i].usedInstruments.length == 0 || midi.trks[i].hasPercussion){continue;}
-                  octaveShifts[i] = instruments[getMM2Instrument(midi.trks[i].usedInstruments[0])-2].octave*-1;
+                  octaveShifts[i] = MM2Instruments[getMM2Instrument(midi.trks[i].usedInstruments[0])-2].octave*-1;
                   if(midi.trks[i].highestNote == null || midi.trks[i].highestNote == null){continue;}
                   var thisRange = Math.max(Math.abs(64-midi.trks[i].lowestNote),Math.abs(64-midi.trks[i].highestNote));
                   if(thisRange > noteRange){noteRange = thisRange;}
@@ -249,16 +263,13 @@ function loadFile(){ // Load file from the file input element
       };
 }
 
+/**
+ * Refreshes the state of the user interface.
+ */
 function updateUI(limitedUpdate, reccTempo){
-      //console.log('rebuilding level');
-      var t0 = (new Date()).getTime();
       var i;
-      var j;
-      var x;
-      var y;
       var width = Math.ceil((midi.duration/midi.timing)*blocksPerBeat);
       setMiniWidth(width);
-      var uspqn = 500000; // Assumed
       var haveTempo = false; // TODO: Get rid of this when adding dynamic tempo
       bbar = midi.firstBbar;
       if(!limitedUpdate){
@@ -344,6 +355,9 @@ function updateUI(limitedUpdate, reccTempo){
       //console.log('Completed in '+((new Date).getTime()-t0)+' ms');
 }
 
+/** 
+ * Draws the background of the main canvas.
+ */
 function drawBG(){
       setBG('#00B2EE');
       drawGrid(16);
@@ -503,6 +517,12 @@ function drawLevel(redrawMini,noDOM){
       if(fileLoaded){refreshMini();}
 }
 
+/** 
+ * Moves the file viewer to the specified area in the level.
+ * @param {number} ox The x-offset as a percentage.
+ * @param {number} oy The y-offset as a percentage.
+ */
+
 function moveOffsetTo(ox,oy){ // Offsets are given as percentages of the level
       if(!fileLoaded){return;}
       cancelPlayback();
@@ -523,6 +543,9 @@ function moveOffsetTo(ox,oy){ // Offsets are given as percentages of the level
       softRefresh(false,false);
 }
 
+/**
+ * Reads the value in the vertical offset number picker and moves the offset to that value.
+ */
 function nudgeY(){
       enableMouse();
       cancelPlayback();
@@ -531,17 +554,25 @@ function nudgeY(){
       moveOffsetTo(null,(relativeOfs+baseOfsY)/127);
 }
 
+/**
+ * Sets the global x and y offsets to their default values.
+ */
 function resetOffsets(){
       ofsX = 0;
       ofsY = baseOfsY;
       document.getElementById('yofspicker').value = 0;
 }
 
-function recommendTempo(songBPM,bpb,print){
+/**
+ * Recommends a tempo based on the song's BPM and the number of blocks per beat.
+ * @param {number} songBPM The tempo of the song, in beats per minute.
+ * @param {number} bpb The number of blocks per beat.
+ */
+function recommendTempo(songBPM, bpb){
       var closestDist = 10000;
       var recc = -1;
-      for(i=0;i<tempos.length;i++){
-            var dist = Math.abs((tempos[i].bpm*(4/bpb))-songBPM);
+      for(i=0;i<MM2Tempos.length;i++){
+            var dist = Math.abs((MM2Tempos[i].bpm*(4/bpb))-songBPM);
             //console.log((bpms[i]*(4/bpqn))+' is dist of '+dist);
             if(dist<closestDist){
                   closestDist = dist;
@@ -550,10 +581,13 @@ function recommendTempo(songBPM,bpb,print){
       }
       //console.log(bpmIDtoStr(recc));
       //console.log(songBPM+' -> '+bpms[recc]*(4/res));
-      if(print){document.getElementById('temposelect').selectedIndex = numCommonTempos+recc;}
-      return tempos[recc].bpm*(4/bpb);
+      document.getElementById('temposelect').selectedIndex = numCommonTempos+recc;
+      return MM2Tempos[recc].bpm*(4/bpb);
 }
 
+/**
+ * Reads the state of the track visibility checkboxes and update the level accordingly.
+ */
 function chkRefresh(){
       var i;
       for(i=0;i<midi.trks.length;i++){
@@ -566,6 +600,10 @@ function chkRefresh(){
       softRefresh();
 }
 
+/**
+ * Determines the equivalent Mario Maker 2 tile ID for a given MIDI instrument.
+ * @param {number} midiInstrument The zero-indexed ID of the MIDI instrument.
+ */
 function getMM2Instrument(midiInstrument){
       midiInstrument++;
       // 1. Specific MIDI Instruments
@@ -591,6 +629,11 @@ function getMM2Instrument(midiInstrument){
       else return midiInstrument - 127 + 16; // For new instruments
 }
 
+/**
+ * Determines the equivalent zero-indexed MIDI instrument ID for a given Mario Maker 2 tile ID.
+ * @param {number} mm2Instrument The tile ID of the entity to convert to a MIDI instrument.
+ * @returns {number} The MIDI instrument ID.
+ */
 function getMidiInstrument(mm2Instrument){
       switch(mm2Instrument){
             case 2: return 0;
@@ -614,25 +657,33 @@ function getMidiInstrument(mm2Instrument){
       }
 }
 
+/**
+ * Handles when the main canvas is clicked, and toggle the ruler.
+ */
 function handleClick(e){
-      if(noMouse){return;}
+      if(noMouse){return;} // Exit if the mouse is disabled
       if(clickedTile!=null){
-            clickedTile = null;
+            // If the ruler is on...
+            clickedTile = null; // Turn off the ruler
             clearDisplayLayer(dlayer.mouseLayer);
             refreshCanvas();
             return;
       }
+      // Else, if the ruler is off...
       var canvasOfs = getOffset(e);
       var div = document.getElementById('displaycontainer');
       var scrollOfs = {x: div.scrollLeft, y: div.scrollTop};
       var offset = {x: canvasOfs.x + scrollOfs.x, y: canvasOfs.y + scrollOfs.y};
       var tilePos = {x: Math.floor(offset.x/16), y:27-Math.floor(offset.y/16)};
       var levelPos = {x:tilePos.x + ofsX - 27, y:tilePos.y + ofsY};
-      clickedTile = levelPos;
+      clickedTile = levelPos; // Turn on the ruler
 }
 
+/**
+ * Handles when the mouse is moved across the main canvas
+ */
 function handleMove(e){
-      if(noMouse){return;}
+      if(noMouse){return;} // Exit if the mouse is disabled
       var canvasOfs = getOffset(e);
       var div = document.getElementById('displaycontainer');
       var scrollOfs = {x: div.scrollLeft, y: div.scrollTop};
@@ -643,6 +694,7 @@ function handleMove(e){
       var refresh = false;
 
       if(currentHighlight.x!=tilePos.x || currentHighlight.y!=tilePos.y){
+            // Draw the cursor
             clearDisplayLayer(dlayer.mouseLayer);
             highlightTile(tilePos.x,27-tilePos.y,{style:'rgba(0,0,0,0.1)', layer: dlayer.mouseLayer}); // Lightly highlight the tile the cursor is on
             drawTile(cursor,(tilePos.x-1)*16,(27-(tilePos.y+1))*16,dlayer.mouseLayer); // Draw the cursor icon
@@ -653,63 +705,56 @@ function handleMove(e){
 
       if(clickedTile==null){return;}
 
-      //if(level.checkTile(levelPos.x,levelPos.y) == 1){
-            //console.log('On another note!');
-            //console.log(levelPos);
-            if(refresh){
-                  //highlightTile(tilePos.x,27-tilePos.y);
+      if(refresh){ // If the highlighted tile position has changed, redraw the ruler
 
-                  // Very bad and confusing because I changed my mind halfway through and didn't feel like fixing it
-                  var i = levelPos.x;
-                  var j = levelPos.y;
-                  levelPos = clickedTile;
-                  tilePos = {x: levelPos.x - ofsX + 27, y: levelPos.y - ofsY};
+            var i = levelPos.x;
+            var j = levelPos.y;
+            levelPos = clickedTile;
+            tilePos = {x: levelPos.x - ofsX + 27, y: levelPos.y - ofsY};
 
-                  //console.log('Found at '+i+', '+j);
-                  //console.log('Delta: Left '+(i-levelPos.x)+', Up '+(j-levelPos.y));
-                  var dirStr = {h: '', v: ''};
-                  var k;
-                  if(i-levelPos.x > 0){
-                        dirStr.h = 'Right';
-                        for(k=0;k<i-levelPos.x;k++){
-                              highlightTile(tilePos.x+k+1,27-tilePos.y,{layer: dlayer.mouseLayer});
-                        }
-                  }
-                  else if(i-levelPos.x < 0){
-                        dirStr.h = 'Left';
-                        for(k=0;k<(i-levelPos.x)*-1;k++){
-                              highlightTile(tilePos.x-k-1,27-tilePos.y,{layer: dlayer.mouseLayer});
-                        }                        
-                  }
-                  
-                  if(j-levelPos.y > 0){
-                        dirStr.v = 'Up';
-                        for(k=0;k<j-levelPos.y;k++){
-                              //console.log('h '+(tilePos.x+(i-levelPos.x))+', '+(27-(j-ofsY-k)));
-                              highlightTile((tilePos.x+(i-levelPos.x)),27-(j-ofsY-k),{style: 'rgba(0,191,0,0.5)', layer: dlayer.mouseLayer});
-                        }
-                  }
-                  else if(j-levelPos.y < 0){
-                        dirStr.v = 'Down';
-                        for(k=0;k<(j-levelPos.y)*-1;k++){
-                              //console.log('h '+(tilePos.x+(i-levelPos.x))+', '+(27-(j-ofsY-k)));
-                              highlightTile((tilePos.x+(i-levelPos.x)),27-(j-ofsY+k),{style: 'rgba(0,191,0,0.5)', layer: dlayer.mouseLayer});
-                        }
-                  }
-                  if(dirStr.h!=''&&dirStr.v!=''){
-                        drawLabel(realTpos.x*16-24,(27-realTpos.y)*16-8,dirStr.h+' '+Math.abs(i-levelPos.x)+', '+dirStr.v+' '+Math.abs(j-levelPos.y));
-                  }
-                  else if(dirStr.h==''&&dirStr.v!=''){
-                        drawLabel(realTpos.x*16-24,(27-realTpos.y)*16-8,dirStr.v+' '+Math.abs(j-levelPos.y));
-                  }
-                  else{
-                        drawLabel(realTpos.x*16-24,(27-realTpos.y)*16-8,dirStr.h+' '+Math.abs(i-levelPos.x));
+            var dirStr = {h: '', v: ''}; // The string to display next to the ruler
+            var k;
+            if(i-levelPos.x > 0){
+                  dirStr.h = 'Right';
+                  for(k=0;k<i-levelPos.x;k++){
+                        highlightTile(tilePos.x+k+1,27-tilePos.y,{layer: dlayer.mouseLayer});
                   }
             }
-      //}
+            else if(i-levelPos.x < 0){
+                  dirStr.h = 'Left';
+                  for(k=0;k<(i-levelPos.x)*-1;k++){
+                        highlightTile(tilePos.x-k-1,27-tilePos.y,{layer: dlayer.mouseLayer});
+                  }                        
+            }
+            
+            if(j-levelPos.y > 0){
+                  dirStr.v = 'Up';
+                  for(k=0;k<j-levelPos.y;k++){
+                        highlightTile((tilePos.x+(i-levelPos.x)),27-(j-ofsY-k),{style: 'rgba(0,191,0,0.5)', layer: dlayer.mouseLayer});
+                  }
+            }
+            else if(j-levelPos.y < 0){
+                  dirStr.v = 'Down';
+                  for(k=0;k<(j-levelPos.y)*-1;k++){
+                        highlightTile((tilePos.x+(i-levelPos.x)),27-(j-ofsY+k),{style: 'rgba(0,191,0,0.5)', layer: dlayer.mouseLayer});
+                  }
+            }
+            if(dirStr.h!=''&&dirStr.v!=''){
+                  drawLabel(realTpos.x*16-24,(27-realTpos.y)*16-8,dirStr.h+' '+Math.abs(i-levelPos.x)+', '+dirStr.v+' '+Math.abs(j-levelPos.y));
+            }
+            else if(dirStr.h==''&&dirStr.v!=''){
+                  drawLabel(realTpos.x*16-24,(27-realTpos.y)*16-8,dirStr.v+' '+Math.abs(j-levelPos.y));
+            }
+            else{
+                  drawLabel(realTpos.x*16-24,(27-realTpos.y)*16-8,dirStr.h+' '+Math.abs(i-levelPos.x));
+            }
+      }
       refreshCanvas();
 }
 
+/**
+ * Reads the blocks per beat number picker, and snaps to the closest value if an invalid input is given.
+ */
 function pickBPB(){
       var val = document.getElementById('bpbpicker').value;
       val = Math.floor(val);
@@ -725,20 +770,25 @@ function pickBPB(){
       changeBPB();
 }
 
+/**
+ * Sets the blocks per beat value to the recommended one.
+ */
 function changeToRecommendedBPB(){
       blocksPerBeat = recmdBlocksPerBeat;
       document.getElementById('bpbpicker').value = blocksPerBeat;
       changeBPB();
 }
 
-function changeBPB(moveOfs){
+/**
+ * Refreshes the level and calculates the new x-offset if the blocks per beat setting is changed.
+ */
+function changeBPB(){
       if(!fileLoaded){return;}
-      moveOfs = true;
       quantizeErrorAggregate = 0;
       for(var i=0;i<midi.trks.length;i++){
             if(!level.noteGroups[i] || level.noteGroups[i].isVisible){quantizeErrorAggregate += midi.trks[i].quantizeErrors[blocksPerBeat-1];}
       }
-      if(moveOfs && !isNewFile){
+      if(!isNewFile){
             cancelPlayback();
             var ratio = (ofsX*minimapZoomX)/minimap.width;
             moveOffsetTo(ratio,null);
@@ -748,20 +798,29 @@ function changeBPB(moveOfs){
       }
 }
 
+/**
+ * Triggers level playback.
+ */
 function playBtn(){
       if(fileLoaded){
-            noMouse = true;
+            disableMouse();
             document.getElementById('playbtn').disabled = true;
             playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY);
       }
 }
 
+/**
+ * Stops level playback.
+ */
 function cancelPlayback(){
       if(!isPlaying) return;
       resetPlayback();
       stopAudio();
 }
 
+/**
+ * Recommends a blocks per beat value based on the quantization errors of each track.
+ */
 function recommendBPB(){
       var lowestQuantizeError = Infinity;
       var bestBPB = 0;
@@ -776,29 +835,55 @@ function recommendBPB(){
             }
       }
       var recmd = bestBPB;
-      changeBPB(false);
+      changeBPB();
       return recmd;
 }
 
-function isVisible(x,y,ofsX,ofsY){
+/**
+ * Determines whether or not a given point should be visible in the level based on x and y offsets.
+ * @param {number} x The x-coordinate of the query point.
+ * @param {number} y The y-coordinate of the query point.
+ * @param {number} ofsX The x-offset of the viewing window.
+ * @param {number} ofsY The y-offset of the viewing window.
+ * @returns {boolean} If the point is visible.
+ */
+function isVisible(x, y, ofsX, ofsY){
       return (x >= ofsX && x < ofsX+levelWidth-27 && y >= ofsY && y < ofsY+27);
 }
 
+/**
+ * Enables mouse controls on the main canvas.
+ */
 function enableMouse(){
       noMouse = false;
 }
 
+/**
+ * Disables mouse controls on the main canvas.
+ */
+function disableMouse(){
+      noMouse = true;
+}
+
+/**
+ * Handles when the mouse leaves the main canvas.
+ */
 function handleOut(){
       if(noMouse){return;}
       clearDisplayLayer(dlayer.mouseLayer);
       refreshCanvas();
-      //drawLevel(false,true);
 }
 
+/**
+ * Displays the main tools.
+ */
 function showEverything(){
-      document.getElementById('toolbox').style = ''; // Much better
+      document.getElementById('toolbox').style = '';
 }
 
+/**
+ * Refreshes the options in the tempo dropdown menu.
+ */
 function refreshTempos(){
       var i;
       var commonGroup = document.getElementById('comtempos');
@@ -806,28 +891,34 @@ function refreshTempos(){
       commonGroup.innerHTML = '';
       allGroup.innerHTML = '';
       if(isNewFile){numCommonTempos = 0;}
-      for(i=0;i<tempos.length;i++){
+      for(i=0;i<MM2Tempos.length;i++){
             var opt = document.createElement('option');
             opt.value = i;
-            opt.innerHTML = tempos[i].name+' ('+Math.round(tempos[i].bpm*(4/blocksPerBeat))+' bpm)';
+            opt.innerHTML = MM2Tempos[i].name+' ('+Math.round(MM2Tempos[i].bpm*(4/blocksPerBeat))+' bpm)';
             allGroup.appendChild(opt);
-            if(tempos[i].isCommon){
+            if(MM2Tempos[i].isCommon){
                   if(isNewFile){numCommonTempos++;}
                   var opt2 = document.createElement('option');
                   opt2.value = i;
-                  opt2.innerHTML = tempos[i].name+' ('+Math.round(tempos[i].bpm*(4/blocksPerBeat))+' bpm)';
+                  opt2.innerHTML = MM2Tempos[i].name+' ('+Math.round(MM2Tempos[i].bpm*(4/blocksPerBeat))+' bpm)';
                   commonGroup.appendChild(opt2);
             }
       }
 }
 
+/**
+ * Reads the value of the tempo dropdown and updates the tempo accordingly.
+ */
 function selectTempo(){
       var sel = document.getElementById('temposelect');
       var selected = sel.value;
-      bpm = tempos[selected].bpm*(4/blocksPerBeat);
+      bpm = MM2Tempos[selected].bpm*(4/blocksPerBeat);
       cancelPlayback();
 }
 
+/**
+ * Refreshes the state of the level without updating the entire UI.
+ */
 function softRefresh(noDOM, redrawMini){ // Refresh changes to track layers
       if(noDOM == undefined){noDOM = false;}
       if(redrawMini == undefined){redrawMini = true;}
@@ -835,18 +926,27 @@ function softRefresh(noDOM, redrawMini){ // Refresh changes to track layers
       drawLevel(redrawMini,noDOM);
 }
 
+/**
+ * Refreshes the state of the level and UI.
+ */
 function hardRefresh(reccTempo, limitUpdate){ // Refresh changes to the entire MIDI
       if(limitUpdate == undefined){limitUpdate = true;}
       updateUI(limitUpdate, reccTempo);
       softRefresh(false,true);
 }
 
+/**
+ * Reads the value of the noise slider and refreshes the level.
+ */
 function changeNoiseThreshold(){
       noiseThreshold = document.getElementById('noiseslider').value;
       refreshBlocks();
       hardRefresh(false);
 }
 
+/**
+ * Reads the values of the octave and semitone shift inputs and shifts the selected track accordingly.
+ */
 function shiftTrackOctave(){
       cancelPlayback();
       octaveShifts[selectedTrack] = parseInt(document.getElementById('octaveshift').value);
@@ -858,6 +958,10 @@ function shiftTrackOctave(){
       updateInstrumentContainer();
 }
 
+/**
+ * Changes the currently selected track, refreshing the track selector.
+ * @param {number} trkID The ID of the track to select.
+ */
 function selectTrack(trkID){
       if(isPlaying && isContinuousPlayback) cancelPlayback();
       var initSelect = (trkID == -1);
@@ -900,6 +1004,12 @@ function selectTrack(trkID){
       updateInstrumentContainer();
 }
 
+/**
+ * Changes every instance of an original instrument in the specified track into a new instrument.
+ * @param {number} trk The ID of the track to replace instruments in.
+ * @param {number} ins The Mario Maker 2 tile ID of the orignal instrument to replace. The original instrument is the instrument originally detected in the MIDI file.
+ * @param {number} newIns The Mario Maker 2 tile ID of the instrument to replace the detected instruments with.
+ */
 function changeInstrument(trk, ins, newIns){
       var i;
       for(i=0;i<midi.trks[trk].notes.length;i++){
@@ -909,6 +1019,9 @@ function changeInstrument(trk, ins, newIns){
       hardRefresh(false);
 }
 
+/**
+ * Refreshes the options in the instrument dropdown menu, recommending instruments based on the current instrument's octave and entity counts.
+ */
 function updateInstrumentContainer(){
       if(midi.trks[selectedTrack].hasPercussion){
             document.getElementById('instrumentcontainer').style.display = 'none';
@@ -985,18 +1098,24 @@ function updateInstrumentContainer(){
             if(hasOctaveRec){picker.appendChild(recOctGroup);}
             if(hasEntityRec){picker.appendChild(recEntGroup);}
             picker.appendChild(allGroup);
-            picker.selectedIndex = getUnsortedInstrumentIndex(instrumentChanges[selectedTrack][i]) + numRecommendedInstruments;
+            picker.selectedIndex = getSortedInstrumentIndex(instrumentChanges[selectedTrack][i]) + numRecommendedInstruments;
             container.appendChild(div);
             updateOutOfBoundsNoteCounts();
       }
 }
 
+/**
+ * Reads the value of the instrument dropdown and changes the instrument accordingly.
+ */
 function triggerInstrChange(selectedInstrument){
       var selectedInsIndex = alphabetizedInstruments[document.getElementById('inspicker'+selectedInstrument).value].pos;
       changeInstrument(selectedTrack,getMM2Instrument(midi.trks[selectedTrack].usedInstruments[selectedInstrument]),selectedInsIndex+2);
       instrumentChanges[selectedTrack][selectedInstrument] = selectedInsIndex;
 }
 
+/**
+ * Displays the number of notes above and below the viewing window, colorizing based on the ratio of out-of-bounds notes to total notes in the selected track.
+ */
 function updateOutOfBoundsNoteCounts(){
       var nasText = document.getElementById('NASText');
       var nbsText = document.getElementById('NBSText');
@@ -1015,15 +1134,25 @@ function updateOutOfBoundsNoteCounts(){
       else nbsText.style.color = 'red';
 }
 
+/**
+ * Finds the Mario Maker 2 instrument ID of the instrument corresponding to the input name.
+ * @param {string} name The name of the instrument to retrieve the ID of.
+ * @returns {number} The instrument ID of the instrument with the name.
+ */
 function getInstrumentById(name){ // Not the fastest solution, but it's convenient
-      for(var i=0;i<instruments.length;i++){
-            if(instruments[i].id == name){return i;}
+      for(var i=0;i<MM2Instruments.length;i++){
+            if(MM2Instruments[i].id == name){return i;}
       }
 }
 
-function getPercussionInstrument(pitch){
-      pitch++;
-      switch(pitch){
+/**
+ * Suggests a Mario Maker 2 instrument recommendation for a percussion key on MIDI Channel 10.
+ * @param {number} key The percussion key to recommend an instrument for.
+ * @returns {number} The instrument ID of the recommended instrument.
+ */
+function getPercussionInstrument(key){
+      key++;
+      switch(key){
             case 35: return getInstrumentById('pow');
             case 36: return getInstrumentById('pow');
             case 37: return getInstrumentById('pow');
@@ -1049,6 +1178,10 @@ function getPercussionInstrument(pitch){
       }
 }
 
+/**
+ * Splits a track with multiple instruments into multiple tracks - one for each instrument.
+ * @param {number} trk The ID of the multiple-instrument track to separate.
+ */
 function sepInsFromTrk(trk){ // Create new 
       var i;
       var newTrks = new Array(trk.usedInstruments.length);
@@ -1088,22 +1221,33 @@ function sepInsFromTrk(trk){ // Create new
             newTrks[i].label = labl+' '+midi.getLabelNumber(labl);
             addTrack(newTrks[i]);
       }
-      snipTrack(trk);
+      disableTrack(trk);
 }
 
-function addTrack(trk){
-      midi.trks.push(trk);
+/**
+ * Adds a new track to the list of current tracks in the level.
+ * @param {MIDItrack} track The MIDItrack object of the track to add to the level.
+ */
+function addTrack(track){
+      midi.trks.push(track);
       octaveShifts.push(0);
       semitoneShifts.push(0);
       notesAboveScreen.push(0);
       notesBelowScreen.push(0);
-      instrumentChanges.push([getMM2Instrument(trk.usedInstruments[0])-2]);
+      instrumentChanges.push([getMM2Instrument(track.usedInstruments[0])-2]);
 }
 
-function snipTrack(trk){ // This makes the track invisible, but doesn't actually remove it from the array
-      trk.notes = [];
+/**
+ * Removes all of the notes in a track, effectively disabling it and making it invisible.
+ * @param {MIDItrack} track The MIDItrack object of the track to disable.
+ */
+function disableTrack(track){ // This makes the track invisible, but doesn't actually remove it from the array
+      track.notes = [];
 }
 
+/**
+ * Plays a button press animation on the Discord button and opens the Discord invite in a new tab.
+ */
 function handleDiscordPress(){
       var btn = document.getElementById('discordbutton');
       btn.style.animationFillMode = 'both';
@@ -1118,22 +1262,30 @@ function handleDiscordPress(){
             btn.disabled = true;
             btn.style.animation = 'discorddisappear 0.5s';
             btn.style.animationFillMode = 'both';
-            window.open('https://discord.gg/KhmXzfp');
+            window.open(discordInviteLink);
       }, 600);
-      /*setTimeout(function(){
-            btn.style.animationPlayState = 'running';
-      }, 1000);*/
 }
 
+/**
+ * Changes the position of the main display's scrollbar by an amount.
+ * @param {number} pixels The amount to displace the scrollbar by, in pixels.
+ */
 function scrollDisplayBy(pixels){
       var current = document.getElementById('displaycontainer').scrollLeft;
       document.getElementById('displaycontainer').scrollLeft = current + pixels;
 }
 
+/**
+ * Changes the position of the main display's scrollbar to an exact amount.
+ * @param {number} pixelsOfs The displacement of the scrollbar, in pixels.
+ */
 function scrollDisplayTo(pixelsOfs){
       document.getElementById('displaycontainer').scrollLeft = pixelsOfs;
 }
 
+/**
+ * Toggles advanced settings, refreshing the UI accordingly.
+ */
 function toggleAdvancedMode(){
       usingAdvSettings = document.getElementById('advbox').checked;
       if(midi.trks[selectedTrack].hasPercussion || usingAdvSettings){
@@ -1160,6 +1312,10 @@ function toggleAdvancedMode(){
       }
 }
 
+/**
+ * Determines the set of acceptable blocks per beat values based on the recommended one.
+ * @returns {number[]} The set of acceptable values.
+ */
 function generateAcceptableBPBs(){
       if(Math.ceil(Math.log2(reccBPB)) == Math.floor(Math.log2(reccBPB))){ // Check if the number is a power of 2
             return [1,2,4,8];
@@ -1168,7 +1324,10 @@ function generateAcceptableBPBs(){
       else{return [reccBPB];} // For BPB 7
 }
 
-function filterBPB(){ // Correct BPB if it ia out
+/**
+ * Corrects the value of the blocks per beat setting to the acceptable range if it falls outside of the acceptable range.
+ */
+function filterBPB(){
 
       // Return the minimum or maxiumum BPB if the current BPB is out of range of recommened BPBs
 
@@ -1204,6 +1363,11 @@ function filterBPB(){ // Correct BPB if it ia out
       }
 }
 
+/**
+ * Calculates the octave shift value needed to shift a track into view from the average note pitch of the track.
+ * @param {number} trkID The ID of the track to calculate the shift value for.
+ * @returns {number} The octave shift value needed to shift the track into view.
+ */
 function getViewOctaveShift(trkID){
       var sum = 0;
       var i;
@@ -1214,6 +1378,9 @@ function getViewOctaveShift(trkID){
       return Math.round((avg - (60 + (ofsY-baseOfsY)))/12)*-1;
 }
 
+/**
+ * Shifts the selected track into view of the level.
+ */
 function shiftTrackIntoView(){
       cancelPlayback();
       var shift = getViewOctaveShift(selectedTrack);
@@ -1227,12 +1394,20 @@ function shiftTrackIntoView(){
       updateInstrumentContainer();
 }
 
+/**
+ * Redraws the outline layer of the selected track onto the outline layer.
+ */
 function refreshOutlines(){
       clearDisplayLayer(dlayer.outlineLayer);
       canvasLayers[dlayer.outlineLayer].ctx.drawImage(outlineLayers[selectedTrack].canvas,0,0,canvas.width,canvas.height);
       refreshCanvas();
 }
 
+/**
+ * Sorts the instruments array alphabetically.
+ * @param {Object[]} arr The instrument array to sort.
+ * @return {Object[]} The sorted instrument array.
+ */
 function alphabetizeInstruments(arr){
       var newArr = new Array(arr.length);
       for(var i=0;i<arr.length;i++){
@@ -1245,23 +1420,34 @@ function alphabetizeInstruments(arr){
       return newArr;
 }
 
-function getUnsortedInstrumentIndex(sortedIndex){
+/**
+ * Finds the index of the alphabetized instrument array based on the index in the unalphabetized instrument array.
+ * @param {number} unsortedIndex The index to get the sorted index of.
+ * @returns {number} The corresponding index of the alphabetized instrument array.
+ */
+function getSortedInstrumentIndex(unsortedIndex){
       var i;
       for(i=0;i<alphabetizedInstruments.length;i++){
-            if(sortedIndex == alphabetizedInstruments[i].pos){return i;}
+            if(unsortedIndex == alphabetizedInstruments[i].pos){return i;}
       }
 }
 
+/**
+ * Adjusts the minimap's zoom level based on the detected range of notes in the file.
+ * @returns {number} The calculated zoom level.
+ */
 function adjustZoom(){
       var range = noteRange;
       if(range < 18){range = 18;}
       var lowerBound = 64-range;
       var zoom = -32/(lowerBound-64);
       setMiniZoomY(zoom);
-      //console.log('zoom set to '+zoom);
       return zoom;
 }
 
+/**
+ * Calculates the difference between the highest and lowest visible note in the file.
+ */
 function calculateNoteRange(){
       noteRange = 0;
       for(var i=0;i<midi.trks.length;i++){
@@ -1271,6 +1457,9 @@ function calculateNoteRange(){
       }
 }
 
+/**
+ * Redraws the points on the minimap where notes are located.
+ */
 function redrawMinimap(){
       miniClear(0);
       for(var i=0;i<=midi.trks.length;i++){
@@ -1289,6 +1478,9 @@ function redrawMinimap(){
       }
 }
 
+/**
+ * Updates the stored values for tile positions in the level.
+ */
 function refreshBlocks(){
       let highestX = 0;
       for(var i=0;i<midi.trks.length;i++){
@@ -1314,7 +1506,10 @@ function refreshBlocks(){
       level.maxWidth = highestX;
 }
 
-function scrollLevelByX(ox){ // Offsets are given as percentages of the level
+/**
+ * Increases the level's x-offset and triggers a quick refresh of the level.
+ */
+function scrollLevelXBy(ox){
       if(!fileLoaded){return;}
       ofsX += ox;
       var limX = (minimap.width-(canvas.width/16-27))+(blocksPerBeat*bbar);
@@ -1323,6 +1518,9 @@ function scrollLevelByX(ox){ // Offsets are given as percentages of the level
       quickLevelRefresh();
 }
 
+/**
+ * Refreshes and redraws the level in a barebones but efficient way for use during playback.
+ */
 function quickLevelRefresh(){ // Redraw the level with only the bare necessities - the notes, and the entities on top of them
       clearDisplayLayer(dlayer.noteLayer);
       for(var i=0;i<midi.trks.length;i++){
@@ -1352,6 +1550,11 @@ function quickLevelRefresh(){ // Redraw the level with only the bare necessities
       refreshCanvas();
 }
 
+/**
+ * Obtains the fractional component of a number, which will always be less than 1.
+ * @param {number} n A number.
+ * @returns {number} The fractional part of the number.
+ */
 function getFraction(n){
       return n - Math.floor(n);
 }

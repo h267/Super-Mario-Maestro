@@ -49,6 +49,28 @@ function animatePlayback(blocksPerFrame, maxX){
       playbackAnim.start();
 }
 
+function animateContinuousPlayback(){ // TODO: Change to work continuously
+      playbackAnim = new Animation(function(anim){
+            canvasLayers[dlayer.mouseLayer].clear();
+            let xPos = Math.floor( ( marginWidth + (blocksPerFrame * anim.frameCount) ) * 16 );
+            if(xPos/16 > maxX){ // TODO: Change to be max(levelWidth, this level width)
+                  stopAudio();
+                  resetPlayback();
+                  return;
+            }
+            canvasLayers[dlayer.mouseLayer].drawLine(xPos, 0, xPos, levelHeight*16);
+            scrollDisplayTo(xPos - (marginWidth * 16));
+            let spriteNum = 0;
+            let period = Math.round( (BASE_WALK_SPEED/blocksPerFrame) * BASE_WALK_PERIOD); // Adjust the animation speed based on the scroll speed
+            if( getFraction(anim.frameCount / period) < 0.5 ) spriteNum = 0;
+            else spriteNum = 1;
+            if(blocksPerFrame >= RUN_SPEED * 0.99) spriteNum += 2; // Change to running animation if the speed is within 1% of running speed
+            drawSprite(marioSprites[spriteNum], xPos - 240, 396, dlayer.mouseLayer);
+            refreshCanvas();
+      });
+      playbackAnim.start();
+}
+
 function stopPlaybackAnimation(){
       if(playbackAnim == undefined) return;
       playbackAnim.stop();

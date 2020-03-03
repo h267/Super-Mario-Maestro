@@ -10,8 +10,6 @@ const LONG_RELEASE_POS = 45500;
 const RELEASE_DURATION = 6000;
 
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)(); // jshint ignore:line
-var masterGainNode = audioCtx.createGain();
-masterGainNode.gain.setValueAtTime(MASTER_VOLUME, 0);
 
 var sourceNodes = [];
 
@@ -41,10 +39,22 @@ class NoteSchedule {
       addNote(note){
             this.schedule.push( {instrument: note.instrument, value: note.value, ticks: note.time} );
       }
-      play(){
+      play(){ // FIXME: If a note plays with another simultaneously, remember to cancel it later
             let that = this;
-            this.schedule.forEach(function(thisNote){
-                  that.instruments[thisNote.instrument].playNote(thisNote, that.ticksToSeconds(thisNote.ticks));
+            let noteTimes = [];
+            let ndx = [];
+            this.instruments.forEach(function(n,i){ // Keep track of all of the notes for each instrument
+                  noteTimes[i] = [];
+                  ndx[i] = 0;
+            });
+            this.schedule.forEach(function(thisNote){ // First pass; get the time of every note
+                  noteTimes[thisNote.instrument].push(that.ticksToSeconds(thisNote.ticks));
+            });
+            this.schedule.forEach(function(thisNote){ // Second pass; play back each note at the correct duration
+                  let time = that.ticksToSeconds(thisNote.ticks);
+                  let inst = thisNote.instrument;
+                  that.instruments[inst].playNote(thisNote, time, noteTimes[inst][ndx[inst]+1] - noteTimes[inst][ndx[inst]]);
+                  ndx[inst]++;
             });
       }
       stop(){
@@ -80,9 +90,8 @@ class Instrument {
                   resolve();
             });
       }
-      playNote(note, time){
-            //if(this.sourceNodes.length > 0) //this.sourceNodes[this.sourceNodes.length - 1].stop(time+8); // TODO: Support polyphony FIXME: Doesn't cut
-            this.sourceNodes.push(playBuffer(this.noteBuffers[note.value], time));
+      playNote(note, time, duration){
+            this.sourceNodes.push(playBuffer(this.noteBuffers[note.value], time, duration));
       }
 }
 
@@ -103,15 +112,21 @@ function loadSample(url){
       });
 }
 
-function playBuffer(buffer, time){
+function playBuffer(buffer, time, duration){
       if(time == undefined) time = 0;
 
+      var curTime = audioCtx.currentTime;
       var source = audioCtx.createBufferSource();
       source.buffer = buffer;
+      var gainNode = audioCtx.createGain();
+      gainNode.gain.linearRampToValueAtTime(masterVolume, 0); // Prevent Firefox bug
+      gainNode.gain.linearRampToValueAtTime(0, curTime + time + 0.1);
 
-      source.connect(masterGainNode);
-      masterGainNode.connect(audioCtx.destination);
-      source.start(audioCtx.currentTime + time);
+      source.connect(gainNode);
+      gainNode.connect(audioCtx.destination); // FIXME: Audio stuff is being weird
+      
+      if(isNaN(duration) || duration == 0) source.start(curTime + time); // TODO: Keep track of these and give them proper durations
+      else source.start(curTime + time, 0, duration);
       sourceNodes.push(source);
       return source;
 }

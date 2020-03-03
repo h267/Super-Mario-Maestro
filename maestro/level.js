@@ -71,7 +71,7 @@ class Level{
                                     columnCounts[x] = {entities: 0, powerups: 0};
                               }
                               var ins = getMM2Instrument(thisNote.instrument)-2;
-                              if(instruments[ins].isPowerup){
+                              if(MM2Instruments[ins].isPowerup){
                                     this.powerupCount++;
                                     columnCounts[x].powerups++;
                               }

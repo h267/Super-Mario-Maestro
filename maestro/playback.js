@@ -63,7 +63,6 @@ var noteSchedule = new NoteSchedule();
 
 var restrictPitchRange = true; // Make this var so Hermit can change it with his epic hacking skillz
 
-// TODO: Import new sounds
 // TODO: Bring back real time for non-full map playback
 
 function loadBuffers(){
@@ -81,10 +80,8 @@ function loadBuffers(){
                   for(let j = 0; j < levelHeight - 1; j++){
                         await noteSchedule.instruments[i].generateBufferForNote(baseOfsY + j);
                   }
-                  document.getElementById('fileinput').disabled = false;
                   resolve();
             }));
-            // TODO: Only load instruments that are CURRENTLY being used in range (possibly trigger during level overview construction)
       });
       return Promise.all(promises);
 }
@@ -152,7 +149,7 @@ function playAudio(bpm, bpb, maxX){
       isPlaying = true;
       noteSchedule.setBPM(bpm);
       noteSchedule.play();
-      animatePlayback(bpm * bpb / 3600, maxX + marginWidth + 5 ); // FIXME: A good calculation for the last x-coord to be played
+      animatePlayback(bpm * bpb / 3600, maxX + marginWidth + 2);
 }
 
 function stopAudio(){
