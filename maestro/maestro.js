@@ -7,7 +7,7 @@
 // 2B. THE CLICKING
 
 // TODO: Upon release, re-enable gtag
-// TODO: Document every function
+// TODO: JSdoc - animation, audio, display, level, playback
 
 /* TODO: New features:
 
@@ -390,7 +390,6 @@ function drawLevel(redrawMini,noDOM){
                         x = Math.round((note.time/midi.timing)*blocksPerBeat);
                         if(note.channel!=9){y = note.pitch + 1 + level.noteGroups[i].ofsY;}
                         else{y = 54;}
-                        // y = note.pitch - level.areas[i].ofsY
                         if(y <= ofsY){notesBelowScreen[i]++;}
                         else if(y > ofsY+26){notesAboveScreen[i]++;} // Omit the notes on the very top row for now
                         else if(x >= ofsX && x < ofsX+levelWidth){ // Check if notes are visible
@@ -586,7 +585,7 @@ function recommendTempo(songBPM, bpb){
 }
 
 /**
- * Reads the state of the track visibility checkboxes and update the level accordingly.
+ * Reads the state of the track visibility checkboxes and updates the level accordingly.
  */
 function chkRefresh(){
       var i;
@@ -659,6 +658,7 @@ function getMidiInstrument(mm2Instrument){
 
 /**
  * Handles when the main canvas is clicked, and toggle the ruler.
+ * @param {MouseEvent} e The mouse event.
  */
 function handleClick(e){
       if(noMouse){return;} // Exit if the mouse is disabled
@@ -680,7 +680,8 @@ function handleClick(e){
 }
 
 /**
- * Handles when the mouse is moved across the main canvas
+ * Handles when the mouse is moved across the main canvas.
+ * @param {MouseEvent} e The mouse event.
  */
 function handleMove(e){
       if(noMouse){return;} // Exit if the mouse is disabled

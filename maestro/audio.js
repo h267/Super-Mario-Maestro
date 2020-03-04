@@ -13,7 +13,14 @@ var audioCtx = new (window.AudioContext || window.webkitAudioContext)(); // jshi
 
 var sourceNodes = [];
 
+/**
+ * A class for playing back a sequence of scheduled notes.
+ */
 class NoteSchedule {
+      /**
+       * Initializes the NoteSchedule object.
+       * @constructor
+       */
       constructor(){
             this.schedule = [];
             this.secondsPerBeat = 0.5;
@@ -21,9 +28,23 @@ class NoteSchedule {
             this.volume = 0.5;
             this.instruments = [];
       }
+
+      /**
+       * Sets the tempo of playback.
+       * @param {number} bpm The tempo, in beats per minute.
+       */
       setBPM(bpm){
             this.secondsPerBeat = 60/bpm;
       }
+
+      /**
+       * Adds an instrument to the list of instruments.
+       * @param {number} index Which array index in the instrument list to insert the instrument in.
+       * @param {string} url The local file location of the sound sample to be used.
+       * @param {Object} options Other options:
+       * * baseNote: The MIDI note that the input sample is pitched at. The default is 60, or Middle C.
+       * * hasLongSustain: If the note plays longer than most others. This option is reserved for the small subset of sustained instruments in MM2.
+       */
       addInstrument(index, url, options){
             let that = this;
             let baseNote = KEY_C4;
@@ -36,9 +57,20 @@ class NoteSchedule {
                   resolve();
             });
       }
+
+      /**
+       * Adds a note to the list of scheduled notes.
+       * @param {Object} note An object describing the basic features of the note:
+       * * instrument: The ID of the instrument stored in this NoteSchedule.
+       * * value: The MIDI pitch of the note.
+       * * ticks: The time that the note is played.
+       */
       addNote(note){
             this.schedule.push( {instrument: note.instrument, value: note.value, ticks: note.time} );
       }
+      /**
+       * Schedules and plays back the sequence of note using the correct instruments
+       */
       play(){ // FIXME: If a note plays with another simultaneously, remember to cancel it later
             let that = this;
             let noteTimes = [];
@@ -53,25 +85,48 @@ class NoteSchedule {
             this.schedule.forEach(function(thisNote){ // Second pass; play back each note at the correct duration
                   let time = that.ticksToSeconds(thisNote.ticks);
                   let inst = thisNote.instrument;
-                  that.instruments[inst].playNote(thisNote, time, noteTimes[inst][ndx[inst]+1] - noteTimes[inst][ndx[inst]]);
+                  that.instruments[inst].playNote(thisNote.value, time, noteTimes[inst][ndx[inst]+1] - noteTimes[inst][ndx[inst]]);
                   ndx[inst]++;
             });
       }
+
+      /**
+       * Stops playback and cancels all scheduled notes.
+       */
       stop(){
             sourceNodes.forEach(function(n,i){
                   n.stop(0);
             });
             sourceNodes = [];
       }
+
+      /**
+       * Clears the schedule of all notes.
+       */
       clear(){
             this.schedule = [];
       }
+
+      /**
+       * Converts a duration in playback ticks to seconds.
+       * @param {number} ticks The number of playback ticks.
+       * @returns {number} The equivalent number of seconds.
+       */
       ticksToSeconds(ticks){
             return ( ticks / this.ppq ) * this.secondsPerBeat;
       }
 }
 
+/**
+ * A class responsible for playing notes and holding instrument-specific playback data.
+ */
 class Instrument {
+      /**
+       * Initializes an Instrument object.
+       * @param {AudioBuffer} buffer An AudioBuffer object of the loaded sample.
+       * @param {number} baseNote The MIDI pitch that the buffer is tuned to.
+       * @constructor
+       */
       constructor(buffer, baseNote){
             if(baseNote == undefined) baseNote = KEY_C4;
             this.buffer = buffer;
@@ -80,6 +135,12 @@ class Instrument {
             this.hasLongSustain = false;
             this.sourceNodes = [];
       }
+
+      /**
+       * Generates an AudioBuffer for a specific note to be played.
+       * @param {number} note The MIDI pitch of the note to be generated.
+       * @returns {Promise} A Promise showing the status of the asynchronous operation.
+       */
       generateBufferForNote(note){
             let that = this;
             return new Promise(async function(resolve, reject){
@@ -90,11 +151,23 @@ class Instrument {
                   resolve();
             });
       }
+
+      /**
+       * Plays a note at a certain time.
+       * @param {number} note The MIDI pitch of the note to be played.
+       * @param {number} time The time, in seconds, when the note should be played.
+       * @param {number} duration The time, in seconds, that a note can play before being terminated.
+       */
       playNote(note, time, duration){
             this.sourceNodes.push(playBuffer(this.noteBuffers[note.value], time, duration));
       }
 }
 
+/**
+ * Loads the data from an audio file into an AudioBuffer object.
+ * @param {string} url The local file location of the audio data to load.
+ * @returns {Promise<AudioBuffer>} A Promise containing the loaded audio data as an AudioBuffer object.
+ */
 function loadSample(url){
       return new Promise(function(resolve, reject){
             var request = new XMLHttpRequest();
@@ -112,6 +185,13 @@ function loadSample(url){
       });
 }
 
+/**
+ * Plays the audio in an AudioBuffer.
+ * @param {AudioBuffer} buffer The AudioBuffer to play.
+ * @param {number} time The amount of time, in seconds, before the note is to be played.
+ * @param {number} duration The amount of time, in seconds, that a note can play before being terminated.
+ * @returns {AudioBufferSourceNode} The AudioBufferSourceNode that controls this note's playback.
+ */
 function playBuffer(buffer, time, duration){
       if(time == undefined) time = 0;
 
@@ -131,10 +211,21 @@ function playBuffer(buffer, time, duration){
       return source;
 }
 
+/**
+ * Converts a MIDI note to a frequency in Hertz.
+ * @param {number} note The MIDI note number.
+ * @returns {number} The equivalent frequency of the note.
+ */
 function midiNoteToFreq(note){
       return Math.pow(2, (note - KEY_A4) / 12) * 440;
 }
 
+/**
+ * Renders an AudioBuffer of an input AudioBuffer played at a specified playback speed.
+ * @param {AudioBuffer} buffer The AudioBuffer to render at a different speed.
+ * @param {number} rate The playback speed for the original sample to be rendered at.
+ * @returns {AudioBuffer} An AudioBuffer of the input buffer being played at the speed.
+ */
 async function renderBufferAtPlaybackRate(buffer, rate){
       let newDuration = buffer.duration / rate;
       let offlineCtx = new OfflineAudioContext(1, Math.ceil(newDuration * SAMPLE_RATE), SAMPLE_RATE);
@@ -149,6 +240,11 @@ async function renderBufferAtPlaybackRate(buffer, rate){
       return renderedBuffer;
 }
 
+/**
+ * Modifies the audio samples in an AudioBuffer to have a linear release envelope.
+ * @param {number[]} bufferData A Float32 array of raw audio samples obtained from an AudioBuffer.
+ * @param {boolean} hasLongSustain If the note should be played longer than usual.
+ */
 function applyReleaseEnvelope(bufferData, hasLongSustain){
       let multiplier;
       let releasePos;

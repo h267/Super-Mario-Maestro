@@ -65,6 +65,10 @@ var restrictPitchRange = true; // Make this var so Hermit can change it with his
 
 // TODO: Bring back real time for non-full map playback
 
+/**
+ * Loads all of the instrument sound samples into new instruments for the noteSchedule object.
+ * @returns {Promise[]} An array of Promises showing the status of each asynchronous file load.
+ */
 function loadBuffers(){
       buffers = [];
       var promises = [];
@@ -86,6 +90,15 @@ function loadBuffers(){
       return Promise.all(promises);
 }
 
+/**
+ * Prepares the level for playback, then triggers playback.
+ * @param {MIDIfile} midi The MIDIfile object holding all of the note data.
+ * @param {Level} level The level object holding all of the level data.
+ * @param {number} bpm The tempo to play the music at, in beats per minute.
+ * @param {number} blocksPerBeat The number of blocks or tiles in every beat.
+ * @param {number} ofsX The x-coordinate at which playback is to begin.
+ * @param {number} ofsY The y-coordinate that dictates vertical displacement.
+ */
 async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       stopAudio();
       isContinuousPlayback = false;
@@ -112,6 +125,9 @@ async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       playAudio(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth));
 }
 
+/**
+ * Prepares the whole MIDI for playback, then triggers playback for the whole song.
+ */
 async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintroduce
       stopAudio();
       isContinuousPlayback = true;
@@ -143,6 +159,12 @@ async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintro
       playAudio(bpm, blocksPerBeat);
 }
 
+/**
+ * Plays a preview of how the notes in the level would sound in-game.
+ * @param {number} bpm The tempo to play the music at, in beats per minute.
+ * @param {number} bpb The number of blocks or tiles in every beat.
+ * @param {number} maxX The maximum scrolling position of playback.
+ */
 function playAudio(bpm, bpb, maxX){
       if(bpm==undefined){bpm=120;}
       pos = 0;
@@ -152,6 +174,9 @@ function playAudio(bpm, bpb, maxX){
       animatePlayback(bpm * bpb / 3600, maxX + marginWidth + 2);
 }
 
+/**
+ * Stops the playback preview.
+ */
 function stopAudio(){
       noteSchedule.stop();
       noteSchedule.clear();
@@ -166,6 +191,9 @@ function stopAudio(){
       }
 }
 
+/**
+ * Resets the UI to its non-playback state.
+ */
 function resetPlayback(){
       enableMouse();
       document.getElementById('playbtn').disabled = false;
@@ -174,6 +202,10 @@ function resetPlayback(){
       refreshCanvas();
 }
 
+/**
+ * Advance the time to schedule notes at in the noteSchedule.
+ * @param {number} delta The number of playback ticks to schedule the next notes at.
+ */
 function advanceSchTime(delta){
       var curNotes = notes[pos];
       if(curNotes != undefined){
@@ -188,6 +220,10 @@ function advanceSchTime(delta){
       pos++;
 }
 
+/**
+ * Scroll the x-offset of the entire level, moving the file scrubber and rendering region.
+ * @param {number} dx The amount of scrolling to perform in the horizontal direction, in whole tile increments.
+ */
 function scrollLevel(dx){
       scrollLevelByX(dx);
 }

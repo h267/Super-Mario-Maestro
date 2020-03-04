@@ -54,6 +54,7 @@ class MIDIfile{
       /**
        * Initializes the MIDIfile object.
        * @param {Uint8Array} bytes An array of 8-bit unsigned bytes that express the MIDI data.
+       * @constructor
        */
       constructor(bytes){
             this.bytes = bytes;
@@ -418,7 +419,7 @@ class MIDIfile{
       /**
        * Finds the number of duplicate track labels from a specified label.
        * @param {string} label The label to check for duplicates.
-       * @returns The number of duplicates plus one.
+       * @returns {number} The number of duplicates plus one.
        */
       getLabelNumber(label){ // Check for duplicates
             var iteration = 0;
@@ -443,11 +444,12 @@ class MIDIfile{
 class MIDIevent{
       /**
        * Initializes the MIDIevent object.
-       * @param deltaTime The number of ticks elapsed before this event.
-       * @param type The type of MIDI event.
-       * @param channel Which MIDI channel this event occurs on.
-       * @param data An array of parameters for this event.
-       * @param address The position of this event in the MIDI file.
+       * @param {number} deltaTime The number of ticks elapsed before this event.
+       * @param {number} type The type of MIDI event.
+       * @param {number} channel Which MIDI channel this event occurs on.
+       * @param {number} data An array of parameters for this event.
+       * @param {number} address The position of this event in the MIDI file.
+       * @constructor
        */
       constructor(deltaTime, type, channel, data, address){
             this.deltaTime = deltaTime;
@@ -464,6 +466,7 @@ class MIDIevent{
 class MIDItrack{
       /**
        * Initializes the MIDItrack object.
+       * @constructor
        */
       constructor(){
             this.events = [];
@@ -481,15 +484,16 @@ class MIDItrack{
  * A music note.
  */
 class Note{
+      /**
+       * Initializes the Note object.
+       * @param time The absolute time, in ticks, at which this note plays.
+       * @param pitch The MIDI note number of this note.
+       * @param volume The velocity of this note, from 0 to 127.
+       * @param instrument The MIDI instrument number of this note.
+       * @param channel Which MIDI channel this instrument plays on.
+       * @constructor
+       */
       constructor(time, pitch, volume, instrument, channel){
-            /**
-             * Initializes the Note object.
-             * @param time The absolute time, in ticks, at which this note plays.
-             * @param pitch The MIDI note number of this note.
-             * @param volume The velocity of this note, from 0 to 127.
-             * @param instrument The MIDI instrument number of this note.
-             * @param channel Which MIDI channel this instrument plays on.
-             */
             this.time = time;
             this.pitch = pitch;
             this.key = pitch; // For percussion

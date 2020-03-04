@@ -1,18 +1,37 @@
+/**
+ * A controllable event to be triggered every time the graphics refesh.
+ */
 class Animation {
+      /**
+       * Initializes the Animation object.
+       * @param {function} callback The callback function to run every available frame.
+       */
       constructor(callback){
             this.isRunning = false;
             this.callback = callback;
             this.frameCount = 0;
             this.state = 0;
       }
+
+      /**
+       * Begins running the animation.
+       */
       start(){
             this.startTime = Date.now();
             this.isRunning = true;
             this.frame();
       }
+
+      /**
+       * Stops running the animation.
+       */
       stop(){
             this.isRunning = false;
       }
+
+      /**
+       * Renders a frame of the animation.
+       */
       frame(){
             if(!this.isRunning) return;
             this.frameCount = Math.floor( (Date.now() - this.startTime) / (50/3) );
@@ -27,6 +46,11 @@ const RUN_SPEED = (17/90);
 
 var playbackAnim;
 
+/**
+ * Plays the playback animation that runs during the audio preview.
+ * @param {number} blocksPerFrame The scroll speed of the animation, in tiles travelled per 60th of a second.
+ * @param {number} maxX The maximum position to scroll to before ending the animation.
+ */
 function animatePlayback(blocksPerFrame, maxX){
       playbackAnim = new Animation(function(anim){
             canvasLayers[dlayer.mouseLayer].clear();
@@ -49,6 +73,9 @@ function animatePlayback(blocksPerFrame, maxX){
       playbackAnim.start();
 }
 
+/**
+ * Animates playback for the entire song, not just the level.
+ */
 function animateContinuousPlayback(){ // TODO: Change to work continuously
       playbackAnim = new Animation(function(anim){
             canvasLayers[dlayer.mouseLayer].clear();
@@ -71,6 +98,9 @@ function animateContinuousPlayback(){ // TODO: Change to work continuously
       playbackAnim.start();
 }
 
+/**
+ * End the level playback animation.
+ */
 function stopPlaybackAnimation(){
       if(playbackAnim == undefined) return;
       playbackAnim.stop();
