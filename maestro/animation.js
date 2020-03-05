@@ -76,7 +76,7 @@ function animatePlayback(blocksPerFrame, maxX){
 /**
  * Animates playback for the entire song, not just the level.
  */
-function animateContinuousPlayback(){ // TODO: Change to work continuously
+function animateContinuousPlayback(blocksPerFrame, maxX){ // TODO: Change to work continuously
       playbackAnim = new Animation(function(anim){
             canvasLayers[dlayer.mouseLayer].clear();
             let xPos = Math.floor( ( marginWidth + (blocksPerFrame * anim.frameCount) ) * 16 );
@@ -86,7 +86,8 @@ function animateContinuousPlayback(){ // TODO: Change to work continuously
                   return;
             }
             canvasLayers[dlayer.mouseLayer].drawLine(xPos, 0, xPos, levelHeight*16);
-            scrollDisplayTo(xPos - (marginWidth * 16));
+            //scrollDisplayTo(xPos - (marginWidth * 16));
+            //scrollLevelXBy(1);
             let spriteNum = 0;
             let period = Math.round( (BASE_WALK_SPEED/blocksPerFrame) * BASE_WALK_PERIOD); // Adjust the animation speed based on the scroll speed
             if( getFraction(anim.frameCount / period) < 0.5 ) spriteNum = 0;

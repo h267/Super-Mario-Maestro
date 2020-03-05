@@ -1,20 +1,14 @@
 // Super Mario Maestro v1.3.1
 // made by h267
 
-// FIXME: Bugs:
-// 1. Instrument volume discrepancies
-// 2A. Specific playback thing
-// 2B. THE CLICKING
-
 // TODO: Upon release, re-enable gtag
-// TODO: JSdoc - animation, audio, display, level, playback
 
 /* TODO: New features:
 
 1.3.1:
-- 3. Full level playback with smooth scroll (via forcing the scrollbar to the center every frame)
-- 4. Example MIDI
-- 5. Better percussion splitting
+- 1. Full level playback with smooth scroll (via forcing the scrollbar to the center every frame), including a button to toggle it
+- 2. Better percussion splitting
+- 3. Example MIDI
 
 1.4:
  - Animated entities with physics simulation
@@ -37,6 +31,7 @@ const marginWidth = 27;
 const levelHeight = 27;
 const baseOfsY = 48;
 const discordInviteLink = 'https://discord.gg/KhmXzfp';
+const contPlayback = false;
 
 var reader = new FileReader();
 var numCommonTempos = 0;
@@ -806,7 +801,8 @@ function playBtn(){
       if(fileLoaded){
             disableMouse();
             document.getElementById('playbtn').disabled = true;
-            playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY);
+            if(contPlayback) playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY);
+            else playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY);
       }
 }
 

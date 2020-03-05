@@ -46,7 +46,6 @@ const insPlayData = [
       {file: 'toad'}
 ];
 const defaultInsPlayData = {file: 'goomba', baseNote: KEY_C4, volumeOffset: 0};
-const masterVolume = -5;
 
 var schTime = 0;
 var pos = 0;
@@ -122,7 +121,7 @@ async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       while(pos < endBound-marginWidth+1){
             advanceSchTime(2520/blocksPerBeat);
       }
-      playAudio(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth));
+      playAudio(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth), false);
 }
 
 /**
@@ -152,11 +151,11 @@ async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintro
             }
       }
       while(pos <= endBound-ofsX){
-            advanceSchTimeCont(2520/blocksPerBeat);
+            advanceSchTime(2520/blocksPerBeat);
       }
       clearDisplayLayer(dlayer.overlayLayer);
       clearDisplayLayer(dlayer.outlineLayer);
-      playAudio(bpm, blocksPerBeat);
+      playAudio(bpm, blocksPerBeat, 100, true);
 }
 
 /**
@@ -164,14 +163,16 @@ async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintro
  * @param {number} bpm The tempo to play the music at, in beats per minute.
  * @param {number} bpb The number of blocks or tiles in every beat.
  * @param {number} maxX The maximum scrolling position of playback.
+ * @param {boolean} isContinuousPlayback If the entire MIDI is to be played instead of just the visible level.
  */
-function playAudio(bpm, bpb, maxX){
+function playAudio(bpm, bpb, maxX, isContinuousPlayback){
       if(bpm==undefined){bpm=120;}
       pos = 0;
       isPlaying = true;
       noteSchedule.setBPM(bpm);
       noteSchedule.play();
-      animatePlayback(bpm * bpb / 3600, maxX + marginWidth + 2);
+      if(isContinuousPlayback) animateContinuousPlayback(bpm * bpb / 3600, maxX);
+      else animatePlayback(bpm * bpb / 3600, maxX + marginWidth + 2);
 }
 
 /**

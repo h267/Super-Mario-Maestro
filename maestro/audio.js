@@ -13,6 +13,8 @@ var audioCtx = new (window.AudioContext || window.webkitAudioContext)(); // jshi
 
 var sourceNodes = [];
 
+// TODO: Possibly offline rendering if lag once again becomes an issue
+
 /**
  * A class for playing back a sequence of scheduled notes.
  */
@@ -159,7 +161,7 @@ class Instrument {
        * @param {number} duration The time, in seconds, that a note can play before being terminated.
        */
       playNote(note, time, duration){
-            this.sourceNodes.push(playBuffer(this.noteBuffers[note.value], time, duration));
+            this.sourceNodes.push(playBuffer(this.noteBuffers[note], time, duration));
       }
 }
 
@@ -199,14 +201,15 @@ function playBuffer(buffer, time, duration){
       var source = audioCtx.createBufferSource();
       source.buffer = buffer;
       var gainNode = audioCtx.createGain();
-      gainNode.gain.linearRampToValueAtTime(masterVolume, 0); // Prevent Firefox bug
-      gainNode.gain.linearRampToValueAtTime(0, curTime + time + 0.1);
+      gainNode.gain.setValueAtTime(MASTER_VOLUME, 0); // Prevent Firefox bug
+      if(!isNaN(duration)) gainNode.gain.setTargetAtTime(0, curTime + time + duration, 0.4);
+      //gainNode.gain.setValueAtTime(0, curTime + time + 0.1);
 
       source.connect(gainNode);
-      gainNode.connect(audioCtx.destination); // FIXME: Audio stuff is being weird
+      gainNode.connect(audioCtx.destination);
       
-      if(isNaN(duration) || duration == 0) source.start(curTime + time); // TODO: Keep track of these and give them proper durations
-      else source.start(curTime + time, 0, duration);
+      if(isNaN(duration) || duration == 0) source.start(curTime + time); // TODO: Keep track of polyphonic notes and give them proper durations
+      else source.start(curTime + time, 0);
       sourceNodes.push(source);
       return source;
 }
