@@ -73,7 +73,7 @@ class NoteSchedule {
       /**
        * Schedules and plays back the sequence of note using the correct instruments
        */
-      play(){ // FIXME: If a note plays with another simultaneously, remember to cancel it later
+      play(){
             let that = this;
             let noteTimes = [];
             let ndx = [];

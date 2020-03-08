@@ -130,7 +130,7 @@ async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
 async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintroduce
       stopAudio();
       isContinuousPlayback = true;
-      endBound = Math.floor((midi.duration/midi.timing)*blocksPerBeat);
+      endBound = mapWidth;
       console.log(endBound-ofsX);
       framesPerColumn = 1/(blocksPerBeat*bpm/3600);
       notes = [];
@@ -141,7 +141,7 @@ async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintro
             if(!level.noteGroups[i].isVisible) continue;
             for(j=0;j<midi.trks[i].notes.length;j++){
                   var thisNote = midi.trks[i].notes[j];
-                  var x = Math.floor((thisNote.time/midi.timing)*blocksPerBeat);
+                  var x = Math.floor(ticksToBlocks(thisNote.time));
                   if(x < ofsX) continue;
                   var yPos = thisNote.pitch + level.noteGroups[i].ofsY;
                   if((yPos < ofsY || yPos >= ofsY+levelHeight-1) && restrictPitchRange) continue;

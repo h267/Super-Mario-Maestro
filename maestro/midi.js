@@ -6,7 +6,8 @@ var trackDuration = 0;
 var noteDelta = Array(16).fill(0);
 var isNewTrack = true;
 var currentLabel = 'Goomba';
-var midiInstrumentNames = ['Acoustic Grand Piano', 'Bright Acoustic Piano', // Thank you to the person who already did this for me
+
+const midiInstrumentNames = ['Acoustic Grand Piano', 'Bright Acoustic Piano', // Thank you to the person who already did this for me
 'Electric Grand Piano', 'Honky-tonk Piano',
 'Electric Piano 1', 'Electric Piano 2', 'Harpsichord',
 'Clavinet', 'Celesta', 'Glockenspiel', 'Music Box',
@@ -271,11 +272,11 @@ class MIDIfile{
                               if(!rs){data.push(this.fetchBytes(1));}
                               data.push(this.fetchBytes(1));
                               if(data[1] == 0){break;}
-                              //var ins;
-                              var ins = currentInstrument[channel]; // Patch out percussion splitting
+                              var ins;
+                              //var ins = currentInstrument[channel]; // Patch out percussion splitting TODO: Patch back in, in a new way
                               if(channel == 9){
                                     this.trks[tpos].hasPercussion = true;
-                                    //ins = data[0];
+                                    ins = data[0];
                               }
                               else{
                                     ins = currentInstrument[channel];

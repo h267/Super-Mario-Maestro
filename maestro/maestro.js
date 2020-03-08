@@ -1,28 +1,27 @@
 // Super Mario Maestro v1.3.1
 // made by h267
 
-// TODO: Upon release, re-enable gtag
+// TODO: Upon release, re-enable gtag and clean up comments
 
 /* TODO: New features:
 
 1.3.1:
 - 1. Full level playback with smooth scroll (via forcing the scrollbar to the center every frame), including a button to toggle it
-- 2. Better percussion splitting
-- 3. Example MIDI
+- 2. Example MIDI
+// FIXME: 3. Some of the samples have low volume
+//        4. fix instruments getting loud in some situations
 
 1.4:
  - Animated entities with physics simulation
  - Partition system where different settings can apply
  - Toolbar for display tools
  - Manual note editing
- - CSS loading animation
+ - CSS loading animation (if needed)
  - Spatial Management, com_poser tricks, maybe autoscroll tracks
  - Warning system
  - Theme, style, day/night indicators
- - Highlight enemies that don't have much room, maybe overlay exclamation point [New UI]
- - A small info button that shows how to use everything and shows patch notes [New UI]
- - Handle dynamic tempo changes [New UI]
- - x-offset number input or other way to nudge x-offset [New UI]
+ - Overlay exclamation points on impossible placements
+ - Handle dynamic tempo changes
  - Start music playback from anywhere in the blueprint
 */
 
@@ -32,10 +31,13 @@ const levelHeight = 27;
 const baseOfsY = 48;
 const discordInviteLink = 'https://discord.gg/KhmXzfp';
 const contPlayback = false;
+const numParts = 20;
+const autoShowRatio = 0.7;
 
 var reader = new FileReader();
 var numCommonTempos = 0;
 var midi;
+var mapWidth;
 
 /**
  * Data on the various scroll speeds in Mario Maker 2. Tempos are stored in their 4 block per beat equivalents.
@@ -61,7 +63,7 @@ const MM2Tempos = [
       {name: 'Fast Underwater Conveyor - Walking', bpm: 144, isCommon: false},
       {name: 'Underwater Blaster in Cloud - Swimming', bpm: 148, isCommon: false},
       {name: 'Blaster in Cloud - Walking', bpm: 166, isCommon: false},
-      {name: 'Running', bpm: 169, isCommon: true},
+      {name: 'Running', bpm: 168, isCommon: true},
       {name: 'Underwater Blaster in Cloud - Swimming Holding Item', bpm: 186, isCommon: false},
       {name: 'Fast Conveyor - Walking', bpm: 194, isCommon: false},
       {name: 'Normal Conveyor - Running', bpm: 227, isCommon: false},
@@ -162,6 +164,8 @@ var entityOverflowStatus = {entity: false, powerup: false};
 var noteRange = 0;
 var defaultZoom = 1;
 
+//getEquivalentBlocks(16);
+
 // Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
 getImg('icon/ruler.png').then(async function(cursorImg){
@@ -228,12 +232,27 @@ function loadFile(){ // Load file from the file input element
             isNewFile = true;
             fileLoaded = true;
             noteRange = 0;
+            mapWidth = Math.ceil(ticksToBlocks(midi.duration));
             level.noteGroups = [];
             outlineLayers = new Array(midi.trks.length);
             for(i=0;i<midi.trks.length;i++){
                   level.addNoteGroup(new PreloadedNoteGroup());
                   if(midi.trks[i].usedInstruments.length > 1){
                         sepInsFromTrk(midi.trks[i]);
+                  }
+                  // TODO: Determine counts
+                  if(midi.trks[i].hasPercussion){
+                        let isInPartitions = new Array(numParts).fill(false);
+                        let partitionSize = Math.floor(mapWidth/numParts);
+                        for(j=0;j<midi.trks[i].notes.length;j++){
+                              let curPartition = Math.floor(ticksToBlocks(midi.trks[i].notes[j].time)/partitionSize);
+                              isInPartitions[curPartition] = true;
+                        }
+                        let sum = 0;
+                        for(j=0;j<isInPartitions.length;j++){
+                              if(isInPartitions[j]) sum++;
+                        }
+                        if(sum/numParts < autoShowRatio) level.noteGroups[i].setVisibility(false);
                   }
                   outlineLayers[i] = new DrawLayer(canvas.width, canvas.height);
                   if(midi.trks[i].usedInstruments.length == 0 || midi.trks[i].hasPercussion){continue;}
@@ -263,7 +282,7 @@ function loadFile(){ // Load file from the file input element
  */
 function updateUI(limitedUpdate, reccTempo){
       var i;
-      var width = Math.ceil((midi.duration/midi.timing)*blocksPerBeat);
+      var width = mapWidth;
       setMiniWidth(width);
       var haveTempo = false; // TODO: Get rid of this when adding dynamic tempo
       bbar = midi.firstBbar;
@@ -287,7 +306,7 @@ function updateUI(limitedUpdate, reccTempo){
                   chkbox.id = 'chk'+i;
                   chkbox.type = 'checkbox';
                   chkbox.setAttribute('onchange','chkRefresh();');
-                  chkbox.checked = true;
+                  chkbox.checked = level.noteGroups[i].isVisible;
                   div.appendChild(chkbox);
                   var rad = document.createElement('input');
                   rad.id = 'rad'+i;
@@ -382,7 +401,7 @@ function drawLevel(redrawMini,noDOM){
                   notesBelowScreen[i] = 0;
                   for(j=0;j<midi.trks[i].notes.length;j++){
                         var note = midi.trks[i].notes[j];
-                        x = Math.round((note.time/midi.timing)*blocksPerBeat);
+                        x = Math.round(ticksToBlocks(note.time));
                         if(note.channel!=9){y = note.pitch + 1 + level.noteGroups[i].ofsY;}
                         else{y = 54;}
                         if(y <= ofsY){notesBelowScreen[i]++;}
@@ -520,9 +539,8 @@ function drawLevel(redrawMini,noDOM){
 function moveOffsetTo(ox,oy){ // Offsets are given as percentages of the level
       if(!fileLoaded){return;}
       cancelPlayback();
-      var width = Math.ceil((midi.duration/midi.timing)*blocksPerBeat);
       if(ox!=null){
-            ofsX = Math.floor(ox*width);
+            ofsX = Math.floor(ox*mapWidth);
             //console.log(ox+' -> '+ofsX);
       }
       var limX = (minimap.width-(canvas.width/16-27))+(blocksPerBeat*bbar);
@@ -763,6 +781,7 @@ function pickBPB(){
       if(!usingAdvSettings){filterBPB();}
       document.getElementById('bpbpicker').value = blocksPerBeat;
       lastBPB = blocksPerBeat;
+      mapWidth = Math.ceil(ticksToBlocks(midi.duration));
       changeBPB();
 }
 
@@ -1467,7 +1486,7 @@ function redrawMinimap(){
                   if(!level.noteGroups[index].isVisible || midi.trks[index].notes.length == 0) continue;
                   var note = midi.trks[index].notes[j];
                   if(note.volume < noiseThreshold) continue;
-                  var x = Math.round((note.time/midi.timing)*blocksPerBeat);
+                  var x = Math.round(ticksToBlocks(note.time));
                   var y = note.pitch + level.noteGroups[index].ofsY;
                   if(index == selectedTrack) miniPlot(x,y,'mediumaquamarine');
                   else miniPlot(x,y);
@@ -1486,7 +1505,7 @@ function refreshBlocks(){
             for(var j=0;j<midi.trks[i].notes.length;j++){
                   var note = midi.trks[i].notes[j];
                   if(note.volume<noiseThreshold){continue;} // Skip notes with volume below noise threshold
-                  x = (note.time/midi.timing)*blocksPerBeat;
+                  x = ticksToBlocks(note.time);
                   var levelX = Math.round(x);
                   if(levelX > highestX) highestX = levelX;
                   var instrument = getMM2Instrument(note.instrument);
@@ -1525,7 +1544,7 @@ function quickLevelRefresh(){ // Redraw the level with only the bare necessities
             for(var j=0;j<midi.trks[i].notes.length;j++){
                   var note = midi.trks[i].notes[j];
                   if(note.volume<noiseThreshold) continue; // Skip notes with volume below noise threshold
-                  var levelX = Math.round((note.time/midi.timing)*blocksPerBeat);
+                  var levelX = Math.round(ticksToBlocks(note.time));
                   if(levelX > ofsX+levelWidth+marginWidth) break;
                   var instrument = getMM2Instrument(note.instrument);
                   if(note.channel == 9){
@@ -1554,4 +1573,32 @@ function quickLevelRefresh(){ // Redraw the level with only the bare necessities
  */
 function getFraction(n){
       return n - Math.floor(n);
+}
+
+/**
+ * Converts MIDI time ticks to a quantity in blocks.
+ * @param {number} ticks The number of ticks.
+ * @returns {number} The number of blocks represented.
+ */
+function ticksToBlocks(ticks){
+      return (ticks/midi.timing) * blocksPerBeat;
+}
+
+function getEquivalentBlocks(blocks){ // This function is only for research purposes and doesn't do anything meaningful otherwise
+      MM2Tempos.forEach((n) => {
+            let val = (n.bpm/112)*blocks;
+            if( getFraction(val/0.5) < 0.2 ){
+                  console.log(n.name + ': ' + val);
+            }
+      });
+}
+
+/**
+ * Hides a MIDI track in the UI, but allows the user to still view it if desired.
+ * @param {number} id The ID of the track to hide.
+ */
+function hideTrk(id){
+      level.noteGroups[id].setVisibility(false);
+      document.getElementById('chk'+id).checked = false;
+      //chkRefresh();
 }
