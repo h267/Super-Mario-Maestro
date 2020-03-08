@@ -7,9 +7,7 @@
 
 1.3.1:
 - 1. Full level playback with smooth scroll (via forcing the scrollbar to the center every frame), including a button to toggle it
-- 2. Example MIDI
-// FIXME: 3. Some of the samples have low volume
-//        4. fix instruments getting loud in some situations
+// FIXME: 2. Some of the samples have low volume
 
 1.4:
  - Animated entities with physics simulation
@@ -30,6 +28,7 @@ const marginWidth = 27;
 const levelHeight = 27;
 const baseOfsY = 48;
 const discordInviteLink = 'https://discord.gg/KhmXzfp';
+const tutorialLink = 'https://www.reddit.com/r/MarioMaker/comments/f5fdzl/tutorial_for_automatically_generating_music/';
 const contPlayback = false;
 const numParts = 20;
 const autoShowRatio = 0.7;
@@ -179,10 +178,10 @@ getImg('icon/ruler.png').then(async function(cursorImg){
 loadBuffers();
 
 /**
- * Loads a MIDI file and initializes the state of the level.
+ * Loads a MIDI file from the file input.
  */
-function loadFile(){ // Load file from the file input element
-      var fname = document.getElementById('fileinput').files[0].name;
+function loadFileFromInput(){
+      let fname = document.getElementById('fileinput').files[0].name;
       if(fname.substring(fname.length-8,fname.length).toLowerCase()=='.mp3.mid'){ // Detect MP3 MIDIs
             document.getElementById('noisecontrol').style.display = '';
       }
@@ -190,91 +189,115 @@ function loadFile(){ // Load file from the file input element
             document.getElementById('noisecontrol').style.display = 'none';
       }
       reader.readAsArrayBuffer(document.getElementById('fileinput').files[0]);
-	reader.onload = function(){
-            if(fileLoaded){
-                  cancelPlayback();
+	reader.onload = () => loadData(new Uint8Array(reader.result));
+}
+
+/**
+ * Loads the example MIDI file.
+ */
+function loadExample(){
+      document.getElementById("fileinput").value = "";
+      let request = new XMLHttpRequest();
+      request.open("GET", "./example.mid", true);
+      request.responseType = "arraybuffer";
+      request.onerror = (e) => console.error('Unable to load example MIDI.');
+      request.onload = () => {
+            let arraybuffer = request.response;
+            if(arraybuffer){
+                  loadData(new Uint8Array(arraybuffer));
             }
-            if(!fileLoaded){showEverything();}
-            midi = new MIDIfile(new Uint8Array(reader.result));
-            document.getElementById('advbox').checked = false;
-            resetOffsets();
-            if(fileLoaded){
-                  miniClear();
-                  drawScrubber(ofsX,ofsY+27,canvas.width/16-27,canvas.height/16);
-                  refreshMini();
-            }
-            document.getElementById('trkcontainer').innerHTML = '';
-            //document.getElementById('trkselect').innerHTML = '';
-            selectedTrack = 0;
-            octaveShifts = new Array(midi.trks.length).fill(0);
-            semitoneShifts = new Array(midi.trks.length).fill(0);
-            instrumentChanges = new Array(midi.trks.length);
-            hasVisibleNotes = new Array(midi.trks.length).fill(false);
-            var i;
-            var j;
-            for(i=0;i<instrumentChanges.length;i++){
-                  instrumentChanges[i] = [];
-                  for(j=0;j<midi.trks[i].usedInstruments.length;j++){
-                        instrumentChanges[i][j] = getMM2Instrument(midi.trks[i].usedInstruments[j])-2;
-                  }
-            }
-            notesAboveScreen = new Array(midi.trks.length);
-            notesAboveScreen.fill(0);
-            notesBelowScreen = new Array(midi.trks.length);
-            notesBelowScreen.fill(0);
-            document.getElementById('octaveshift').value = 0;
-            document.getElementById('semitoneshift').value = 0;
-            blocksPerBeat = midi.blocksPerBeat;
-            reccBPB = blocksPerBeat;
-            lastBPB = blocksPerBeat;
-            document.getElementById('bpbpicker').value = blocksPerBeat;
-            acceptableBPBs = generateAcceptableBPBs();
-            isNewFile = true;
-            fileLoaded = true;
-            noteRange = 0;
-            mapWidth = Math.ceil(ticksToBlocks(midi.duration));
-            level.noteGroups = [];
-            outlineLayers = new Array(midi.trks.length);
-            for(i=0;i<midi.trks.length;i++){
-                  level.addNoteGroup(new PreloadedNoteGroup());
-                  if(midi.trks[i].usedInstruments.length > 1){
-                        sepInsFromTrk(midi.trks[i]);
-                  }
-                  // TODO: Determine counts
-                  if(midi.trks[i].hasPercussion){
-                        let isInPartitions = new Array(numParts).fill(false);
-                        let partitionSize = Math.floor(mapWidth/numParts);
-                        for(j=0;j<midi.trks[i].notes.length;j++){
-                              let curPartition = Math.floor(ticksToBlocks(midi.trks[i].notes[j].time)/partitionSize);
-                              isInPartitions[curPartition] = true;
-                        }
-                        let sum = 0;
-                        for(j=0;j<isInPartitions.length;j++){
-                              if(isInPartitions[j]) sum++;
-                        }
-                        if(sum/numParts < autoShowRatio) level.noteGroups[i].setVisibility(false);
-                  }
-                  outlineLayers[i] = new DrawLayer(canvas.width, canvas.height);
-                  if(midi.trks[i].usedInstruments.length == 0 || midi.trks[i].hasPercussion){continue;}
-                  octaveShifts[i] = MM2Instruments[getMM2Instrument(midi.trks[i].usedInstruments[0])-2].octave*-1;
-                  if(midi.trks[i].highestNote == null || midi.trks[i].highestNote == null){continue;}
-                  var thisRange = Math.max(Math.abs(64-midi.trks[i].lowestNote),Math.abs(64-midi.trks[i].highestNote));
-                  if(thisRange > noteRange){noteRange = thisRange;}
-            }
-            //console.log(noteRange);
-            refreshBlocks();
-            updateUI(false, true);
-            isNewFile = false;
-            document.getElementById('yofspicker').disabled = false;
-            document.getElementById('bpbpicker').disabled = false;
-            document.getElementById('tempotext').innerHTML = 'Original: '+Math.round(songBPM)+' bpm';
-            document.getElementById('advbox').checked = usingAdvSettings;
-            /*var newTrack = new MIDItrack();
-            newTrack.label = 'test'
-            newTrack.notes[0] = new Note(0,0,1,0,0);
-            addTrack(newTrack);*/
-            //console.log(midi.noteCount+' notes total');
       };
+      request.send();
+}
+
+/**
+ * Loads MIDI data and initializes the state of the level.
+ * @param {Uint8Array} bytes The MIDI data to load.
+ */
+function loadData(bytes){ // Load file from the file input element
+      if(fileLoaded){
+            cancelPlayback();
+      }
+      if(!fileLoaded){showEverything();}
+      midi = new MIDIfile(bytes);
+      document.getElementById('advbox').checked = false;
+      resetOffsets();
+      if(fileLoaded){
+            miniClear();
+            drawScrubber(ofsX,ofsY+27,canvas.width/16-27,canvas.height/16);
+            refreshMini();
+      }
+      document.getElementById('trkcontainer').innerHTML = '';
+      //document.getElementById('trkselect').innerHTML = '';
+      selectedTrack = 0;
+      octaveShifts = new Array(midi.trks.length).fill(0);
+      semitoneShifts = new Array(midi.trks.length).fill(0);
+      instrumentChanges = new Array(midi.trks.length);
+      hasVisibleNotes = new Array(midi.trks.length).fill(false);
+      var i;
+      var j;
+      for(i=0;i<instrumentChanges.length;i++){
+            instrumentChanges[i] = [];
+            for(j=0;j<midi.trks[i].usedInstruments.length;j++){
+                  instrumentChanges[i][j] = getMM2Instrument(midi.trks[i].usedInstruments[j])-2;
+            }
+      }
+      notesAboveScreen = new Array(midi.trks.length);
+      notesAboveScreen.fill(0);
+      notesBelowScreen = new Array(midi.trks.length);
+      notesBelowScreen.fill(0);
+      document.getElementById('octaveshift').value = 0;
+      document.getElementById('semitoneshift').value = 0;
+      blocksPerBeat = midi.blocksPerBeat;
+      reccBPB = blocksPerBeat;
+      lastBPB = blocksPerBeat;
+      document.getElementById('bpbpicker').value = blocksPerBeat;
+      acceptableBPBs = generateAcceptableBPBs();
+      isNewFile = true;
+      fileLoaded = true;
+      noteRange = 0;
+      mapWidth = Math.ceil(ticksToBlocks(midi.duration));
+      level.noteGroups = [];
+      outlineLayers = new Array(midi.trks.length);
+      for(i=0;i<midi.trks.length;i++){
+            level.addNoteGroup(new PreloadedNoteGroup());
+            if(midi.trks[i].usedInstruments.length > 1){
+                  sepInsFromTrk(midi.trks[i]);
+            }
+            // TODO: Determine counts
+            if(midi.trks[i].hasPercussion){
+                  let isInPartitions = new Array(numParts).fill(false);
+                  let partitionSize = Math.floor(mapWidth/numParts);
+                  for(j=0;j<midi.trks[i].notes.length;j++){
+                        let curPartition = Math.floor(ticksToBlocks(midi.trks[i].notes[j].time)/partitionSize);
+                        isInPartitions[curPartition] = true;
+                  }
+                  let sum = 0;
+                  for(j=0;j<isInPartitions.length;j++){
+                        if(isInPartitions[j]) sum++;
+                  }
+                  if(sum/numParts < autoShowRatio) level.noteGroups[i].setVisibility(false);
+            }
+            outlineLayers[i] = new DrawLayer(canvas.width, canvas.height);
+            if(midi.trks[i].usedInstruments.length == 0 || midi.trks[i].hasPercussion){continue;}
+            octaveShifts[i] = MM2Instruments[getMM2Instrument(midi.trks[i].usedInstruments[0])-2].octave*-1;
+            if(midi.trks[i].highestNote == null || midi.trks[i].highestNote == null){continue;}
+            var thisRange = Math.max(Math.abs(64-midi.trks[i].lowestNote),Math.abs(64-midi.trks[i].highestNote));
+            if(thisRange > noteRange){noteRange = thisRange;}
+      }
+      //console.log(noteRange);
+      refreshBlocks();
+      updateUI(false, true);
+      isNewFile = false;
+      document.getElementById('yofspicker').disabled = false;
+      document.getElementById('bpbpicker').disabled = false;
+      document.getElementById('tempotext').innerHTML = 'Original: '+Math.round(songBPM)+' bpm';
+      document.getElementById('advbox').checked = usingAdvSettings;
+      /*var newTrack = new MIDItrack();
+      newTrack.label = 'test'
+      newTrack.notes[0] = new Note(0,0,1,0,0);
+      addTrack(newTrack);*/
+      //console.log(midi.noteCount+' notes total');
 }
 
 /**
@@ -1601,4 +1624,11 @@ function hideTrk(id){
       level.noteGroups[id].setVisibility(false);
       document.getElementById('chk'+id).checked = false;
       //chkRefresh();
+}
+
+/**
+ * Opens a link to a tutorial.
+ */
+function tutorialBtn(){
+      window.open(tutorialLink);
 }

@@ -46,6 +46,7 @@ const insPlayData = [
       {file: 'toad'}
 ];
 const defaultInsPlayData = {file: 'goomba', baseNote: KEY_C4, volumeOffset: 0};
+const polyphonyCap = 2;
 
 var schTime = 0;
 var pos = 0;
@@ -106,16 +107,25 @@ async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       var i;
       var j;
       notes = [];
+      let noteCount = [];
       for(i=0;i<endBound;i++){
             notes[i] = [];
+            noteCount[i] = {};
       }
       for(i=0;i<level.noteGroups.length;i++){
             if(!level.noteGroups[i].isVisible) continue;
             for(j=0;j<level.noteGroups[i].notes.length;j++){
-                  var thisNote = level.noteGroups[i].notes[j];
-                  var yPos = thisNote.pitch + level.noteGroups[i].ofsY;
+
+                  let thisNote = level.noteGroups[i].notes[j];
+                  let yPos = thisNote.pitch + level.noteGroups[i].ofsY;
                   if((yPos < ofsY || yPos >= ofsY+levelHeight-1) && restrictPitchRange) continue;
-                  notes[thisNote.x - ofsX].push({note: yPos - (ofsY - baseOfsY), instrument: getMM2Instrument(thisNote.instrument)-2});
+                  let pitch = yPos - (ofsY - baseOfsY);
+                  let xPos = thisNote.x - ofsX;
+                  if(noteCount[xPos][pitch] <= polyphonyCap || noteCount[xPos][pitch] == undefined){ // Prevent things from getting too loud
+                        notes[xPos].push({note: pitch, instrument: getMM2Instrument(thisNote.instrument)-2});
+                        if(noteCount[xPos][pitch] == undefined) noteCount[xPos][pitch] = 1;
+                        else noteCount[xPos][pitch]++;
+                  }
             }
       }
       while(pos < endBound-marginWidth+1){
@@ -127,7 +137,7 @@ async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
 /**
  * Prepares the whole MIDI for playback, then triggers playback for the whole song.
  */
-async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintroduce
+async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintroduce, copy code from above
       stopAudio();
       isContinuousPlayback = true;
       endBound = mapWidth;
@@ -140,10 +150,10 @@ async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintro
       for(i=0;i<level.noteGroups.length;i++){
             if(!level.noteGroups[i].isVisible) continue;
             for(j=0;j<midi.trks[i].notes.length;j++){
-                  var thisNote = midi.trks[i].notes[j];
-                  var x = Math.floor(ticksToBlocks(thisNote.time));
+                  let thisNote = midi.trks[i].notes[j];
+                  let x = Math.floor(ticksToBlocks(thisNote.time));
                   if(x < ofsX) continue;
-                  var yPos = thisNote.pitch + level.noteGroups[i].ofsY;
+                  let yPos = thisNote.pitch + level.noteGroups[i].ofsY;
                   if((yPos < ofsY || yPos >= ofsY+levelHeight-1) && restrictPitchRange) continue;
                   // FIXME: Changing BPB breaks x-ofsX when ??
                   // FIXME: Need end scrolling behavior

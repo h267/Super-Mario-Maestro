@@ -94,12 +94,15 @@
                     </div>
                </div>
                <p id="filetext" class="displaytext" style="float:left; margin-top: 17px;">MIDI File:</p>
-               <input id ="fileinput" type="file" onchange="loadFile()" style="margin-top:5px; margin-left:5px"></input>
+               <input id ="fileinput" type="file" onchange="loadFileFromInput()" style="margin-top:5px; margin-left:5px"></input>
                <div style="position: absolute; bottom: 1em; right: 1em;">
                     <p style="text-align: center; font-style: italic; margin-bottom: 4px;">made by h267</p>
                     <button id="discordbutton" class="discordbutton" onClick="handleDiscordPress();"></button>
                </div>
-               <a href="https://www.reddit.com/r/MarioMaker/comments/f5fdzl/tutorial_for_automatically_generating_music/" style="margin-left: 10px;">Tutorial (by Loup&Snoop)</a>
+               <div class="smallspacedcontainer" style="display: inline;">
+                    <button class="button" onclick="loadExample()">Load Example</button>
+                    <button class="button" onclick="tutorialBtn()">Tutorial</button>
+               </div>
           </div>
           
           <script src="display.js"></script> 
