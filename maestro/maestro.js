@@ -8,6 +8,7 @@
 1.3.1:
 - 1. Full level playback with smooth scroll (via forcing the scrollbar to the center every frame), including a button to toggle it
 // FIXME: 2. Some of the samples have low volume
+// FIXME: 3. Audio track playback loads inconsistently
 
 1.4:
  - Animated entities with physics simulation
@@ -29,7 +30,7 @@ const levelHeight = 27;
 const baseOfsY = 48;
 const discordInviteLink = 'https://discord.gg/KhmXzfp';
 const tutorialLink = 'https://www.reddit.com/r/MarioMaker/comments/f5fdzl/tutorial_for_automatically_generating_music/';
-const contPlayback = false;
+const contPlayback = true;
 const numParts = 20;
 const autoShowRatio = 0.7;
 
@@ -163,7 +164,7 @@ var entityOverflowStatus = {entity: false, powerup: false};
 var noteRange = 0;
 var defaultZoom = 1;
 
-//getEquivalentBlocks(16);
+//getEquivalentBlocks(2.75);
 
 // Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
@@ -1546,11 +1547,12 @@ function refreshBlocks(){
 }
 
 /**
- * Increases the level's x-offset and triggers a quick refresh of the level.
+ * Changes the level's x-offset and triggers a quick refresh of the level if a new value is set.
+ * @param {number} ox The new x-offset.
  */
-function scrollLevelXBy(ox){
-      if(!fileLoaded){return;}
-      ofsX += ox;
+function setLevelXTo(ox){
+      if(!fileLoaded || ofsX == ox){return;}
+      ofsX = ox;
       var limX = (minimap.width-(canvas.width/16-27))+(blocksPerBeat*bbar);
       if(ofsX>limX){ofsX = limX;}
       if(ofsX<0){ofsX=0;}
@@ -1607,10 +1609,17 @@ function ticksToBlocks(ticks){
       return (ticks/midi.timing) * blocksPerBeat;
 }
 
-function getEquivalentBlocks(blocks){ // This function is only for research purposes and doesn't do anything meaningful otherwise
+/**
+ * Converts a distance in blocks in fast autoscroll to the equivalent distance in all of the other tempos.
+ * Then, lists the scroll speeds whose values are closest to being doable.
+ * Underwater scroll speeds are omitted from this search.
+ * This function is only used for research and discovery purposes.
+ * @param {number} blocks The distance in blocks for fast autoscroll.
+ */
+function getEquivalentBlocks(blocks){ // This function is only for research purposes and doesn't do anything meaningful otherwise.
       MM2Tempos.forEach((n) => {
             let val = (n.bpm/112)*blocks;
-            if( getFraction(val/0.5) < 0.2 ){
+            if( getFraction(val/0.5) < 0.2 && n.name.search('water') == -1 && n.name.search('wim') == -1){
                   console.log(n.name + ': ' + val);
             }
       });

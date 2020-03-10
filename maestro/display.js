@@ -15,6 +15,7 @@ class DrawLayer{
             this.canvas.height = height;
             this.width = width;
             this.height = height;
+            this.xOfs = 0;
             this.ctx = this.canvas.getContext('2d');
       }
       /**
@@ -22,6 +23,14 @@ class DrawLayer{
        */
       clear(){
             this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+      }
+
+      /**
+       * Sets the layer's horizontal offset to some amount.
+       * @param {number} x The number of pixels to offset the layer by.
+       */
+      setXOfs(x){
+            this.xOfs = x;
       }
 
       /**
@@ -566,7 +575,7 @@ function refreshCanvas(){
       var i;
       for(i=0;i<canvasLayers.length;i++){
             if(!canvasLayers[i].isVisible){continue;}
-            ctx.drawImage(canvasLayers[i].canvas,0,0,canvasLayers[i].canvas.width,canvasLayers[i].canvas.height);
+            ctx.drawImage(canvasLayers[i].canvas,canvasLayers[i].xOfs,0,canvasLayers[i].canvas.width,canvasLayers[i].canvas.height);
       }
 }
 

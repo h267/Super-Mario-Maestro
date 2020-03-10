@@ -47,6 +47,7 @@ const insPlayData = [
 ];
 const defaultInsPlayData = {file: 'goomba', baseNote: KEY_C4, volumeOffset: 0};
 const polyphonyCap = 2;
+const loadDelay = 0.2;
 
 var schTime = 0;
 var pos = 0;
@@ -101,6 +102,7 @@ function loadBuffers(){
  */
 async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       stopAudio();
+      schTime = loadDelay / (60/bpm) * PPQ;
       isContinuousPlayback = false;
       endBound = level.width;
       framesPerColumn = 1/(blocksPerBeat*bpm/3600);
@@ -115,7 +117,6 @@ async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       for(i=0;i<level.noteGroups.length;i++){
             if(!level.noteGroups[i].isVisible) continue;
             for(j=0;j<level.noteGroups[i].notes.length;j++){
-
                   let thisNote = level.noteGroups[i].notes[j];
                   let yPos = thisNote.pitch + level.noteGroups[i].ofsY;
                   if((yPos < ofsY || yPos >= ofsY+levelHeight-1) && restrictPitchRange) continue;
@@ -129,7 +130,7 @@ async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
             }
       }
       while(pos < endBound-marginWidth+1){
-            advanceSchTime(2520/blocksPerBeat);
+            advanceSchTime(PPQ/blocksPerBeat);
       }
       playAudio(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth), false);
 }
@@ -139,33 +140,38 @@ async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
  */
 async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintroduce, copy code from above
       stopAudio();
+      schTime = loadDelay*5 / (60/bpm) * PPQ;
       isContinuousPlayback = true;
       endBound = mapWidth;
-      console.log(endBound-ofsX);
       framesPerColumn = 1/(blocksPerBeat*bpm/3600);
       notes = [];
+      let noteCount = [];
       for(i=0;i<endBound;i++){
             notes[i] = [];
+            noteCount[i] = {};
       }
       for(i=0;i<level.noteGroups.length;i++){
             if(!level.noteGroups[i].isVisible) continue;
-            for(j=0;j<midi.trks[i].notes.length;j++){
+            for(j=0;j<midi.trks[i].notes.length;j++){ // TODO: Can binary search for the starting bound
                   let thisNote = midi.trks[i].notes[j];
-                  let x = Math.floor(ticksToBlocks(thisNote.time));
-                  if(x < ofsX) continue;
                   let yPos = thisNote.pitch + level.noteGroups[i].ofsY;
                   if((yPos < ofsY || yPos >= ofsY+levelHeight-1) && restrictPitchRange) continue;
-                  // FIXME: Changing BPB breaks x-ofsX when ??
-                  // FIXME: Need end scrolling behavior
-                  notes[x - ofsX].push({note: yPos - (ofsY - baseOfsY), instrument: getMM2Instrument(thisNote.instrument)-2});
+                  let pitch = yPos - (ofsY - baseOfsY);
+                  let xPos = Math.round(ticksToBlocks(thisNote.time)) - ofsX;
+                  if(xPos < 0) continue;
+                  if(noteCount[xPos][pitch] <= polyphonyCap || noteCount[xPos][pitch] == undefined){ // Prevent things from getting too loud
+                        notes[xPos].push({note: pitch, instrument: getMM2Instrument(thisNote.instrument)-2});
+                        if(noteCount[xPos][pitch] == undefined) noteCount[xPos][pitch] = 1;
+                        else noteCount[xPos][pitch]++;
+                  }
             }
       }
-      while(pos <= endBound-ofsX){
-            advanceSchTime(2520/blocksPerBeat);
+      while(pos <= endBound){
+            advanceSchTime(PPQ/blocksPerBeat);
       }
       clearDisplayLayer(dlayer.overlayLayer);
       clearDisplayLayer(dlayer.outlineLayer);
-      playAudio(bpm, blocksPerBeat, 100, true);
+      playAudio(bpm, blocksPerBeat, endBound, true);
 }
 
 /**
@@ -181,8 +187,8 @@ function playAudio(bpm, bpb, maxX, isContinuousPlayback){
       isPlaying = true;
       noteSchedule.setBPM(bpm);
       noteSchedule.play();
-      if(isContinuousPlayback) animateContinuousPlayback(bpm * bpb / 3600, maxX);
-      else animatePlayback(bpm * bpb / 3600, maxX + marginWidth + 2);
+      if(isContinuousPlayback) animateContinuousPlayback(bpm * bpb / 3600, maxX, loadDelay*5);
+      else animatePlayback(bpm * bpb / 3600, maxX + marginWidth + 2, loadDelay);
 }
 
 /**
@@ -224,9 +230,6 @@ function advanceSchTime(delta){
                   noteSchedule.addNote({value: n.note, instrument: n.instrument, time: schTime});
             });
       }
-      /*if(pos >= endBound-ofsX){ // FIXME: Triggering incorrectly
-            resetPlayback();
-      }*/
       schTime += delta;
       pos++;
 }

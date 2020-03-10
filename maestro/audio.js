@@ -9,6 +9,8 @@ const RELEASE_POS = 12000;
 const LONG_RELEASE_POS = 45500;
 const RELEASE_DURATION = 6000;
 
+const PPQ = 2520;
+
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)(); // jshint ignore:line
 
 var sourceNodes = [];
@@ -26,7 +28,7 @@ class NoteSchedule {
       constructor(){
             this.schedule = [];
             this.secondsPerBeat = 0.5;
-            this.ppq = 2520;
+            this.ppq = PPQ;
             this.volume = 0.5;
             this.instruments = [];
       }
