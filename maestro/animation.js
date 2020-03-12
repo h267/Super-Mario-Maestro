@@ -82,13 +82,18 @@ function animatePlayback(blocksPerFrame, maxX, delay){
  * @param {number} maxX The maximum position to scroll to before ending the animation.
  * @param {number} delay The number of seconds before the animation starts.
  */
-function animateContinuousPlayback(blocksPerFrame, maxX, delay){
+function animateContinuousPlayback(blocksPerFrame, delay){
+      const startX = ofsX;
+      const tileLimX = Math.floor((minimap.width-(canvas.width/16-27))+(blocksPerBeat*bbar)/16) + CONT_SCROLL_X;
+      let lastMovingX = 0;
+      let ranEndTransition = false;
       playbackAnim = new Animation(function(anim){
             canvasLayers[dlayer.mouseLayer].clear();
             let xPos = Math.floor( ( marginWidth + (blocksPerFrame * anim.frameCount) ) * 16 );
             let tilePos = Math.floor(xPos/16);
+            let globalTilePos = xPos/16 + startX;
             let drawPos = xPos;
-            if(xPos/16 > maxX+marginWidth){ // TODO: Change to be max(levelWidth, this level width)
+            if(globalTilePos > tileLimX + levelWidth - CONT_SCROLL_X + 5){ // TODO: Change to be max(levelWidth, this level width)
                   stopAudio();
                   resetPlayback();
                   return;
@@ -98,15 +103,22 @@ function animateContinuousPlayback(blocksPerFrame, maxX, delay){
                   drawPos = xPos;
                   scrollDisplayTo(xPos - (marginWidth * 16));
             }
-            else if(tilePos >= CONT_SCROLL_X){ // Case 2: The level is in the middle of scrolling TODO: Condition and logic for case 2
+            else if(tilePos >= CONT_SCROLL_X && globalTilePos < tileLimX){ // Case 2: The level is in the middle of scrolling
                   let ofs = xPos%16;
                   drawPos = (CONT_SCROLL_X*16) + ofs;
-                  setLevelXTo(tilePos-CONT_SCROLL_X);
+                  setLevelXTo(tilePos - CONT_SCROLL_X + startX);
                   scrollDisplayTo((CONT_SCROLL_X - marginWidth)*16 + ofs);
                   canvasLayers[dlayer.bgLayer].setXOfs(ofs);
             }
-            else{ // Case 3: The level is about to stop scrolling
-
+            else{ // Case 3: The level is about to stop scrolling // TODO: Fix the end getting cut off, causing desync when the scrubber is at the end
+                  if(!ranEndTransition){
+                        lastMovingX = tilePos - CONT_SCROLL_X + startX + 1;
+                        canvasLayers[dlayer.bgLayer].setXOfs(0);
+                        ranEndTransition = true;
+                  }
+                  setLevelXTo(lastMovingX);
+                  drawPos = (CONT_SCROLL_X + globalTilePos - tileLimX)*16;
+                  scrollDisplayTo((CONT_SCROLL_X + globalTilePos - tileLimX - marginWidth)*16);
             }
             canvasLayers[dlayer.mouseLayer].drawLine(drawPos, 0, drawPos, levelHeight*16);
 
@@ -128,5 +140,6 @@ function stopPlaybackAnimation(){
       if(playbackAnim == undefined) return;
       playbackAnim.stop();
       canvasLayers[dlayer.mouseLayer].clear();
+      canvasLayers[dlayer.bgLayer].setXOfs(0);
       refreshCanvas();
 }

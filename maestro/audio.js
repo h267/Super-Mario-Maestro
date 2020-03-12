@@ -75,7 +75,8 @@ class NoteSchedule {
       /**
        * Schedules and plays back the sequence of note using the correct instruments
        */
-      play(){
+      play(){ // TODO: setTimeout scheduling routine (see https://www.html5rocks.com/en/tutorials/audio/scheduling/)
+            console.table(this.schedule);
             let that = this;
             let noteTimes = [];
             let ndx = [];

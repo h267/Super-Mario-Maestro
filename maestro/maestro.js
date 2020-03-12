@@ -6,9 +6,9 @@
 /* TODO: New features:
 
 1.3.1:
-- 1. Full level playback with smooth scroll (via forcing the scrollbar to the center every frame), including a button to toggle it
-// FIXME: 2. Some of the samples have low volume
-// FIXME: 3. Audio track playback loads inconsistently
+- 1. Include a way to toggle full map playback
+// FIXME: 2. Audio track playback loads inconsistently, starting lag
+// FIXME: 3. Some of the samples have low volume
 
 1.4:
  - Animated entities with physics simulation

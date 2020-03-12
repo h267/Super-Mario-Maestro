@@ -187,7 +187,7 @@ function playAudio(bpm, bpb, maxX, isContinuousPlayback){
       isPlaying = true;
       noteSchedule.setBPM(bpm);
       noteSchedule.play();
-      if(isContinuousPlayback) animateContinuousPlayback(bpm * bpb / 3600, maxX, loadDelay*5);
+      if(isContinuousPlayback) animateContinuousPlayback(bpm * bpb / 3600, loadDelay*5);
       else animatePlayback(bpm * bpb / 3600, maxX + marginWidth + 2, loadDelay);
 }
 
