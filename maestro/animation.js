@@ -57,7 +57,7 @@ function animatePlayback(blocksPerFrame, maxX, delay){
       playbackAnim = new Animation(function(anim){
             canvasLayers[dlayer.mouseLayer].clear();
             let xPos = Math.floor( ( marginWidth + (blocksPerFrame * anim.frameCount) ) * 16 );
-            if(xPos/16 > maxX+marginWidth){ // TODO: Change to be max(levelWidth, this level width)
+            if(xPos/16 > maxX+marginWidth){
                   stopAudio();
                   resetPlayback();
                   return;
@@ -93,7 +93,7 @@ function animateContinuousPlayback(blocksPerFrame, delay){
             let tilePos = Math.floor(xPos/16);
             let globalTilePos = xPos/16 + startX;
             let drawPos = xPos;
-            if(globalTilePos > tileLimX + levelWidth - CONT_SCROLL_X + 5){ // TODO: Change to be max(levelWidth, this level width)
+            if(globalTilePos > tileLimX + levelWidth - CONT_SCROLL_X + 5){
                   stopAudio();
                   resetPlayback();
                   return;

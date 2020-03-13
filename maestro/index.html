@@ -26,7 +26,8 @@
                <div id="toolbox" style="display: none; height: 24px;">
                     <div class="smallspacedcontainer">
                          <div>
-                              <button id="playbtn" class="button" type="button" onclick="playBtn()" style="margin-right: 4px;">Play</button><button id="stopbtn" class="button" type="button" onclick="cancelPlayback()">Stop</button>
+                              <button id="playbtn" class="button" type="button" onclick="playBtn()" style="margin-right: 4px;" disabled>. . .</button>
+                              <button id="stopbtn" class="button" type="button" onclick="cancelPlayback()" disabled>. . .</button>
                          </div>
                          <select id="temposelect" class="dropdown" onchange="selectTempo()">
                               <optgroup id="comtempos" label="Common Tempos">

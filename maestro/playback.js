@@ -47,7 +47,6 @@ const insPlayData = [
 ];
 const defaultInsPlayData = {file: 'goomba', baseNote: KEY_C4, volumeOffset: 0};
 const polyphonyCap = 2;
-const loadDelay = 0.2;
 
 var schTime = 0;
 var pos = 0;
@@ -62,7 +61,7 @@ var buffers = [];
 var isContinuousPlayback = false;
 var noteSchedule = new NoteSchedule();
 
-var restrictPitchRange = true; // Make this var so Hermit can change it with his epic hacking skillz
+const restrictPitchRange = true; // This will crash if set to false for now. Here lies Hermit's hopes and dreams.
 
 // TODO: Bring back real time for non-full map playback
 
@@ -102,7 +101,7 @@ function loadBuffers(){
  */
 async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       stopAudio();
-      schTime = loadDelay / (60/bpm) * PPQ;
+      schTime = 0;
       isContinuousPlayback = false;
       endBound = level.width;
       framesPerColumn = 1/(blocksPerBeat*bpm/3600);
@@ -140,7 +139,7 @@ async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
  */
 async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintroduce, copy code from above
       stopAudio();
-      schTime = loadDelay*5 / (60/bpm) * PPQ;
+      schTime = 0;
       isContinuousPlayback = true;
       endBound = mapWidth;
       framesPerColumn = 1/(blocksPerBeat*bpm/3600);
@@ -187,8 +186,8 @@ function playAudio(bpm, bpb, maxX, isContinuousPlayback){
       isPlaying = true;
       noteSchedule.setBPM(bpm);
       noteSchedule.play();
-      if(isContinuousPlayback) animateContinuousPlayback(bpm * bpb / 3600, loadDelay*5);
-      else animatePlayback(bpm * bpb / 3600, maxX + marginWidth + 2, loadDelay);
+      if(isContinuousPlayback) animateContinuousPlayback(bpm * bpb / 3600, LOAD_DELAY);
+      else animatePlayback(bpm * bpb / 3600, maxX + marginWidth + 2, LOAD_DELAY);
 }
 
 /**

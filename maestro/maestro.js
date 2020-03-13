@@ -163,6 +163,7 @@ var numRecommendedInstruments = 0;
 var entityOverflowStatus = {entity: false, powerup: false};
 var noteRange = 0;
 var defaultZoom = 1;
+var hasLoadedBuffers = false;
 
 //getEquivalentBlocks(2.75);
 
@@ -176,7 +177,13 @@ getImg('icon/ruler.png').then(async function(cursorImg){
       drawLevel(false,true);
 });
 
-loadBuffers();
+loadBuffers().then(() => {
+      hasLoadedBuffers = true;
+      document.getElementById('stopbtn').innerHTML = 'Stop';
+      document.getElementById('stopbtn').disabled = false;
+      document.getElementById('playbtn').innerHTML = 'Play';
+      document.getElementById('playbtn').disabled = false;
+});
 
 /**
  * Loads a MIDI file from the file input.
@@ -919,6 +926,8 @@ function handleOut(){
  */
 function showEverything(){
       document.getElementById('toolbox').style = '';
+      document.getElementById('playbtn').disabled = !hasLoadedBuffers;
+      document.getElementById('stopbtn').disabled = !hasLoadedBuffers;
 }
 
 /**

@@ -11,9 +11,11 @@ const RELEASE_DURATION = 6000;
 
 const PPQ = 2520;
 
-var audioCtx = new (window.AudioContext || window.webkitAudioContext)(); // jshint ignore:line
+const LOAD_DELAY = 0.5;
 
-var sourceNodes = [];
+const LOAD_SIZE = 0.5;
+
+var audioCtx = new (window.AudioContext || window.webkitAudioContext)(); // jshint ignore:line
 
 // TODO: Possibly offline rendering if lag once again becomes an issue
 
@@ -31,6 +33,12 @@ class NoteSchedule {
             this.ppq = PPQ;
             this.volume = 0.5;
             this.instruments = [];
+            this.audioSchedule = [];
+            this.audioScheduleIndex = 0;
+            this.audioScheduleTime = 0;
+            this.audioScheduleInterval = null;
+            this.audioScheduleStartTime = null;
+            this.isPlaying = false;
       }
 
       /**
@@ -63,7 +71,7 @@ class NoteSchedule {
       }
 
       /**
-       * Adds a note to the list of scheduled notes.
+       * Adds a note to the list of scheduled notes. Notes need to be added in chronological order to work properly.
        * @param {Object} note An object describing the basic features of the note:
        * * instrument: The ID of the instrument stored in this NoteSchedule.
        * * value: The MIDI pitch of the note.
@@ -75,8 +83,9 @@ class NoteSchedule {
       /**
        * Schedules and plays back the sequence of note using the correct instruments
        */
-      play(){ // TODO: setTimeout scheduling routine (see https://www.html5rocks.com/en/tutorials/audio/scheduling/)
-            console.table(this.schedule);
+      play(){
+            this.audioSchedule = [];
+            this.audioScheduleIndex = 0;
             let that = this;
             let noteTimes = [];
             let ndx = [];
@@ -90,19 +99,22 @@ class NoteSchedule {
             this.schedule.forEach(function(thisNote){ // Second pass; play back each note at the correct duration
                   let time = that.ticksToSeconds(thisNote.ticks);
                   let inst = thisNote.instrument;
-                  that.instruments[inst].playNote(thisNote.value, time, noteTimes[inst][ndx[inst]+1] - noteTimes[inst][ndx[inst]]);
+                  that.audioSchedule.push({inst: inst, pitch: thisNote.value, time: time, duration: noteTimes[inst][ndx[inst]+1] - noteTimes[inst][ndx[inst]]});
                   ndx[inst]++;
             });
+            this.isPlaying = true;
+            this.audioScheduleStartTime = audioCtx.currentTime;
+            this.scheduleAudioOutput(LOAD_SIZE);
+            this.audioScheduleInterval = setInterval(() => this.scheduleAudioOutput(LOAD_SIZE), LOAD_SIZE*1000);
       }
 
       /**
        * Stops playback and cancels all scheduled notes.
        */
       stop(){
-            sourceNodes.forEach(function(n,i){
-                  n.stop(0);
-            });
-            sourceNodes = [];
+            this.isPlaying = false;
+            clearInterval(this.audioScheduleInterval);
+            this.audioScheduleIndex = 0;
       }
 
       /**
@@ -119,6 +131,29 @@ class NoteSchedule {
        */
       ticksToSeconds(ticks){
             return ( ticks / this.ppq ) * this.secondsPerBeat;
+      }
+
+      /**
+       * Schedules the playback of notes in the future over a specified time period.
+       * @param {number} duration The amount of time to schedule the notes over, in seconds.
+       */
+      scheduleAudioOutput(duration){
+            let nCount = 0;
+            if(!this.isPlaying) return;
+            this.audioScheduleTime += duration;
+            while(true){
+                  if(this.audioScheduleIndex >= this.audioSchedule.length){
+                        clearInterval(this.audioScheduleInterval);
+                        break;
+                  }
+                  let thisNote = this.audioSchedule[this.audioScheduleIndex];
+                  let time = thisNote.time;
+                  if(time > this.audioScheduleTime) break;
+                  nCount++;
+                  this.instruments[thisNote.inst].playNote(thisNote.pitch, thisNote.time + this.audioScheduleStartTime + LOAD_DELAY, thisNote.duration);
+                  this.audioScheduleIndex++;
+            }
+            if(nCount > 50) console.log(nCount); // FIXME: Prevent overscheduling caused by starting at a nonzero position
       }
 }
 
@@ -138,7 +173,6 @@ class Instrument {
             this.baseNote = baseNote;
             this.noteBuffers = {};
             this.hasLongSustain = false;
-            this.sourceNodes = [];
       }
 
       /**
@@ -164,7 +198,7 @@ class Instrument {
        * @param {number} duration The time, in seconds, that a note can play before being terminated.
        */
       playNote(note, time, duration){
-            this.sourceNodes.push(playBuffer(this.noteBuffers[note], time, duration));
+            playBuffer(this.noteBuffers[note], time, duration);
       }
 }
 
@@ -200,20 +234,19 @@ function loadSample(url){
 function playBuffer(buffer, time, duration){
       if(time == undefined) time = 0;
 
-      var curTime = audioCtx.currentTime;
+      var curTime =  0; //audioCtx.currentTime;
       var source = audioCtx.createBufferSource();
       source.buffer = buffer;
       var gainNode = audioCtx.createGain();
       gainNode.gain.setValueAtTime(MASTER_VOLUME, 0); // Prevent Firefox bug
-      if(!isNaN(duration)) gainNode.gain.setTargetAtTime(0, curTime + time + duration, 0.4);
+      //if(!isNaN(duration)) gainNode.gain.setTargetAtTime(0, curTime + time + duration, 0.4);
       //gainNode.gain.setValueAtTime(0, curTime + time + 0.1);
 
       source.connect(gainNode);
       gainNode.connect(audioCtx.destination);
       
-      if(isNaN(duration) || duration == 0) source.start(curTime + time); // TODO: Keep track of polyphonic notes and give them proper durations
+      if(isNaN(duration) || duration == 0) source.start(curTime + time);
       else source.start(curTime + time, 0);
-      sourceNodes.push(source);
       return source;
 }
 
