@@ -61,7 +61,7 @@ var buffers = [];
 var isContinuousPlayback = false;
 var noteSchedule = new NoteSchedule();
 
-var restrictPitchRange = true; // This will crash if set to false for now... but that doesn't mean Hermit can't try.
+var restrictPitchRange = true; // Just change 3 lines of code Hermit smh my head
 
 /**
  * Loads all of the instrument sound samples into new instruments for the noteSchedule object.
