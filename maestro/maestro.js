@@ -1,8 +1,6 @@
 // Super Mario Maestro v1.3.1
 // made by h267
 
-// TODO: Upon release, re-enable gtag and clean up comments
-
 /* TODO: New features:
 
 1.4:
