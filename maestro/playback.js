@@ -212,6 +212,7 @@ function prerenderAndPlay(bpm, bpb, maxX, isContinuousPlayback){
  * Stops the playback preview.
  */
 function stopAudio(){
+      if(isAnimating) return;
       noteSchedule.stop();
       noteSchedule.clear();
       stopPlaybackAnimation();

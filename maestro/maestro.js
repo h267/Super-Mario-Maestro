@@ -5,11 +5,6 @@
 
 /* TODO: New features:
 
-1.3.1:
-- 1. Include a way to toggle full map playback
-// FIXME: 2. Audio track playback loads inconsistently, starting lag
-// FIXME: 3. Some of the samples have low volume
-
 1.4:
  - Animated entities with physics simulation
  - Partition system where different settings can apply
@@ -30,7 +25,7 @@ const levelHeight = 27;
 const baseOfsY = 48;
 const discordInviteLink = 'https://discord.gg/KhmXzfp';
 const tutorialLink = 'https://www.reddit.com/r/MarioMaker/comments/f5fdzl/tutorial_for_automatically_generating_music/';
-const contPlayback = true;
+const contPlayback = false; // Dev toggle for full map playback
 const numParts = 20;
 const autoShowRatio = 0.7;
 
@@ -860,6 +855,7 @@ function playBtn(){
  */
 function cancelPlayback(){
       if(!isPlaying) return;
+      isAnimating = false;
       resetPlayback();
       stopAudio();
 }

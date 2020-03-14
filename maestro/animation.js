@@ -45,7 +45,9 @@ const BASE_WALK_PERIOD = 6;
 const RUN_SPEED = (17/90);
 const CONT_SCROLL_X = 120;
 
-var playbackAnim;
+let playbackAnim;
+let timeout = null;
+let isAnimating = false;
 
 /**
  * Plays the playback animation that runs during the audio preview.
@@ -57,9 +59,12 @@ function animatePlayback(blocksPerFrame, maxX, delay){
       playbackAnim = new Animation(function(anim){
             canvasLayers[dlayer.mouseLayer].clear();
             let xPos = Math.floor( ( marginWidth + (blocksPerFrame * anim.frameCount) ) * 16 );
-            if(xPos/16 > maxX+marginWidth){
-                  stopAudio();
-                  resetPlayback();
+            if(xPos/16 > maxX-marginWidth){
+                  if(isAnimating){
+                        setTimeout(() => stopAudio(), 2000);
+                        isAnimating = false;
+                        resetPlayback();
+                  }
                   return;
             }
             canvasLayers[dlayer.mouseLayer].drawLine(xPos, 0, xPos, levelHeight*16);
@@ -72,6 +77,7 @@ function animatePlayback(blocksPerFrame, maxX, delay){
             drawSprite(marioSprites[spriteNum], xPos - 240, 396, dlayer.mouseLayer);
             refreshCanvas();
       });
+      isAnimating = true;
       setTimeout(() => playbackAnim.start(), delay*1000);
       
 }
@@ -94,8 +100,11 @@ function animateContinuousPlayback(blocksPerFrame, delay){
             let globalTilePos = xPos/16 + startX;
             let drawPos = xPos;
             if(globalTilePos > tileLimX + levelWidth - CONT_SCROLL_X + 5){
-                  stopAudio();
-                  resetPlayback();
+                  if(isAnimating){
+                        setTimeout(() => stopAudio(), 2000);
+                        isAnimating = false;
+                        resetPlayback();
+                  }
                   return;
             }
             //console.log(xPos);
@@ -130,6 +139,7 @@ function animateContinuousPlayback(blocksPerFrame, delay){
             drawSprite(marioSprites[spriteNum], drawPos - 240, 396, dlayer.mouseLayer);
             refreshCanvas();
       });
+      isAnimating = true;
       setTimeout(() => playbackAnim.start(), delay*1000);
 }
 
