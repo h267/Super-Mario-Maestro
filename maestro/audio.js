@@ -2,12 +2,12 @@ const KEY_A4 = 69;
 const KEY_C4 = 60;
 const KEY_F3 = 53;
 
-const SAMPLE_RATE = 44100;
+const SAMPLE_RATE = 32000; //44100;
 const MASTER_VOLUME = 0.20;
 
-const RELEASE_POS = 12000;
-const LONG_RELEASE_POS = 45500;
-const RELEASE_DURATION = 6000;
+const RELEASE_POS = Math.round(12000/44100 * SAMPLE_RATE);
+const LONG_RELEASE_POS = Math.round(45500/44100 * SAMPLE_RATE);
+const RELEASE_DURATION = Math.round(6000/44100 * SAMPLE_RATE);
 
 const PPQ = 2520;
 
@@ -16,8 +16,6 @@ const LOAD_DELAY = 0.5;
 const LOAD_SIZE = 0.5;
 
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)(); // jshint ignore:line
-
-// TODO: Possibly offline rendering if lag once again becomes an issue
 
 /**
  * A class for playing back a sequence of scheduled notes.
@@ -39,6 +37,8 @@ class NoteSchedule {
             this.audioScheduleInterval = null;
             this.audioScheduleStartTime = null;
             this.isPlaying = false;
+            this.playbackNode = null;
+            this.renderingCtx = null;
       }
 
       /**
@@ -80,33 +80,6 @@ class NoteSchedule {
       addNote(note){
             this.schedule.push( {instrument: note.instrument, value: note.value, ticks: note.time} );
       }
-      /**
-       * Schedules and plays back the sequence of note using the correct instruments
-       */
-      play(){
-            this.audioSchedule = [];
-            this.audioScheduleIndex = 0;
-            let that = this;
-            let noteTimes = [];
-            let ndx = [];
-            this.instruments.forEach(function(n,i){ // Keep track of all of the notes for each instrument
-                  noteTimes[i] = [];
-                  ndx[i] = 0;
-            });
-            this.schedule.forEach(function(thisNote){ // First pass; get the time of every note
-                  noteTimes[thisNote.instrument].push(that.ticksToSeconds(thisNote.ticks));
-            });
-            this.schedule.forEach(function(thisNote){ // Second pass; play back each note at the correct duration
-                  let time = that.ticksToSeconds(thisNote.ticks);
-                  let inst = thisNote.instrument;
-                  that.audioSchedule.push({inst: inst, pitch: thisNote.value, time: time, duration: noteTimes[inst][ndx[inst]+1] - noteTimes[inst][ndx[inst]]});
-                  ndx[inst]++;
-            });
-            this.isPlaying = true;
-            this.audioScheduleStartTime = audioCtx.currentTime;
-            this.scheduleAudioOutput(LOAD_SIZE);
-            this.audioScheduleInterval = setInterval(() => this.scheduleAudioOutput(LOAD_SIZE), LOAD_SIZE*1000);
-      }
 
       /**
        * Stops playback and cancels all scheduled notes.
@@ -115,6 +88,52 @@ class NoteSchedule {
             this.isPlaying = false;
             clearInterval(this.audioScheduleInterval);
             this.audioScheduleIndex = 0;
+            if(this.playbackNode != null) this.playbackNode.stop();
+      }
+
+      /**
+       * Pre-renders and plays the notes in the schedule.
+       * @returns {Promise} A Promise that resolves when rendering has completed.
+       */
+      playPrerender(){
+            let that = this;
+            return new Promise(async function(resolve, reject){
+                  let buffer = await that.render(); // To monitor progress, see https://github.com/WebAudio/web-audio-api/issues/302#issuecomment-310829366
+                  resolve();
+                  var source = audioCtx.createBufferSource();
+                  that.playbackNode = source;
+                  source.buffer = buffer;
+                  source.connect(audioCtx.destination);
+                  source.start();
+            });
+      }
+
+      /**
+       * Renders the notes in the schedule to an audio buffer.
+       * @returns {Promise<AudioBuffer>} A Promise holding the rendered audio buffer.
+       */
+      async render(){
+            let offlineCtx = new OfflineAudioContext(1, Math.ceil((this.ticksToSeconds(this.schedule[this.schedule.length-1].ticks) + 2) * SAMPLE_RATE), SAMPLE_RATE);
+            this.renderingCtx = offlineCtx;
+            let that = this;
+
+            this.schedule.forEach(function(thisNote, idx){ // Second pass; play back each note at the correct duration
+                  let time = that.ticksToSeconds(thisNote.ticks);
+                  let inst = thisNote.instrument;
+                  //that.audioSchedule.push({inst: inst, pitch: thisNote.value, time: time, duration: 1});
+                  that.instruments[inst].playNote(thisNote.value, time, 1, offlineCtx);
+            });
+
+            let renderedBuffer = await offlineCtx.startRendering();
+            return renderedBuffer;
+      }
+
+      /**
+       * Cancels the audio rendering process.
+       */
+      cancelRender(){
+            this.renderingCtx.suspend();
+            setPlaybackWaitStatus(false);
       }
 
       /**
@@ -131,29 +150,6 @@ class NoteSchedule {
        */
       ticksToSeconds(ticks){
             return ( ticks / this.ppq ) * this.secondsPerBeat;
-      }
-
-      /**
-       * Schedules the playback of notes in the future over a specified time period.
-       * @param {number} duration The amount of time to schedule the notes over, in seconds.
-       */
-      scheduleAudioOutput(duration){
-            let nCount = 0;
-            if(!this.isPlaying) return;
-            this.audioScheduleTime += duration;
-            while(true){
-                  if(this.audioScheduleIndex >= this.audioSchedule.length){
-                        clearInterval(this.audioScheduleInterval);
-                        break;
-                  }
-                  let thisNote = this.audioSchedule[this.audioScheduleIndex];
-                  let time = thisNote.time;
-                  if(time > this.audioScheduleTime) break;
-                  nCount++;
-                  this.instruments[thisNote.inst].playNote(thisNote.pitch, thisNote.time + this.audioScheduleStartTime + LOAD_DELAY, thisNote.duration);
-                  this.audioScheduleIndex++;
-            }
-            if(nCount > 50) console.log(nCount); // FIXME: Prevent overscheduling caused by starting at a nonzero position
       }
 }
 
@@ -196,9 +192,11 @@ class Instrument {
        * @param {number} note The MIDI pitch of the note to be played.
        * @param {number} time The time, in seconds, when the note should be played.
        * @param {number} duration The time, in seconds, that a note can play before being terminated.
+       * @param {AudioContext} ctx The AudioContext object to play the sound through. (Optional)
        */
-      playNote(note, time, duration){
-            playBuffer(this.noteBuffers[note], time, duration);
+      playNote(note, time, duration, ctx){
+            if(ctx == undefined) ctx = audioCtx;
+            playBuffer(this.noteBuffers[note], time, duration, ctx);
       }
 }
 
@@ -229,21 +227,23 @@ function loadSample(url){
  * @param {AudioBuffer} buffer The AudioBuffer to play.
  * @param {number} time The amount of time, in seconds, before the note is to be played.
  * @param {number} duration The amount of time, in seconds, that a note can play before being terminated.
+ * @param {AudioContext} ctx The AudioContext to play the sound through. (Optional)
  * @returns {AudioBufferSourceNode} The AudioBufferSourceNode that controls this note's playback.
  */
-function playBuffer(buffer, time, duration){
+function playBuffer(buffer, time, duration, ctx){
       if(time == undefined) time = 0;
+      if(ctx == undefined) ctx = audioCtx;
 
       var curTime =  0; //audioCtx.currentTime;
-      var source = audioCtx.createBufferSource();
+      var source = ctx.createBufferSource();
       source.buffer = buffer;
-      var gainNode = audioCtx.createGain();
+      var gainNode = ctx.createGain();
       gainNode.gain.setValueAtTime(MASTER_VOLUME, 0); // Prevent Firefox bug
       //if(!isNaN(duration)) gainNode.gain.setTargetAtTime(0, curTime + time + duration, 0.4);
       //gainNode.gain.setValueAtTime(0, curTime + time + 0.1);
 
       source.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
+      gainNode.connect(ctx.destination);
       
       if(isNaN(duration) || duration == 0) source.start(curTime + time);
       else source.start(curTime + time, 0);

@@ -272,7 +272,6 @@ function loadData(bytes){ // Load file from the file input element
             if(midi.trks[i].usedInstruments.length > 1){
                   sepInsFromTrk(midi.trks[i]);
             }
-            // TODO: Determine counts
             if(midi.trks[i].hasPercussion){
                   let isInPartitions = new Array(numParts).fill(false);
                   let partitionSize = Math.floor(mapWidth/numParts);
@@ -1649,4 +1648,21 @@ function hideTrk(id){
  */
 function tutorialBtn(){
       window.open(tutorialLink);
+}
+
+/**
+ * Sets the text and function in the playback controls depending on if audio is being rendered.
+ * @param {boolean} status Whether the user is waiting for audio to be rendered.
+ */
+function setPlaybackWaitStatus(status){
+      if(status){
+            document.getElementById('playbtn').innerHTML = ". . .";
+            document.getElementById('stopbtn').innerHTML = ". . .";
+            document.getElementById('stopbtn').disabled = true;
+      }
+      else{
+            document.getElementById('playbtn').innerHTML = "Play";
+            document.getElementById('stopbtn').innerHTML = "Stop";
+            document.getElementById('stopbtn').disabled = false;
+      }
 }

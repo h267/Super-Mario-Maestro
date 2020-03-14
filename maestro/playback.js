@@ -61,9 +61,7 @@ var buffers = [];
 var isContinuousPlayback = false;
 var noteSchedule = new NoteSchedule();
 
-const restrictPitchRange = true; // This will crash if set to false for now. Here lies Hermit's hopes and dreams.
-
-// TODO: Bring back real time for non-full map playback
+var restrictPitchRange = true; // This will crash if set to false for now... but that doesn't mean Hermit can't try.
 
 /**
  * Loads all of the instrument sound samples into new instruments for the noteSchedule object.
@@ -131,13 +129,13 @@ async function playLvl(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       while(pos < endBound-marginWidth+1){
             advanceSchTime(PPQ/blocksPerBeat);
       }
-      playAudio(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth), false);
+      prerenderAndPlay(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth), false);
 }
 
 /**
  * Prepares the whole MIDI for playback, then triggers playback for the whole song.
  */
-async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintroduce, copy code from above
+async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){
       stopAudio();
       schTime = 0;
       isContinuousPlayback = true;
@@ -170,7 +168,7 @@ async function playMap(midi,level,bpm,blocksPerBeat,ofsX,ofsY){ // TODO: Reintro
       }
       clearDisplayLayer(dlayer.overlayLayer);
       clearDisplayLayer(dlayer.outlineLayer);
-      playAudio(bpm, blocksPerBeat, endBound, true);
+      prerenderAndPlay(bpm, blocksPerBeat, endBound, true);
 }
 
 /**
@@ -188,6 +186,26 @@ function playAudio(bpm, bpb, maxX, isContinuousPlayback){
       noteSchedule.play();
       if(isContinuousPlayback) animateContinuousPlayback(bpm * bpb / 3600, LOAD_DELAY);
       else animatePlayback(bpm * bpb / 3600, maxX + marginWidth + 2, LOAD_DELAY);
+}
+
+/**
+* Renders and plays a preview of how the notes in the level would sound in-game.
+* @param {number} bpm The tempo to play the music at, in beats per minute.
+* @param {number} bpb The number of blocks or tiles in every beat.
+* @param {number} maxX The maximum scrolling position of playback.
+* @param {boolean} isContinuousPlayback If the entire MIDI is to be played instead of just the visible level.
+*/
+function prerenderAndPlay(bpm, bpb, maxX, isContinuousPlayback){
+     if(bpm==undefined){bpm=120;}
+     pos = 0;
+     isPlaying = true;
+     noteSchedule.setBPM(bpm);
+     setPlaybackWaitStatus(true);
+     noteSchedule.playPrerender().then(() => {
+            setPlaybackWaitStatus(false);
+            if(isContinuousPlayback) animateContinuousPlayback(bpm * bpb / 3600, 0);
+            else animatePlayback(bpm * bpb / 3600, maxX + marginWidth + 2, 0);
+     });
 }
 
 /**
