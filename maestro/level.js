@@ -1,3 +1,5 @@
+const numStructChunks = 30;
+
 class Level{
       /**
        * Initializes the level object.
@@ -13,6 +15,9 @@ class Level{
             this.width = levelWidth;
             this.maxWidth = 0;
             this.limitLine = null;
+            this.structures = [];
+            this.structChunks = [];
+            for(let i = 0; i < numStructChunks; i++) this.structChunks[i] = [];
             this.refresh();
       }
 
@@ -25,6 +30,11 @@ class Level{
       checkTile(x,y){
             return this.overview.getTile(x,y,true);
       }
+
+      checkBgTile(x,y){
+            return this.background.getTile(x,y,true);
+      }
+
       /**
        * Adds a note group to the stored list. One note group corresponds to a MIDI track.
        * @param {PreloadedNoteGroup} group The NoteGroup to add.
@@ -46,9 +56,12 @@ class Level{
        * Refreshes the level overview by plotting values from the stored note groups.
        */
       refresh(){
+            console.log('rf');
             this.overview = new Area(levelWidth,levelHeight);
+            this.background = new Area(levelWidth,levelHeight);
             this.isTrackOccupant = new Array(levelWidth);
             this.numberOfOccupants = new Array(levelWidth);
+            this.structures = [];
             this.entityCount = 0;
             this.powerupCount = 0;
             this.width = 0;
@@ -73,16 +86,17 @@ class Level{
                         if(!isVisible(x,y,marginWidth,0)){continue;}
 
                         // Set note
-                        this.overview.setTile(x,y,1);
+                        //this.overview.setTile(x,y,1);
                         this.isTrackOccupant[x][y][i] = true;
                         this.numberOfOccupants[x][y]++;
 
                         // Set instrument
+                        let ins = getMM2Instrument(thisNote.instrument)-2;
                         if(y<26){
                               if(columnCounts[x] == undefined){
                                     columnCounts[x] = {entities: 0, powerups: 0};
                               }
-                              var ins = getMM2Instrument(thisNote.instrument)-2;
+                              let ins = getMM2Instrument(thisNote.instrument)-2;
                               if(MM2Instruments[ins].isPowerup){
                                     this.powerupCount++;
                                     columnCounts[x].powerups++;
@@ -93,10 +107,20 @@ class Level{
                               }
                               if(x > this.width) this.width = x;
                               //if((this.powerupCount > 100 || this.entityCount > 100) && (this.limitLine == null)) this.limitLine = x + marginWidth + 1;
-                              this.overview.setTile(x,y+1,ins+2);
+                              //this.overview.setTile(x,y+1,ins+2);
                               this.isTrackOccupant[x][y+1][i] = true;
                               this.numberOfOccupants[x][y+1]++;
                         }
+
+                        let newStruct = new Structure(0, x, y);
+                        let structID = this.structures.length;
+                        let chunkLocation = Math.floor(x/(levelWidth/numStructChunks));
+                        newStruct.chunkIndex = chunkLocation;
+                        newStruct.id = structID;
+                        newStruct.entities[0] = ins+2;
+                        this.structures[structID] = newStruct;
+                        newStruct.chunkListIndex = this.structChunks[chunkLocation].length;
+                        this.structChunks[chunkLocation][newStruct.chunkListIndex] = structID;
                   }
             }
             var curCount = {entities: 0, powerups: 0};
@@ -107,6 +131,39 @@ class Level{
                   if((curCount.entities > 100 || curCount.powerups > 100) && this.limitLine == null){
                         this.limitLine = i;
                   }
+            }
+            let that = this;
+            this.structures.forEach((struct, i) => { // First pass: Handle conflicts
+                  for(let j = 0; j < 3; j++){
+                        if(struct.chunkIndex+j-1 < 0 || struct.chunkIndex+j-1 >= numStructChunks) continue;
+                        for(let k = 0; k < this.structChunks[struct.chunkIndex+j-1].length; k++){
+                              let otherStruct = this.structures[this.structChunks[struct.chunkIndex+j-1][k]];
+                              if(struct.id == otherStruct.id) continue;
+                              struct.checkCollisionWith(otherStruct);
+                        }
+                  }
+            });
+            this.structures.forEach((struct, i) => { // Second pass: Draw the structures
+                  that.drawStructure(struct);
+            });
+      }
+
+      drawStructure(structure){ // TODO: Replace everything with structures
+            for(let i = 0; i < structure.blueprint[0].length; i++){
+                  for(let j = 0; j < structure.blueprint.length; j++){
+                        let tile = structure.blueprint[j][i];
+                        if(tile == 0) continue;
+                        let isBG = getIsBG(tile);
+                        if(!isBG) this.overview.setTile(structure.x + structure.xOfs + i, structure.y - structure.yOfs - j, getLvlTile(tile));
+                        else this.background.setTile(structure.x + structure.xOfs + i, structure.y - structure.yOfs - j, getLvlTile(tile));
+                  }
+            }
+            for(let i = 0; i < structure.entities.length; i++){
+                  this.overview.setTile(
+                        structure.x-structure.xOfs-structure.entityPos[i].x, 
+                        structure.y-structure.yOfs-structure.entityPos[i].y,
+                        structure.entities[i]
+                  );
             }
       }
 }
@@ -254,4 +311,19 @@ class PreloadedNoteGroup{
       setVisibility(visible){
             this.isVisible = visible;
       }
+}
+
+function getLvlTile(n){
+      if(n == 0) return 0;
+      else if(n < 3) return n + 46;
+      else return 1;
+}
+
+function getIsBG(n){
+      if(n == 2) return true;
+      else return false;
+}
+
+function removeElementFromArr(arr, n){
+      return arr.splice(n, 1);
 }

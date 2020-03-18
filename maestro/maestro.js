@@ -22,7 +22,7 @@ const marginWidth = 27;
 const levelHeight = 27;
 const baseOfsY = 48;
 const discordInviteLink = 'https://discord.gg/KhmXzfp';
-const tutorialLink = 'https://www.reddit.com/r/MarioMaker/comments/f5fdzl/tutorial_for_automatically_generating_music/';
+const tutorialLink = 'https://docs.google.com/document/d/1UG-Y-2zbdcqE7ciMgPVT3HICWEZHP002HmukCuWctxg/edit';
 const contPlayback = false; // Dev toggle for full map playback
 const numParts = 20;
 const autoShowRatio = 0.7;
@@ -484,8 +484,10 @@ function drawLevel(redrawMini,noDOM){
             for(j=0;j<27;j++){
                   x = ofsX + i - marginWidth;
                   y = ofsY + j;
-                  var tile = level.checkTile(i,j); // Tile on the main screen
-                  var drawY = 27-j-1;
+                  let tile = level.checkTile(i,j); // Tile on the main screen
+                  let bgTile = level.checkBgTile(i,j);
+                  let drawY = 27-j-1;
+                  if(bgTile != null) drawTile(tiles[bgTile],i*16,(drawY*16));
                   if(tile != null && isVisible(x,y,ofsX,ofsY)){
                         drawTile(tiles[tile],i*16,(drawY*16));
                         if(level.numberOfOccupants[i][j] > 1){ // Highlight any overalapping tiles in red

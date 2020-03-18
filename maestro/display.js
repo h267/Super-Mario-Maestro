@@ -509,7 +509,9 @@ function loadTiles(){
                   getImg('tiles/pokey.png'),
                   getImg('tiles/snow-pokey.png'),
                   getImg('tiles/sword.png'),
-                  getImg('tiles/toad.png')
+                  getImg('tiles/toad.png'),
+                  getImg('tiles/block.png'),
+                  getImg('tiles/cloud.png'),
                   ]
             ).then(function(loaded){
                   //console.log('All tiles loaded');
