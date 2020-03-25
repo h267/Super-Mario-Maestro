@@ -486,6 +486,7 @@ function drawLevel(redrawMini,noDOM){
                   y = ofsY + j;
                   let tile = level.checkTile(i,j); // Tile on the main screen
                   let bgTile = level.checkBgTile(i,j);
+                  let fgTile = level.checkFgTile(i,j);
                   let drawY = 27-j-1;
                   if(bgTile != null) drawTile(tiles[bgTile],i*16,(drawY*16));
                   if(tile != null && isVisible(x,y,ofsX,ofsY)){
@@ -498,6 +499,7 @@ function drawLevel(redrawMini,noDOM){
                               outlineTile(i,drawY,2,'rgb(102,205,170)');
                         }
                   }
+                  if(fgTile != null) drawTile(bgs[2+fgTile],i*16,(drawY*16));
             }
             if(i>ofsX+levelWidth){break;}
       }

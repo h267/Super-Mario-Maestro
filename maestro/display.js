@@ -528,7 +528,9 @@ function loadBGs(){
       return new Promise(function(resolve,reject){
             Promise.all([
                   getImg('bg/sign.png'),
-                  getImg('bg/goal.png')
+                  getImg('bg/goal.png'),
+                  getImg('icon/parachute.png'),
+                  getImg('icon/alert.png'),
             ]).then(function(loaded){
                   //console.log('BGs loaded');
                   resolve(loaded);

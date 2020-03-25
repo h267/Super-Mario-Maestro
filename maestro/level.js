@@ -35,6 +35,10 @@ class Level{
             return this.background.getTile(x,y,true);
       }
 
+      checkFgTile(x,y){
+            return this.foreground.getTile(x,y,true);
+      }
+
       /**
        * Adds a note group to the stored list. One note group corresponds to a MIDI track.
        * @param {PreloadedNoteGroup} group The NoteGroup to add.
@@ -59,9 +63,12 @@ class Level{
             console.log('rf');
             this.overview = new Area(levelWidth,levelHeight);
             this.background = new Area(levelWidth,levelHeight);
+            this.foreground = new Area(levelWidth,levelHeight);
             this.isTrackOccupant = new Array(levelWidth);
             this.numberOfOccupants = new Array(levelWidth);
             this.structures = [];
+            this.structChunks = [];
+            for(let i = 0; i < numStructChunks; i++) this.structChunks[i] = [];
             this.entityCount = 0;
             this.powerupCount = 0;
             this.width = 0;
@@ -112,7 +119,7 @@ class Level{
                               this.numberOfOccupants[x][y+1]++;
                         }
 
-                        let newStruct = new Structure(0, x, y);
+                        let newStruct = new NoteStructure(0, x, y);
                         let structID = this.structures.length;
                         let chunkLocation = Math.floor(x/(levelWidth/numStructChunks));
                         newStruct.chunkIndex = chunkLocation;
@@ -139,7 +146,9 @@ class Level{
                         for(let k = 0; k < this.structChunks[struct.chunkIndex+j-1].length; k++){
                               let otherStruct = this.structures[this.structChunks[struct.chunkIndex+j-1][k]];
                               if(struct.id == otherStruct.id) continue;
-                              struct.checkCollisionWith(otherStruct);
+                              if(struct.checkCollisionWith(otherStruct)){
+                                    this.markTile(struct.x, struct.y, 1);
+                              }
                         }
                   }
             });
@@ -148,23 +157,30 @@ class Level{
             });
       }
 
-      drawStructure(structure){ // TODO: Replace everything with structures
-            for(let i = 0; i < structure.blueprint[0].length; i++){
-                  for(let j = 0; j < structure.blueprint.length; j++){
-                        let tile = structure.blueprint[j][i];
+      drawStructure(structure){
+            for(let i = 0; i < structure.blueprint.width; i++){
+                  for(let j = 0; j < structure.blueprint.height; j++){
+                        let tile = structure.blueprint.get(i,j);
                         if(tile == 0) continue;
+                        let x = structure.x + structure.xOfs + i;
+                        let y = structure.y - structure.yOfs - j;
+                        if(this.overview.getTile(x, y, true) == 1 && tile == 1) continue; // Don't replace note blocks with hard blocks
                         let isBG = getIsBG(tile);
-                        if(!isBG) this.overview.setTile(structure.x + structure.xOfs + i, structure.y - structure.yOfs - j, getLvlTile(tile));
-                        else this.background.setTile(structure.x + structure.xOfs + i, structure.y - structure.yOfs - j, getLvlTile(tile));
+                        if(!isBG) this.overview.setTile(x, y, getLvlTile(tile));
+                        else this.background.setTile(x, y, getLvlTile(tile));
                   }
             }
             for(let i = 0; i < structure.entities.length; i++){
-                  this.overview.setTile(
-                        structure.x-structure.xOfs-structure.entityPos[i].x, 
-                        structure.y-structure.yOfs-structure.entityPos[i].y,
-                        structure.entities[i]
-                  );
+                  let x = structure.x-structure.xOfs-structure.entityPos[i].x;
+                  let y = structure.y-structure.yOfs-structure.entityPos[i].y;
+                  this.overview.setTile(x, y, structure.entities[i]);
+                  if(structure.entityProperties[0].parachute) this.foreground.setTile(x, y+1, 0);
             }
+      }
+
+      markTile(x, y, id){
+            if(id == undefined) id = 2;
+            this.foreground.setTile(x, y, id);
       }
 }
 
