@@ -22,7 +22,7 @@ class Blueprint {
             this.grid[x][y] = n;
       }
 
-      insertRow(y, row){
+      insertRow(y, row){ // TODO: Function to splice middle rows at the lowest position, but sides at highest
             for(let i = 0; i < row.length; i++){
                   this.grid[i].splice(y, 0, row[i]);
             }
@@ -112,21 +112,34 @@ class NoteStructure extends Structure {
             super(type, x, y);
       }
 
-      checkCollisionWith(otherStruct){
+      checkCollisionWith(otherStruct){ // TODO: Recursive height updates, max height limit
             let dists = this.collisionBox.getCollisionDistWith(otherStruct.collisionBox);
             if(dists.xdist == 0 && dists.ydist < 0){ // Can be merged into a cell
-
-                  // TODO: Finish adjustments
-                  let ydiff = this.collisionBox.y - otherStruct.collisionBox.y;
+                  let tID = this.id;
+                  let oID = otherStruct.id;
+                  //console.log(tID + ' @ ' + this.collisionBox.x + ' <-> ' + oID + ' @ ' + otherStruct.collisionBox.x);
                   let xdiff = this.collisionBox.x - otherStruct.collisionBox.x;
+                  let expandDist = (this.collisionBox.y + this.collisionBox.h) - (otherStruct.collisionBox.y + otherStruct.collisionBox.h);
+                  let trimSize;
 
-                  // TODO: Expand structures using ydiff
-                  if(ydiff != 0) return true;
-                  else{
-                        let isRightSide = (xdiff < 0);
-                        this.trimSide(isRightSide, 2);
-                        otherStruct.trimSide(!isRightSide, 2);
+                  if(expandDist < 0){
+                        //console.log(tID + ' expanded by ' + (-expandDist));
+                        this.extendUpwardsBy(-expandDist);
+                        trimSize = otherStruct.collisionBox.h - 1;
                   }
+                  else if(expandDist > 0){
+                        //console.log(oID + ' expanded by ' + (expandDist));
+                        otherStruct.extendUpwardsBy(expandDist); // FIXME: Future expansion moving trimmed area up - see TODO in blueprint class
+                        trimSize = this.collisionBox.h - 1;
+                  }
+                  else{
+                        trimSize = Math.min(this.collisionBox.h, otherStruct.collisionBox.h) - 1;
+                  }
+                  //console.log(tID + ' and ' + oID + ' trimmed by '+trimSize);
+
+                  let isRightSide = (xdiff < 0);
+                  this.trimSide(isRightSide, trimSize);
+                  otherStruct.trimSide(!isRightSide, trimSize);
             }
             else{
                   return this.collisionBox.getCollisionWith(otherStruct.collisionBox);
@@ -138,13 +151,15 @@ class NoteStructure extends Structure {
             if(isRightSide) x = 2;
             else x = 0;
             for(let i = 0; i < numBlocks; i++){
-                  this.blueprint.set(x, i+1, 0);
+                  if(1+i > this.blueprint.height) break;
+                  this.blueprint.set(x, 1+i, 0);
             }
       }
 
       extendUpwardsBy(numBlocks){
+            if(numBlocks == 0) return;
             for(let i = 0; i < numBlocks; i++){
-                  this.blueprint.insertRow(1, [1, 0, 1]);
+                  this.blueprint.insertRow(3, [1, 0, 1]);
             }
             this.collisionBox.h += numBlocks;
             this.entityPos[0].y += numBlocks;

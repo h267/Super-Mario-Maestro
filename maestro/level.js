@@ -1,5 +1,7 @@
 const numStructChunks = 30;
 
+// Debug note: Clicking the ruler tool on the bottom right will give the x-coord of whatever tile it's dragged to
+
 class Level{
       /**
        * Initializes the level object.
@@ -128,6 +130,10 @@ class Level{
                         this.structures[structID] = newStruct;
                         newStruct.chunkListIndex = this.structChunks[chunkLocation].length;
                         this.structChunks[chunkLocation][newStruct.chunkListIndex] = structID;
+
+                        // Debug
+                        //newStruct.extendUpwardsBy(3);
+                        //newStruct.trimSide(false, 2);
                   }
             }
             var curCount = {entities: 0, powerups: 0};
@@ -149,12 +155,14 @@ class Level{
                               if(struct.checkCollisionWith(otherStruct)){
                                     this.markTile(struct.x, struct.y, 1);
                               }
+                              //this.highlightCollisionBox(struct.collisionBox);
                         }
                   }
             });
             this.structures.forEach((struct, i) => { // Second pass: Draw the structures
                   that.drawStructure(struct);
             });
+            console.log('---');
       }
 
       drawStructure(structure){
@@ -181,6 +189,15 @@ class Level{
       markTile(x, y, id){
             if(id == undefined) id = 2;
             this.foreground.setTile(x, y, id);
+      }
+
+      highlightCollisionBox(colBox){
+            let color = colBox.x % 2;
+            for(let i = 0; i < colBox.w; i++){
+                  for(let j = 0; j < colBox.h; j++){
+                        this.markTile(colBox.x + i, colBox.y + colBox.h + 1 - j, color + 3);
+                  }
+            }
       }
 }
 

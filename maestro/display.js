@@ -531,6 +531,9 @@ function loadBGs(){
                   getImg('bg/goal.png'),
                   getImg('icon/parachute.png'),
                   getImg('icon/alert.png'),
+                  getImg('icon/marker.png'),
+                  getImg('icon/highlight.png'),
+                  getImg('icon/highlight2.png'),
             ]).then(function(loaded){
                   //console.log('BGs loaded');
                   resolve(loaded);
