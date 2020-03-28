@@ -17,7 +17,6 @@ class Level{
             this.width = levelWidth;
             this.maxWidth = 0;
             this.limitLine = null;
-            this.structures = [];
             this.structChunks = [];
             for(let i = 0; i < numStructChunks; i++) this.structChunks[i] = [];
             this.refresh();
@@ -68,7 +67,7 @@ class Level{
             this.foreground = new Area(levelWidth,levelHeight);
             this.isTrackOccupant = new Array(levelWidth);
             this.numberOfOccupants = new Array(levelWidth);
-            this.structures = [];
+            structures = [];
             this.structChunks = [];
             for(let i = 0; i < numStructChunks; i++) this.structChunks[i] = [];
             this.entityCount = 0;
@@ -122,12 +121,12 @@ class Level{
                         }
 
                         let newStruct = new NoteStructure(0, x, y);
-                        let structID = this.structures.length;
+                        let structID = structures.length;
                         let chunkLocation = Math.floor(x/(levelWidth/numStructChunks));
                         newStruct.chunkIndex = chunkLocation;
                         newStruct.id = structID;
                         newStruct.entities[0] = ins+2;
-                        this.structures[structID] = newStruct;
+                        structures[structID] = newStruct;
                         newStruct.chunkListIndex = this.structChunks[chunkLocation].length;
                         this.structChunks[chunkLocation][newStruct.chunkListIndex] = structID;
 
@@ -146,11 +145,11 @@ class Level{
                   }
             }
             let that = this;
-            this.structures.forEach((struct, i) => { // First pass: Handle conflicts
+            structures.forEach((struct, i) => { // First pass: Handle conflicts
                   for(let j = 0; j < 3; j++){
                         if(struct.chunkIndex+j-1 < 0 || struct.chunkIndex+j-1 >= numStructChunks) continue;
                         for(let k = 0; k < this.structChunks[struct.chunkIndex+j-1].length; k++){
-                              let otherStruct = this.structures[this.structChunks[struct.chunkIndex+j-1][k]];
+                              let otherStruct = structures[this.structChunks[struct.chunkIndex+j-1][k]];
                               if(struct.id == otherStruct.id) continue;
                               if(struct.checkCollisionWith(otherStruct)){
                                     this.markTile(struct.x, struct.y, 1);
@@ -159,8 +158,12 @@ class Level{
                         }
                   }
             });
-            this.structures.forEach((struct, i) => { // Second pass: Draw the structures
+            structures.forEach((struct, i) => { // Second pass: Draw the structures
                   that.drawStructure(struct);
+                  if(struct.connections.length > 0){
+                        console.log(struct.id + ': ');
+                        console.table(struct.connections);
+                  }
             });
             console.log('---');
       }

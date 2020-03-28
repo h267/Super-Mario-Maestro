@@ -1,20 +1,24 @@
-// Super Mario Maestro v1.3.1
+// Super Mario Maestro v1.4
 // made by h267
 
 /* TODO: New features:
 
-1.4:
- - Animated entities with physics simulation
+1.4: (?) = Might not be necessary
+ - Hard blocks -> Ground tiles
+ - Support for larger entities
+ - Hiding/showing structures, semisolid view
+ - Build button
+ - Animated entities with physics simulation (?)
  - Partition system where different settings can apply
- - Toolbar for display tools
- - Manual note editing
- - CSS loading animation (if needed)
+ - Toolbar for display tools (?)
+ - Manual note editing (?)
+ - CSS loading animation if needed (?)
  - Spatial Management, com_poser tricks, maybe autoscroll tracks
- - Warning system
+ - Warning system (?)
  - Theme, style, day/night indicators
- - Overlay exclamation points on impossible placements
+ - Recount conflicts using structure conflicts, not overlap
  - Handle dynamic tempo changes
- - Start music playback from anywhere in the blueprint
+ - Start music playback from anywhere in the blueprint (?)
 */
 
 const levelWidth = 240;

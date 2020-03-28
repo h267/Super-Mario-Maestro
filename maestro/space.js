@@ -1,5 +1,7 @@
 // Here we go!
 
+let structures = [];
+
 class Blueprint {
       constructor(arr2d){
             this.grid = [];
@@ -22,7 +24,7 @@ class Blueprint {
             this.grid[x][y] = n;
       }
 
-      insertRow(y, row){ // TODO: Function to splice middle rows at the lowest position, but sides at highest
+      insertRow(y, row){
             for(let i = 0; i < row.length; i++){
                   this.grid[i].splice(y, 0, row[i]);
             }
@@ -96,6 +98,7 @@ class Structure {
             this.id = null;
             this.chunkListIndex = null;
             this.entities = [];
+            this.connections= [];
       }
 
       checkCollisionWith(otherStruct){ // TODO: Multiple collision box support
@@ -114,13 +117,15 @@ class NoteStructure extends Structure {
 
       checkCollisionWith(otherStruct){ // TODO: Recursive height updates, max height limit
             let dists = this.collisionBox.getCollisionDistWith(otherStruct.collisionBox);
-            if(dists.xdist == 0 && dists.ydist < 0){ // Can be merged into a cell
+            if(dists.xdist == 0 && dists.ydist < -1){ // Can be merged into a cell
                   let tID = this.id;
                   let oID = otherStruct.id;
                   //console.log(tID + ' @ ' + this.collisionBox.x + ' <-> ' + oID + ' @ ' + otherStruct.collisionBox.x);
                   let xdiff = this.collisionBox.x - otherStruct.collisionBox.x;
                   let expandDist = (this.collisionBox.y + this.collisionBox.h) - (otherStruct.collisionBox.y + otherStruct.collisionBox.h);
                   let trimSize;
+
+                  let isAcceptable = this.updateConnectionHeights();
 
                   if(expandDist < 0){
                         //console.log(tID + ' expanded by ' + (-expandDist));
@@ -129,7 +134,7 @@ class NoteStructure extends Structure {
                   }
                   else if(expandDist > 0){
                         //console.log(oID + ' expanded by ' + (expandDist));
-                        otherStruct.extendUpwardsBy(expandDist); // FIXME: Future expansion moving trimmed area up - see TODO in blueprint class
+                        otherStruct.extendUpwardsBy(expandDist);
                         trimSize = this.collisionBox.h - 1;
                   }
                   else{
@@ -140,6 +145,11 @@ class NoteStructure extends Structure {
                   let isRightSide = (xdiff < 0);
                   this.trimSide(isRightSide, trimSize);
                   otherStruct.trimSide(!isRightSide, trimSize);
+
+                  this.connections.push(otherStruct.id);
+            }
+            else if(dists.xdist == 0 && dists.ydist == -1){
+                  return false;
             }
             else{
                   return this.collisionBox.getCollisionWith(otherStruct.collisionBox);
@@ -159,11 +169,24 @@ class NoteStructure extends Structure {
       extendUpwardsBy(numBlocks){
             if(numBlocks == 0) return;
             for(let i = 0; i < numBlocks; i++){
-                  this.blueprint.insertRow(3, [1, 0, 1]);
+                  this.shearInsertRow(3, 1, [1, 0, 1]);
             }
             this.collisionBox.h += numBlocks;
             this.entityPos[0].y += numBlocks;
             this.yOfs -= numBlocks;
+      }
+
+      shearInsertRow(y1, y2, row){ // Specialized function for note blueprints to splice middle rows at y1, but the sides at y2
+            for(let i = 0; i < row.length; i++){
+                  if(i == 0 || i == row.length - 1) this.blueprint.grid[i].splice(y2, 0, row[i]);
+                  else this.blueprint.grid[i].splice(y1, 0, row[i]);
+            }
+            this.blueprint.height++;
+      }
+
+      updateConnectionHeights(){ // Recursively goes through and makes sure heights are fine
+            // TODO: Better think this over...
+            return true;
       }
 }
 
