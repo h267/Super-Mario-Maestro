@@ -1,6 +1,9 @@
 // Here we go!
+const noteHeightLimit = 5; // 3 block jump
 
 let structures = [];
+let cells = [];
+let cellHighestPoints = [];
 
 class Blueprint {
       constructor(arr2d){
@@ -98,7 +101,7 @@ class Structure {
             this.id = null;
             this.chunkListIndex = null;
             this.entities = [];
-            this.connections= [];
+            this.memberOf = null;
       }
 
       checkCollisionWith(otherStruct){ // TODO: Multiple collision box support
@@ -117,36 +120,8 @@ class NoteStructure extends Structure {
 
       checkCollisionWith(otherStruct){ // TODO: Recursive height updates, max height limit
             let dists = this.collisionBox.getCollisionDistWith(otherStruct.collisionBox);
-            if(dists.xdist == 0 && dists.ydist < -1){ // Can be merged into a cell
-                  let tID = this.id;
-                  let oID = otherStruct.id;
-                  //console.log(tID + ' @ ' + this.collisionBox.x + ' <-> ' + oID + ' @ ' + otherStruct.collisionBox.x);
-                  let xdiff = this.collisionBox.x - otherStruct.collisionBox.x;
-                  let expandDist = (this.collisionBox.y + this.collisionBox.h) - (otherStruct.collisionBox.y + otherStruct.collisionBox.h);
-                  let trimSize;
-
-                  let isAcceptable = this.updateConnectionHeights();
-
-                  if(expandDist < 0){
-                        //console.log(tID + ' expanded by ' + (-expandDist));
-                        this.extendUpwardsBy(-expandDist);
-                        trimSize = otherStruct.collisionBox.h - 1;
-                  }
-                  else if(expandDist > 0){
-                        //console.log(oID + ' expanded by ' + (expandDist));
-                        otherStruct.extendUpwardsBy(expandDist);
-                        trimSize = this.collisionBox.h - 1;
-                  }
-                  else{
-                        trimSize = Math.min(this.collisionBox.h, otherStruct.collisionBox.h) - 1;
-                  }
-                  //console.log(tID + ' and ' + oID + ' trimmed by '+trimSize);
-
-                  let isRightSide = (xdiff < 0);
-                  this.trimSide(isRightSide, trimSize);
-                  otherStruct.trimSide(!isRightSide, trimSize);
-
-                  this.connections.push(otherStruct.id);
+            if(dists.xdist == 0 && dists.ydist < -1){ // Merge into a cell
+                  return this.buildCell(otherStruct, dists);
             }
             else if(dists.xdist == 0 && dists.ydist == -1){
                   return false;
@@ -154,6 +129,87 @@ class NoteStructure extends Structure {
             else{
                   return this.collisionBox.getCollisionWith(otherStruct.collisionBox);
             }
+      }
+
+      buildCell(otherStruct, dists){
+            let tID = this.id;
+            let oID = otherStruct.id;
+            //console.log(tID + ' @ ' + this.collisionBox.x + ' <-> ' + oID + ' @ ' + otherStruct.collisionBox.x);
+            let xdiff = this.collisionBox.x - otherStruct.collisionBox.x;
+            let expandDist = (this.collisionBox.y + this.collisionBox.h) - (otherStruct.collisionBox.y + otherStruct.collisionBox.h);
+            let highestPoint = Math.max(this.collisionBox.y + this.collisionBox.h, otherStruct.collisionBox.y + otherStruct.collisionBox.h);
+            let isAcceptable = true;
+            let trimSize;
+            let thisCell = this.memberOf;
+            let otherCell = otherStruct.memberOf;
+
+            // Make sure all cells can be expanded
+            if(thisCell != null){
+                  for(let i = 0; i < cells[thisCell].length; i++){
+                        isAcceptable = isAcceptable && structures[cells[thisCell][i]].isExtendableUpwardsTo(highestPoint);
+                  }
+            }
+            if(otherCell != null && otherCell != thisCell){
+                  for(let i = 0; i < cells[otherCell].length; i++){
+                        isAcceptable = isAcceptable && structures[cells[otherCell][i]].isExtendableUpwardsTo(highestPoint);
+                  }
+            }
+
+            // Conflict if there is an issue
+            if(!isAcceptable) return true;
+
+            // Else, add to the cell
+            if(thisCell == null && otherCell != null){
+                  addToCell(otherStruct.memberOf, otherStruct.id);
+                  thisCell = otherCell;
+            }
+            else if(thisCell != null && otherCell == null){
+                  addToCell(this.memberOf, otherStruct.id);
+            }
+            else if(thisCell != null && otherCell != null && thisCell != otherCell){
+                  let newID = mergeCells(thisCell, otherCell);
+                  addToCell(newID, this.id);
+                  addToCell(newID, otherStruct.id);
+                  thisCell = newID;
+            }
+            else if(thisCell == null && otherCell == null){
+                  let newID = createCell();
+                  addToCell(newID, this.id);
+                  addToCell(newID, otherStruct.id);
+                  thisCell = newID;
+            }
+            // No action is taken when the cells of the two structures match
+            // TODO: Sort cell entries by x pos, or have a search function for them
+
+            if(expandDist < 0){
+                  //console.log(tID + ' expanded by ' + (-expandDist));
+                  this.extendUpwardsBy(-expandDist);
+                  trimSize = otherStruct.collisionBox.h - 1;
+            }
+            else if(expandDist > 0){
+                  //console.log(oID + ' expanded by ' + (expandDist));
+                  otherStruct.extendUpwardsBy(expandDist);
+                  trimSize = this.collisionBox.h - 1;
+            }
+            else{
+                  trimSize = Math.min(this.collisionBox.h, otherStruct.collisionBox.h) - 1;
+            }
+            //console.log(tID + ' and ' + oID + ' trimmed by '+trimSize);
+
+            let isRightSide = (xdiff < 0);
+            this.trimSide(isRightSide, trimSize);
+            otherStruct.trimSide(!isRightSide, trimSize);
+
+            let targetY = (this.collisionBox.y + this.collisionBox.h);
+            for(let i = 0; i < cells[thisCell].length; i++){
+                  let curStruct = structures[cells[thisCell][i]];
+                  let expandDist = targetY - (curStruct.collisionBox.y + curStruct.collisionBox.h);
+                  if(expandDist > 0){ // FIXME: These are not sorted by x pos!
+                        curStruct.extendUpwardsBy(expandDist, true);
+                  }
+            }
+
+            return false;
       }
 
       trimSide(isRightSide, numBlocks){
@@ -166,10 +222,18 @@ class NoteStructure extends Structure {
             }
       }
 
-      extendUpwardsBy(numBlocks){
+      extendUpwardsBy(numBlocks, isCopyMode){
+            if(isCopyMode == undefined) isCopyMode = false;
             if(numBlocks == 0) return;
-            for(let i = 0; i < numBlocks; i++){
-                  this.shearInsertRow(3, 1, [1, 0, 1]);
+            if(!isCopyMode){
+                  for(let i = 0; i < numBlocks; i++){
+                        this.shearInsertRow(3, 1, [1, 0, 1]);
+                  }
+            }
+            else{
+                  for(let i = 0; i < numBlocks; i++){
+                        this.insertCopyRow(2, this.blueprint.height - 1);
+                  }
             }
             this.collisionBox.h += numBlocks;
             this.entityPos[0].y += numBlocks;
@@ -184,9 +248,20 @@ class NoteStructure extends Structure {
             this.blueprint.height++;
       }
 
-      updateConnectionHeights(){ // Recursively goes through and makes sure heights are fine
-            // TODO: Better think this over...
-            return true;
+      insertCopyRow(y1, y2){ // Specialized function for note blueprints that inserts a copy of the walls of the row at y1 to y2.
+            let row = [];
+            for(let i = 0; i < this.blueprint.width; i++){
+                  if(i != 0 && i != this.blueprint.width - 1) row.push(0); // Only clone the walls, empty space otherwise
+                  else row.push(this.blueprint.get(i, y1));
+            }
+            for(let i = 0; i < row.length; i++){
+                  this.blueprint.grid[i].splice(y2, 0, row[i]);
+            }
+            this.blueprint.height++;
+      }
+
+      isExtendableUpwardsTo(yPos){
+            return (yPos - this.collisionBox.y <= noteHeightLimit);
       }
 }
 
@@ -253,4 +328,32 @@ function getStructTemplate(n){
                   collisionBox: new CollisionBox(1, 1, 1, 4),
             };
       }
+}
+
+function addToCell(cellID, structID){
+      cells[cellID].push(structID);
+      structures[structID].memberOf = cellID;
+      let structHighestPoint = this.collisionBox.y + this.collisionBox.h;
+      cellHighestPoints[cellID] = Math.max(cellHighestPoints[cellID], structHighestPoint);
+}
+
+function createCell(){
+      cells.push([]);
+      cellHighestPoints.push(0);
+      return cells.length - 1;
+}
+
+function mergeCells(origCell, destCell){
+      for(var i = 0; i < cells[origCell].length; i++){
+            addToCell(destCell, cells[origCell][i]);
+      }
+      cellHighestPoints[destCell] = Math.max(cellHighestPoints[origCell], cellHighestPoints[destCell]);
+      cells[origCell] = [];
+      cellHighestPoints[origCell] = 0;
+      return origCell;
+}
+
+function clearCells(){
+      cells = [];
+      cellHighestPoints = [];
 }

@@ -145,6 +145,7 @@ class Level{
                   }
             }
             let that = this;
+            clearCells();
             structures.forEach((struct, i) => { // First pass: Handle conflicts
                   for(let j = 0; j < 3; j++){
                         if(struct.chunkIndex+j-1 < 0 || struct.chunkIndex+j-1 >= numStructChunks) continue;
@@ -158,11 +159,14 @@ class Level{
                         }
                   }
             });
+            console.log(cells);
             structures.forEach((struct, i) => { // Second pass: Draw the structures
                   that.drawStructure(struct);
-                  if(struct.connections.length > 0){
-                        console.log(struct.id + ': ');
-                        console.table(struct.connections);
+                  if(struct.connections != undefined){
+                        if(struct.connections.length > 0){
+                              console.log(struct.id + ': ');
+                              console.table(struct.connections);
+                        }
                   }
             });
             console.log('---');
