@@ -3,7 +3,6 @@ const noteHeightLimit = 5; // 3 block jump
 
 let structures = [];
 let cells = [];
-let cellHighestPoints = [];
 
 class Blueprint {
       constructor(arr2d){
@@ -101,7 +100,7 @@ class Structure {
             this.id = null;
             this.chunkListIndex = null;
             this.entities = [];
-            this.memberOf = null;
+            this.cell = null;
       }
 
       checkCollisionWith(otherStruct){ // TODO: Multiple collision box support
@@ -121,7 +120,7 @@ class NoteStructure extends Structure {
       checkCollisionWith(otherStruct){ // TODO: Recursive height updates, max height limit
             let dists = this.collisionBox.getCollisionDistWith(otherStruct.collisionBox);
             if(dists.xdist == 0 && dists.ydist < -1){ // Merge into a cell
-                  return this.buildCell(otherStruct, dists);
+                  return this.addToCell(otherStruct, dists);
             }
             else if(dists.xdist == 0 && dists.ydist == -1){
                   return false;
@@ -131,27 +130,27 @@ class NoteStructure extends Structure {
             }
       }
 
-      buildCell(otherStruct, dists){
-            let tID = this.id;
+      addToCell(otherStruct, dists){
+            /*let tID = this.id;
             let oID = otherStruct.id;
-            //console.log(tID + ' @ ' + this.collisionBox.x + ' <-> ' + oID + ' @ ' + otherStruct.collisionBox.x);
-            let xdiff = this.collisionBox.x - otherStruct.collisionBox.x;
-            let expandDist = (this.collisionBox.y + this.collisionBox.h) - (otherStruct.collisionBox.y + otherStruct.collisionBox.h);
+            console.log(tID + ' @ ' + this.collisionBox.x + ' <-> ' + oID + ' @ ' + otherStruct.collisionBox.x);*/
             let highestPoint = Math.max(this.collisionBox.y + this.collisionBox.h, otherStruct.collisionBox.y + otherStruct.collisionBox.h);
             let isAcceptable = true;
-            let trimSize;
-            let thisCell = this.memberOf;
-            let otherCell = otherStruct.memberOf;
+            let thisCell = this.cell;
+            let otherCell = otherStruct.cell;
 
             // Make sure all cells can be expanded
+            let isSameCell;
+            if(thisCell == null || otherCell == null) isSameCell = false;
+            else isSameCell = (otherCell.id == thisCell.id);
             if(thisCell != null){
-                  for(let i = 0; i < cells[thisCell].length; i++){
-                        isAcceptable = isAcceptable && structures[cells[thisCell][i]].isExtendableUpwardsTo(highestPoint);
+                  for(let i = 0; i < thisCell.members.length; i++){
+                        isAcceptable = isAcceptable && thisCell.members[i].isExtendableUpwardsTo(highestPoint);
                   }
             }
-            if(otherCell != null && otherCell != thisCell){
-                  for(let i = 0; i < cells[otherCell].length; i++){
-                        isAcceptable = isAcceptable && structures[cells[otherCell][i]].isExtendableUpwardsTo(highestPoint);
+            if(otherCell != null && !isSameCell){
+                  for(let i = 0; i < otherCell.members.length; i++){
+                        isAcceptable = isAcceptable && otherCell.members[i].isExtendableUpwardsTo(highestPoint);
                   }
             }
 
@@ -160,53 +159,21 @@ class NoteStructure extends Structure {
 
             // Else, add to the cell
             if(thisCell == null && otherCell != null){
-                  addToCell(otherStruct.memberOf, otherStruct.id);
+                  otherStruct.cell.add(this);
                   thisCell = otherCell;
             }
             else if(thisCell != null && otherCell == null){
-                  addToCell(this.memberOf, otherStruct.id);
+                  this.cell.add(otherStruct);
             }
-            else if(thisCell != null && otherCell != null && thisCell != otherCell){
-                  let newID = mergeCells(thisCell, otherCell);
-                  addToCell(newID, this.id);
-                  addToCell(newID, otherStruct.id);
-                  thisCell = newID;
+            else if(thisCell != null && otherCell != null && thisCell.id != otherCell.id){
+                  thisCell.mergeWith(otherCell);
+                  thisCell.add(otherStruct);
             }
             else if(thisCell == null && otherCell == null){
-                  let newID = createCell();
-                  addToCell(newID, this.id);
-                  addToCell(newID, otherStruct.id);
-                  thisCell = newID;
-            }
-            // No action is taken when the cells of the two structures match
-            // TODO: Sort cell entries by x pos, or have a search function for them
-
-            if(expandDist < 0){
-                  //console.log(tID + ' expanded by ' + (-expandDist));
-                  this.extendUpwardsBy(-expandDist);
-                  trimSize = otherStruct.collisionBox.h - 1;
-            }
-            else if(expandDist > 0){
-                  //console.log(oID + ' expanded by ' + (expandDist));
-                  otherStruct.extendUpwardsBy(expandDist);
-                  trimSize = this.collisionBox.h - 1;
-            }
-            else{
-                  trimSize = Math.min(this.collisionBox.h, otherStruct.collisionBox.h) - 1;
-            }
-            //console.log(tID + ' and ' + oID + ' trimmed by '+trimSize);
-
-            let isRightSide = (xdiff < 0);
-            this.trimSide(isRightSide, trimSize);
-            otherStruct.trimSide(!isRightSide, trimSize);
-
-            let targetY = (this.collisionBox.y + this.collisionBox.h);
-            for(let i = 0; i < cells[thisCell].length; i++){
-                  let curStruct = structures[cells[thisCell][i]];
-                  let expandDist = targetY - (curStruct.collisionBox.y + curStruct.collisionBox.h);
-                  if(expandDist > 0){ // FIXME: These are not sorted by x pos!
-                        curStruct.extendUpwardsBy(expandDist, true);
-                  }
+                  let newCell = createCell();
+                  newCell.add(this);
+                  newCell.add(otherStruct);
+                  thisCell = newCell;
             }
 
             return false;
@@ -265,11 +232,73 @@ class NoteStructure extends Structure {
       }
 }
 
+class Cell {
+      constructor(id){
+            this.id = id;
+            this.members = [];
+            this.locationMap = {};
+            this.highestPoint = 0;
+            this.startX = Infinity;
+            this.endX = 0;
+      }
+
+      add(struct){ // Add a structure to the cell
+            this.members.push(struct);
+            struct.cell = this;
+
+            let structHighestPoint = struct.collisionBox.y + struct.collisionBox.h;
+            this.highestPoint = Math.max(this.highestPoint, structHighestPoint);
+            this.startX = Math.min(this.startX, struct.collisionBox.x);
+            this.endX = Math.max(this.endX, struct.collisionBox.x);
+
+            this.addToLocMap(struct);
+      }
+
+      mergeWith(otherCell){ // Combine two cells together
+            otherCell.members.forEach(struct => {
+                  this.add(struct);
+            });
+            otherCell.clear();
+      }
+
+      build(){ // Modify the blueprints of each member to form the proper structure
+            for (let i = this.startX; i <= this.endX; i++) { // First Pass: Expanding
+                  this.locationMap[i].list.forEach(struct => {
+                        let expandDist = this.highestPoint - (struct.collisionBox.y + struct.collisionBox.h);
+                        struct.extendUpwardsBy(expandDist);
+                  });
+            }
+            for (let i = this.startX; i < this.endX; i++) { // Second Pass: Trimming
+                  this.locationMap[i].list.forEach(struct => {
+                        let nextStruct = this.locationMap[i+1].tallest;
+                        let trimDist = nextStruct.collisionBox.h - 1;
+                        struct.trimSide(true, trimDist);
+                        nextStruct.trimSide(false, trimDist);
+                  });
+            }
+      }
+
+      addToLocMap(struct){ // Register a structure in the location map
+            const xPos = struct.collisionBox.x;
+            if(this.locationMap[xPos] == undefined) this.locationMap[xPos] = {list: [], tallest: struct};
+            else{
+                  this.locationMap[xPos].list.forEach(localStruct => {
+                        if(localStruct.x > this.locationMap[xPos].tallest.collisionBox.x) this.locationMap[xPos].tallest = localStruct;
+                  });
+            }
+            this.locationMap[xPos].list.push(struct);
+      }
+
+      clear(){
+            this.members = [];
+            this.locationMap = {};
+      }
+}
+
 function getRectangleDist(r1, r2){ // Thanks Tri
       let xdist = Math.max(r1.x1 - r2.x2, r2.x1 - r1.x2);
       let ydist = Math.max(r1.y1 - r2.y2, r2.y1 - r1.y2);
       return {xdist, ydist};
-      //return (xdist <= 0 && ydist <= 0 && xdist + ydist < 0);
 }
 
 function isSimpleNote(structID){
@@ -330,30 +359,18 @@ function getStructTemplate(n){
       }
 }
 
-function addToCell(cellID, structID){
-      cells[cellID].push(structID);
-      structures[structID].memberOf = cellID;
-      let structHighestPoint = this.collisionBox.y + this.collisionBox.h;
-      cellHighestPoints[cellID] = Math.max(cellHighestPoints[cellID], structHighestPoint);
-}
-
 function createCell(){
-      cells.push([]);
-      cellHighestPoints.push(0);
-      return cells.length - 1;
+      let newCell = new Cell(cells.length);
+      cells.push(newCell);
+      return newCell;
 }
 
-function mergeCells(origCell, destCell){
-      for(var i = 0; i < cells[origCell].length; i++){
-            addToCell(destCell, cells[origCell][i]);
-      }
-      cellHighestPoints[destCell] = Math.max(cellHighestPoints[origCell], cellHighestPoints[destCell]);
-      cells[origCell] = [];
-      cellHighestPoints[origCell] = 0;
+function mergeCells(origCell, destCell){ // TODO: Change and replace
+      for(var i = 0; i < cells[origCell].length; i++) destCell.add(origCell.members[i]);
+      origCell.clear();
       return origCell;
 }
 
 function clearCells(){
       cells = [];
-      cellHighestPoints = [];
 }

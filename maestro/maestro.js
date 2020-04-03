@@ -4,6 +4,7 @@
 /* TODO: New features:
 
 1.4: (?) = Might not be necessary
+ - Draw entites slightly lower than other blocks to make clouds more visible
  - Hard blocks -> Ground tiles
  - Support for larger entities
  - Hiding/showing structures, semisolid view

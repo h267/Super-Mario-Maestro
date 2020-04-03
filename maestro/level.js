@@ -152,13 +152,14 @@ class Level{
                         for(let k = 0; k < this.structChunks[struct.chunkIndex+j-1].length; k++){
                               let otherStruct = structures[this.structChunks[struct.chunkIndex+j-1][k]];
                               if(struct.id == otherStruct.id) continue;
-                              if(struct.checkCollisionWith(otherStruct)){
-                                    this.markTile(struct.x, struct.y, 1);
-                              }
-                              //this.highlightCollisionBox(struct.collisionBox);
+
+                              // Debug
+                              if(struct.checkCollisionWith(otherStruct)) this.markTile(struct.x, struct.y, 1);
+                              //if(struct.cell != null) this.markTile(struct.x, struct.y, 2);
                         }
                   }
             });
+            cells.forEach(cell => cell.build());
             console.log(cells);
             structures.forEach((struct, i) => { // Second pass: Draw the structures
                   that.drawStructure(struct);
