@@ -1,7 +1,4 @@
-const numStructChunks = 30;
-
 // Debug note: Clicking the ruler tool on the bottom right will give the x-coord of whatever tile it's dragged to
-
 class Level{
       /**
        * Initializes the level object.
@@ -17,8 +14,6 @@ class Level{
             this.width = levelWidth;
             this.maxWidth = 0;
             this.limitLine = null;
-            this.structChunks = [];
-            for(let i = 0; i < numStructChunks; i++) this.structChunks[i] = [];
             this.refresh();
       }
 
@@ -68,8 +63,6 @@ class Level{
             this.isTrackOccupant = new Array(levelWidth);
             this.numberOfOccupants = new Array(levelWidth);
             structures = [];
-            this.structChunks = [];
-            for(let i = 0; i < numStructChunks; i++) this.structChunks[i] = [];
             this.entityCount = 0;
             this.powerupCount = 0;
             this.width = 0;
@@ -85,6 +78,7 @@ class Level{
                         this.numberOfOccupants[i][j] = 0;
                   }
             }
+            resetSpatialInformation();
             for(i=0;i<this.noteGroups.length;i++){
                   if(!this.noteGroups[i].isVisible){continue;}
                   for(j=0;j<this.noteGroups[i].notes.length;j++){
@@ -121,18 +115,7 @@ class Level{
                         }
 
                         let newStruct = new NoteStructure(0, x, y);
-                        let structID = structures.length;
-                        let chunkLocation = Math.floor(x/(levelWidth/numStructChunks));
-                        newStruct.chunkIndex = chunkLocation;
-                        newStruct.id = structID;
                         newStruct.entities[0] = ins+2;
-                        structures[structID] = newStruct;
-                        newStruct.chunkListIndex = this.structChunks[chunkLocation].length;
-                        this.structChunks[chunkLocation][newStruct.chunkListIndex] = structID;
-
-                        // Debug
-                        //newStruct.extendUpwardsBy(3);
-                        //newStruct.trimSide(false, 2);
                   }
             }
             var curCount = {entities: 0, powerups: 0};
@@ -145,30 +128,14 @@ class Level{
                   }
             }
             let that = this;
-            clearCells();
             structures.forEach((struct, i) => { // First pass: Handle conflicts
-                  for(let j = 0; j < 3; j++){
-                        if(struct.chunkIndex+j-1 < 0 || struct.chunkIndex+j-1 >= numStructChunks) continue;
-                        for(let k = 0; k < this.structChunks[struct.chunkIndex+j-1].length; k++){
-                              let otherStruct = structures[this.structChunks[struct.chunkIndex+j-1][k]];
-                              if(struct.id == otherStruct.id) continue;
-
-                              // Debug
-                              if(struct.checkCollisionWith(otherStruct)) this.markTile(struct.x, struct.y, 1);
-                              //if(struct.cell != null) this.markTile(struct.x, struct.y, 2);
-                        }
-                  }
+                  struct.checkForCollisions();
+                  if(struct.conflictingStructures.length > 0) this.markTile(struct.x, struct.y, 1);
             });
             cells.forEach(cell => cell.build());
             console.log(cells);
             structures.forEach((struct, i) => { // Second pass: Draw the structures
                   that.drawStructure(struct);
-                  if(struct.connections != undefined){
-                        if(struct.connections.length > 0){
-                              console.log(struct.id + ': ');
-                              console.table(struct.connections);
-                        }
-                  }
             });
             console.log('---');
       }

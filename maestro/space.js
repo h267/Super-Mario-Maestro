@@ -1,8 +1,18 @@
 // Here we go!
-const noteHeightLimit = 5; // 3 block jump
+const noteHeightLimit = 6; // 3 block jump
+const setups = [ // TODO: Port to different tempos
+      {offset: -2, structType: 1},
+      {offset: -6, structType: 2},
+      {offset: -11, structType: 3},
+      {offset: -16, structType: 4},
+];
+const blocksPerChunk = 8;
+const numStructChunks = 240/blocksPerChunk;
 
 let structures = [];
 let cells = [];
+let chunks = [];
+for(let i = 0; i < numStructChunks; i++) chunks[i] = [];
 
 class Blueprint {
       constructor(arr2d){
@@ -88,19 +98,36 @@ class CollisionBox {
 }
 
 class Structure {
-      constructor(type, x, y){
+      constructor(type, x, y, id){
             Object.assign(this, getStructTemplate(type));
 
             this.type = type;
             this.x = x;
             this.y = y;
 
-            this.collisionBox.moveTo(this.x + this.xOfs, this.y + this.yOfs);
+            this.collisionBox.moveTo(this.x + this.xOfs, this.y);
+            if(id == undefined) this.id = structures.length;
+            else this.id = id;
             this.chunkIndex = null;
-            this.id = null;
             this.chunkListIndex = null;
             this.entities = [];
             this.cell = null;
+            this.hasModifiedBlueprint = false;
+            this.conflictingStructures = [];
+            this.putInChunk();
+
+            structures.push(this);
+      }
+
+      checkForCollisions(){
+            for(let j = 0; j < 3; j++){
+                  if(this.chunkIndex+j-1 < 0 || this.chunkIndex+j-1 >= numStructChunks) continue;
+                  for(let k = 0; k < chunks[this.chunkIndex+j-1].length; k++){
+                        let otherStruct = chunks[this.chunkIndex+j-1][k];
+                        if(this.id == otherStruct.id) continue;
+                        if(this.checkCollisionWith(otherStruct)) this.conflictingStructures.push(otherStruct);
+                  }
+            }
       }
 
       checkCollisionWith(otherStruct){ // TODO: Multiple collision box support
@@ -110,6 +137,11 @@ class Structure {
       moveTo(x, y){ // TODO: Set this up
 
       }
+
+      putInChunk(){
+            this.chunkIndex = Math.floor(this.x/blocksPerChunk);
+            chunks[this.chunkIndex].push(this);
+      }
 }
 
 class NoteStructure extends Structure {
@@ -117,10 +149,10 @@ class NoteStructure extends Structure {
             super(type, x, y);
       }
 
-      checkCollisionWith(otherStruct){ // TODO: Recursive height updates, max height limit
+      checkCollisionWith(otherStruct){
             let dists = this.collisionBox.getCollisionDistWith(otherStruct.collisionBox);
             if(dists.xdist == 0 && dists.ydist < -1){ // Merge into a cell
-                  return this.addToCell(otherStruct, dists);
+                  return this.checkCellCollision(otherStruct, true);
             }
             else if(dists.xdist == 0 && dists.ydist == -1){
                   return false;
@@ -130,7 +162,7 @@ class NoteStructure extends Structure {
             }
       }
 
-      addToCell(otherStruct, dists){
+      checkCellCollision(otherStruct, doAdd){
             /*let tID = this.id;
             let oID = otherStruct.id;
             console.log(tID + ' @ ' + this.collisionBox.x + ' <-> ' + oID + ' @ ' + otherStruct.collisionBox.x);*/
@@ -139,25 +171,32 @@ class NoteStructure extends Structure {
             let thisCell = this.cell;
             let otherCell = otherStruct.cell;
 
-            // Make sure all cells can be expanded
+            // Make sure all structures can be expanded and put into cells
             let isSameCell;
             if(thisCell == null || otherCell == null) isSameCell = false;
             else isSameCell = (otherCell.id == thisCell.id);
+            if(isSameCell) return false;
             if(thisCell != null){
                   for(let i = 0; i < thisCell.members.length; i++){
-                        isAcceptable = isAcceptable && thisCell.members[i].isExtendableUpwardsTo(highestPoint);
+                        isAcceptable = isAcceptable && thisCell.members[i].isExtendableUpwardsTo(highestPoint) && thisCell.members[i].canBeInCell;
                   }
+                  isAcceptable = isAcceptable && this.canBeInCell;
             }
             if(otherCell != null && !isSameCell){
-                  for(let i = 0; i < otherCell.members.length; i++){
-                        isAcceptable = isAcceptable && otherCell.members[i].isExtendableUpwardsTo(highestPoint);
+                  if(!isSameCell){
+                        for(let i = 0; i < otherCell.members.length; i++){
+                              isAcceptable = isAcceptable && otherCell.members[i].isExtendableUpwardsTo(highestPoint) && otherCell.members[i].canBeInCell;
+                        }
                   }
+                  isAcceptable = isAcceptable && otherCell.canBeInCell;
             }
-
+             
+      
             // Conflict if there is an issue
             if(!isAcceptable) return true;
 
             // Else, add to the cell
+            if(!doAdd) return false;
             if(thisCell == null && otherCell != null){
                   otherStruct.cell.add(this);
                   thisCell = otherCell;
@@ -205,6 +244,7 @@ class NoteStructure extends Structure {
             this.collisionBox.h += numBlocks;
             this.entityPos[0].y += numBlocks;
             this.yOfs -= numBlocks;
+            this.hasModifiedBlueprint = true;
       }
 
       shearInsertRow(y1, y2, row){ // Specialized function for note blueprints to splice middle rows at y1, but the sides at y2
@@ -213,6 +253,7 @@ class NoteStructure extends Structure {
                   else this.blueprint.grid[i].splice(y1, 0, row[i]);
             }
             this.blueprint.height++;
+            this.hasModifiedBlueprint = true;
       }
 
       insertCopyRow(y1, y2){ // Specialized function for note blueprints that inserts a copy of the walls of the row at y1 to y2.
@@ -225,10 +266,15 @@ class NoteStructure extends Structure {
                   this.blueprint.grid[i].splice(y2, 0, row[i]);
             }
             this.blueprint.height++;
+            this.hasModifiedBlueprint++;
       }
 
       isExtendableUpwardsTo(yPos){
             return (yPos - this.collisionBox.y <= noteHeightLimit);
+      }
+
+      getNumConflictsWhenOffsetTo(){ // Hypothetically, if the note offset was something else, how many conflicts would there be?
+            // TODO: Loop through all of the offsets, find a way to try them (likely making a new colbox) and struct chunks
       }
 }
 
@@ -262,6 +308,7 @@ class Cell {
       }
 
       build(){ // Modify the blueprints of each member to form the proper structure
+            if(this.members.length == 0) return;
             for (let i = this.startX; i <= this.endX; i++) { // First Pass: Expanding
                   this.locationMap[i].list.forEach(struct => {
                         let expandDist = this.highestPoint - (struct.collisionBox.y + struct.collisionBox.h);
@@ -301,10 +348,6 @@ function getRectangleDist(r1, r2){ // Thanks Tri
       return {xdist, ydist};
 }
 
-function isSimpleNote(structID){
-      return structID < 5; // TODO: Revise when other setups get added
-}
-
 /* Structure Encoding:
       0 = Air
       1 = Block
@@ -326,6 +369,7 @@ function getStructTemplate(n){
                   xOfs: -1,
                   yOfs: -3,
                   collisionBox: new CollisionBox(1, 1, 1, 3, 0),
+                  canBeInCell: true,
             };
             case 1: return {
                   blueprint: new Blueprint([
@@ -341,6 +385,7 @@ function getStructTemplate(n){
                   xOfs: -1,
                   yOfs: -5,
                   collisionBox: new CollisionBox(1, 1, 1, 5, 0),
+                  canBeInCell: false,
             };
             case 2: return {
                   blueprint: new Blueprint([
@@ -355,7 +400,43 @@ function getStructTemplate(n){
                   xOfs: -1,
                   yOfs: -4,
                   collisionBox: new CollisionBox(1, 1, 1, 4),
+                  canBeInCell: false,
             };
+            case 3: return {
+                  blueprint: new Blueprint([
+                        [0, 1, 0],
+                        [1, 0, 1],
+                        [1, 2, 1],
+                        [1, 0, 1],
+                        [1, 0, 1],
+                        [0, 3, 0]
+                  ]),
+                  entityPos: [ {x: 1, y: 2} ],
+                  entityProperties: [ {parachute: true} ],
+                  xOfs: -1,
+                  yOfs: -5,
+                  collisionBox: new CollisionBox(1, 1, 1, 5),
+                  canBeInCell: false,
+            };
+            case 4: return {
+                  blueprint: new Blueprint([
+                        [0, 1, 0],
+                        [1, 0, 1],
+                        [1, 2, 1],
+                        [1, 0, 1],
+                        [1, 0, 1],
+                        [1, 0, 1],
+                        [0, 3, 0]
+                  ]),
+                  entityPos: [ {x: 1, y: 2} ],
+                  entityProperties: [ {parachute: true} ],
+                  xOfs: -1,
+                  yOfs: -6,
+                  collisionBox: new CollisionBox(1, 1, 1, 6),
+                  canBeInCell: false,
+            };
+            
+            // TODO: More setups, like the "up 3" one
       }
 }
 
@@ -365,12 +446,19 @@ function createCell(){
       return newCell;
 }
 
-function mergeCells(origCell, destCell){ // TODO: Change and replace
-      for(var i = 0; i < cells[origCell].length; i++) destCell.add(origCell.members[i]);
-      origCell.clear();
-      return origCell;
-}
-
 function clearCells(){
       cells = [];
+}
+
+function resetSpatialInformation(){
+      structures = [];
+      cells = [];
+}
+
+function handleAllConflicts(){ // TODO: Do all spatial conflict resolution stuff here
+      structures.forEach(struct => {
+            if(struct.conflictingStructures.length > 0){ // TODO: Try offsets
+                  console.log(struct);
+            }
+      });
 }

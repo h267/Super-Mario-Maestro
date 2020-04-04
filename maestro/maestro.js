@@ -1,11 +1,16 @@
 // Super Mario Maestro v1.4
 // made by h267
 
+// TODO: Re-enable gtag when releasing
+
 /* TODO: New features:
 
 1.4: (?) = Might not be necessary
  - Draw entites slightly lower than other blocks to make clouds more visible
- - Hard blocks -> Ground tiles
+ - Collision exceptions (entities in the same cell, non-double hits due to timing differences or sheer height)
+ - Better way of showing conflicts visually (maybe transparency on conflicting structures?)
+ - Hard blocks -> Ground tiles (?)
+ - Loading buffers, maybe prompt the user when it is needed
  - Support for larger entities
  - Hiding/showing structures, semisolid view
  - Build button
