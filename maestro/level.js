@@ -78,7 +78,7 @@ class Level{
                         this.numberOfOccupants[i][j] = 0;
                   }
             }
-            resetSpatialInformation();
+            resetSpatialData(true);
             for(i=0;i<this.noteGroups.length;i++){
                   if(!this.noteGroups[i].isVisible){continue;}
                   for(j=0;j<this.noteGroups[i].notes.length;j++){
@@ -90,7 +90,7 @@ class Level{
                         // Set note
                         //this.overview.setTile(x,y,1);
                         this.isTrackOccupant[x][y][i] = true;
-                        this.numberOfOccupants[x][y]++;
+                        //this.numberOfOccupants[x][y]++; // TODO: Properly update this information after conflict resolution
 
                         // Set instrument
                         let ins = getMM2Instrument(thisNote.instrument)-2;
@@ -127,17 +127,29 @@ class Level{
                         this.limitLine = i;
                   }
             }
+            
             let that = this;
-            structures.forEach((struct, i) => { // First pass: Handle conflicts
+            structures.forEach((struct) => { // First pass: Handle conflicts
+                  struct.checkForCollisions();
+            });
+            handleAllConflicts();
+
+            //resetSpatialData(false);
+            structures.forEach((struct) => { // Second pass: Check for unhandled conflicts
                   struct.checkForCollisions();
                   if(struct.conflictingStructures.length > 0) this.markTile(struct.x, struct.y, 1);
             });
             cells.forEach(cell => cell.build());
             console.log(cells);
-            structures.forEach((struct, i) => { // Second pass: Draw the structures
+            
+            structures.forEach((struct) => { // Third pass: Draw the structures
                   that.drawStructure(struct);
             });
             console.log('---');
+      }
+
+      refreshStructures(){
+
       }
 
       drawStructure(structure){
@@ -334,4 +346,16 @@ function getIsBG(n){
 
 function removeElementFromArr(arr, n){
       return arr.splice(n, 1);
+}
+
+function resetSpatialData(deleteStructs){ // TODO: Reset chunks
+      if(deleteStructs) structures = [];
+      cells = [];
+      chunks = [];
+      for(let i = 0; i < numStructChunks; i++) chunks[i] = [];
+      if(!deleteStructs){
+            structures.forEach(thisStruct => {
+                  thisStruct.putInChunk();
+            });
+      }
 }

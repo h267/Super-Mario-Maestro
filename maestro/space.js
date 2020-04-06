@@ -8,6 +8,25 @@ const setups = [ // TODO: Port to different tempos
 ];
 const blocksPerChunk = 8;
 const numStructChunks = 240/blocksPerChunk;
+const noteColBoxHeights = [3, 5, 4, 5, 6];
+
+const structTemplates = [
+      {
+            entityProperties: [ {parachute: false} ],
+      },
+      {
+            entityProperties: [ {parachute: false} ],
+      },
+      {
+            entityProperties: [ {parachute: true} ],
+      },
+      {
+            entityProperties: [ {parachute: true} ],
+      },
+      {
+            entityProperties: [ {parachute: true} ],
+      },
+];
 
 let structures = [];
 let cells = [];
@@ -109,17 +128,18 @@ class Structure {
             if(id == undefined) this.id = structures.length;
             else this.id = id;
             this.chunkIndex = null;
-            this.chunkListIndex = null;
             this.entities = [];
             this.cell = null;
             this.hasModifiedBlueprint = false;
             this.conflictingStructures = [];
+            this.isNote = false;
             this.putInChunk();
 
             structures.push(this);
       }
 
       checkForCollisions(){
+            this.conflictingStructures = [];
             for(let j = 0; j < 3; j++){
                   if(this.chunkIndex+j-1 < 0 || this.chunkIndex+j-1 >= numStructChunks) continue;
                   for(let k = 0; k < chunks[this.chunkIndex+j-1].length; k++){
@@ -134,19 +154,30 @@ class Structure {
             return this.collisionBox.getCollisionWith(otherStruct.collisionBox);
       }
 
-      moveTo(x, y){ // TODO: Set this up
-
-      }
-
       putInChunk(){
             this.chunkIndex = Math.floor(this.x/blocksPerChunk);
             chunks[this.chunkIndex].push(this);
+      }
+
+      updateChunkLocation(){
+            let curChunk = this.chunkIndex;
+            let newChunk = Math.floor(this.x/blocksPerChunk);
+
+            if(newChunk == curChunk) return;
+
+            // Remove a reference to the structure in the current chunk
+            let foundIndex = chunks[curChunk].findIndex((thisStruct) => {return (thisStruct.id == this.id);});
+            chunks[curChunk].splice(foundIndex, 1);
+
+            // Add to the new chunk
+            this.putInChunk();
       }
 }
 
 class NoteStructure extends Structure {
       constructor(type, x, y){
             super(type, x, y);
+            this.isNote = true;
       }
 
       checkCollisionWith(otherStruct){
@@ -273,8 +304,67 @@ class NoteStructure extends Structure {
             return (yPos - this.collisionBox.y <= noteHeightLimit);
       }
 
-      getNumConflictsWhenOffsetTo(){ // Hypothetically, if the note offset was something else, how many conflicts would there be?
-            // TODO: Loop through all of the offsets, find a way to try them (likely making a new colbox) and struct chunks
+      getConflictsForSetups(){ // Hypothetically, if the note offset was something else, how many conflicts would there be?
+            let testBox = new CollisionBox(this.collisionBox.xOfs, this.collisionBox.yOfs, this.collisionBox.w, this.collisionBox.h, 0);
+            testBox.x = this.collisionBox.x;
+            testBox.y = this.collisionBox.y;
+            let baseX = this.collisionBox.x;
+            let conflicts = [];
+            let currentChunk = 0;
+
+            for (let i = 0; i < setups.length; i++) {
+                  const thisSetup = setups[i];
+                  conflicts[i] = [];
+                  if(thisSetup.structType == this.type) continue;
+                  testBox.h = noteColBoxHeights[thisSetup.structType];
+                  testBox.x = baseX + thisSetup.offset;
+                  currentChunk = Math.floor(testBox.x/blocksPerChunk);
+
+                  for (let j = 0; j < 3; j++) {
+                        if(currentChunk + j - 1 < 0 || currentChunk + j - 1 >= numStructChunks) continue;
+                        const thisChunk = chunks[currentChunk + j - 1];
+                        thisChunk.forEach(otherStruct => {
+                              let otherBox = otherStruct.collisionBox;
+                              let dists = testBox.getCollisionDistWith(otherBox);
+                              if(getNoteCollisionFromDists(dists)){
+                                    conflicts[i].push(otherStruct);
+                              }
+                        });
+                  }
+            }
+            return conflicts;
+            // TODO: Store total height of cells to quickly evalutate if the struct would make the cell too tall
+      }
+
+      moveBySetup(setup){
+
+            // First, remove all references to collisions with this structure
+            this.conflictingStructures.forEach(otherStruct => {
+                  let foundIndex = otherStruct.conflictingStructures.findIndex((thisStruct) => {return (thisStruct.id == this.id);});
+                  otherStruct.conflictingStructures.splice(foundIndex, 1);
+            });
+
+            // Change structure type to the appropriate setup
+            this.changeToType(setup.structType);
+
+            // Move structure
+            let xOfs = setup.offset;
+            this.x += xOfs;
+            this.collisionBox.x += xOfs;
+            this.conflictingStructures = [];
+
+            // Update Chunk
+            this.updateChunkLocation();
+      }
+
+      changeToType(typeNum){
+            this.blueprint = getBlueprint(typeNum);
+            let prevLoc = {x: this.collisionBox.x, y: this.collisionBox.y};
+            this.collisionBox = getColBox(typeNum);
+            this.collisionBox.x = prevLoc.x;
+            this.collisionBox.y = prevLoc.y;
+            this.yOfs = -this.collisionBox.h;
+            this.entityProperties = structTemplates[typeNum].entityProperties;
       }
 }
 
@@ -310,6 +400,10 @@ class Cell {
       build(){ // Modify the blueprints of each member to form the proper structure
             if(this.members.length == 0) return;
             for (let i = this.startX; i <= this.endX; i++) { // First Pass: Expanding
+                  if(this.locationMap[i] == undefined){
+                        console.log('Missing structure in cell??');
+                        continue;
+                  }
                   this.locationMap[i].list.forEach(struct => {
                         let expandDist = this.highestPoint - (struct.collisionBox.y + struct.collisionBox.h);
                         struct.extendUpwardsBy(expandDist);
@@ -358,85 +452,105 @@ function getRectangleDist(r1, r2){ // Thanks Tri
 function getStructTemplate(n){
       switch(n){
             case 0: return {
-                  blueprint: new Blueprint([
-                        [0, 1, 0],
-                        [1, 0, 1],
-                        [1, 2, 1],
-                        [0, 3, 0]
-                  ]),
+                  blueprint: getBlueprint(n),
                   entityPos: [ {x: 1, y: 2} ],
                   entityProperties: [ {parachute: false} ],
                   xOfs: -1,
                   yOfs: -3,
-                  collisionBox: new CollisionBox(1, 1, 1, 3, 0),
+                  collisionBox: getColBox(n),
                   canBeInCell: true,
             };
             case 1: return {
-                  blueprint: new Blueprint([
-                        [0, 1, 0],
-                        [1, 0, 1],
-                        [1, 2, 1],
-                        [1, 0, 1],
-                        [1, 0, 1],
-                        [0, 3, 0]
-                  ]),
+                  blueprint: getBlueprint(n),
                   entityPos: [ {x: 1, y: 2} ],
                   entityProperties: [ {parachute: false} ],
                   xOfs: -1,
                   yOfs: -5,
-                  collisionBox: new CollisionBox(1, 1, 1, 5, 0),
-                  canBeInCell: false,
+                  collisionBox: getColBox(n),
+                  canBeInCell: true,
             };
             case 2: return {
-                  blueprint: new Blueprint([
-                        [0, 1, 0],
-                        [1, 0, 1],
-                        [1, 2, 1],
-                        [1, 0, 1],
-                        [0, 3, 0]
-                  ]),
+                  blueprint: getBlueprint(n),
                   entityPos: [ {x: 1, y: 2} ],
                   entityProperties: [ {parachute: true} ],
                   xOfs: -1,
                   yOfs: -4,
-                  collisionBox: new CollisionBox(1, 1, 1, 4),
+                  collisionBox: getColBox(n),
                   canBeInCell: false,
             };
             case 3: return {
-                  blueprint: new Blueprint([
-                        [0, 1, 0],
-                        [1, 0, 1],
-                        [1, 2, 1],
-                        [1, 0, 1],
-                        [1, 0, 1],
-                        [0, 3, 0]
-                  ]),
+                  blueprint: getBlueprint(n),
                   entityPos: [ {x: 1, y: 2} ],
                   entityProperties: [ {parachute: true} ],
                   xOfs: -1,
                   yOfs: -5,
-                  collisionBox: new CollisionBox(1, 1, 1, 5),
+                  collisionBox: getColBox(n),
                   canBeInCell: false,
             };
             case 4: return {
-                  blueprint: new Blueprint([
-                        [0, 1, 0],
-                        [1, 0, 1],
-                        [1, 2, 1],
-                        [1, 0, 1],
-                        [1, 0, 1],
-                        [1, 0, 1],
-                        [0, 3, 0]
-                  ]),
+                  blueprint: getBlueprint(n),
                   entityPos: [ {x: 1, y: 2} ],
                   entityProperties: [ {parachute: true} ],
                   xOfs: -1,
                   yOfs: -6,
-                  collisionBox: new CollisionBox(1, 1, 1, 6),
+                  collisionBox: getColBox(n),
                   canBeInCell: false,
             };
             
             // TODO: More setups, like the "up 3" one
+      }
+}
+
+function getBlueprint(n){
+      switch(n){
+            case 0: return new Blueprint([
+                  [0, 1, 0],
+                  [1, 0, 1],
+                  [1, 2, 1],
+                  [0, 3, 0]
+            ]);
+            case 1: return new Blueprint([
+                  [0, 1, 0],
+                  [1, 0, 1],
+                  [1, 2, 1],
+                  [1, 0, 1],
+                  [1, 0, 1],
+                  [0, 3, 0]
+            ]);
+            case 2: return new Blueprint([
+                  [0, 1, 0],
+                  [1, 0, 1],
+                  [1, 2, 1],
+                  [1, 0, 1],
+                  [0, 3, 0]
+            ]);
+            case 3: return new Blueprint([
+                  [0, 1, 0],
+                  [1, 0, 1],
+                  [1, 2, 1],
+                  [1, 0, 1],
+                  [1, 0, 1],
+                  [0, 3, 0]
+            ]);
+            case 4: return new Blueprint([
+                  [0, 1, 0],
+                  [1, 0, 1],
+                  [1, 2, 1],
+                  [1, 0, 1],
+                  [1, 0, 1],
+                  [1, 0, 1],
+                  [0, 3, 0]
+            ]);
+      }
+}
+
+function getColBox(n){
+      switch(n){
+            case 0: return new CollisionBox(1, 1, 1, 3);
+            case 1: return new CollisionBox(1, 1, 1, 5);
+            case 2: return new CollisionBox(1, 1, 1, 4);
+            case 3: return new CollisionBox(1, 1, 1, 5);
+            case 4: return new CollisionBox(1, 1, 1, 6);
       }
 }
 
@@ -446,19 +560,33 @@ function createCell(){
       return newCell;
 }
 
-function clearCells(){
-      cells = [];
-}
-
-function resetSpatialInformation(){
-      structures = [];
-      cells = [];
-}
-
-function handleAllConflicts(){ // TODO: Do all spatial conflict resolution stuff here
+// Where the magic happens
+function handleAllConflicts(){ // TODO: Search tree, breadth-first search
       structures.forEach(struct => {
-            if(struct.conflictingStructures.length > 0){ // TODO: Try offsets
-                  console.log(struct);
+            if(struct.conflictingStructures.length > 0 && struct.isNote){
+                  //console.log(struct);
+                  let offsetConflicts = struct.getConflictsForSetups(); // TODO: Make this return an array of conflicting structs, or null if the offset is impossible
+                  console.log(offsetConflicts);
+                  for(let i = 0; i < offsetConflicts.length; i++){
+                        if(offsetConflicts[i].length == 0){
+                              console.log('Move ' + setups[i].offset);
+                              struct.moveBySetup(setups[i]);
+                              struct.debug = setups[i].offset;
+                              break;
+                        }
+                  }
             }
       });
+}
+
+/*
+// Remove the references to the collision
+let foundIndex = otherStruct.conflictingStructures.find((thisStruct) => {return (thisStruct.id == this.id);});
+otherStruct.conflictingStructures.splice(foundIndex, 1);
+*/
+
+function getNoteCollisionFromDists(dists){
+      if(dists.xdist == 0 && dists.ydist < -1) return false; // Cell merging needed
+      else if(dists.xdist == 0 && dists.ydist == -1) return false;
+      else return (dists.xdist <= 0 && dists.ydist <= 0 && dists.xdist + dists.ydist < 0);
 }
