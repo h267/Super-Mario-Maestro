@@ -1,30 +1,51 @@
 // Super Mario Maestro v1.4
 // made by h267
 
+// FIXME: Playback breaks after clicking different tracks?
+
 // TODO: Re-enable gtag when releasing
 
 /* TODO: New features:
 
-1.4: (?) = Might not be necessary
- - Draw entites slightly lower than other blocks to make clouds more visible
- - Collision exceptions (entities in the same cell, non-double hits due to timing differences or sheer height)
- - Better way of showing conflicts visually (maybe transparency on conflicting structures?)
- - Hard blocks -> Ground tiles (?)
- - Loading buffers, maybe prompt the user when it is needed
- - Support for larger entities
- - Hiding/showing structures, semisolid view
- - Build button
- - Animated entities with physics simulation (?)
- - Partition system where different settings can apply
- - Toolbar for display tools (?)
- - Manual note editing (?)
- - CSS loading animation if needed (?)
- - Spatial Management, com_poser tricks, maybe autoscroll tracks
- - Warning system (?)
- - Theme, style, day/night indicators
- - Recount conflicts using structure conflicts, not overlap
- - Handle dynamic tempo changes
- - Start music playback from anywhere in the blueprint (?)
+1.4:
+0. Finish offsets, search tree
+1. Entity-saving setups
+2. Collision exceptions (entities in the same cell, non-double hits due to timing differences or sheer height)
+3. Entity exceptions (P-Switches can't have parachutes, nor munchers, etc)
+4. Draw entities slightly lower than other blocks to make clouds more visible
+5. Build and unbuild button
+6. Loading animations, maybe prompt the user when long operations are needed
+7. Layer/semisolid view
+
+8. Toolbar for display tools
+9. Conflict display when hovering over notes with magnifying glass tool, also display note pitch
+10. Note placer and eraser
+11. Single track edit view (all other blocks except the track being edited become transparent)
+12. New track button
+13. Simple Undodog
+14. Remove percussion; add percussion gallery instead
+15. Chord deconstructor
+16. Fix iOS/mobile somehow
+*/
+
+/*
+1.5:
+ - Selection tool, partitioning
+ - Save files
+*/
+
+/*
+Maybe now or later:
+      - Hard blocks -> Ground tiles
+      - Animated entities with physics simulation
+      - CSS loading animation if needed
+      - Warning system
+      - Theme, style, day/night indicators
+      - Handle dynamic tempo changes
+      - Start music playback from anywhere in the blueprint
+      - Partition system where different settings can apply
+      - Support for larger entities
+      - Full level preview
 */
 
 const levelWidth = 240;
@@ -168,7 +189,7 @@ var noteRange = 0;
 var defaultZoom = 1;
 var hasLoadedBuffers = false;
 
-//getEquivalentBlocks(2.75);
+//getEquivalentBlocks(1.5);
 
 // Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener ('mouseout', handleOut, false);
@@ -490,7 +511,7 @@ function drawLevel(redrawMini,noDOM){
       }
       powerupCount = 0;
       entityCount = 0;
-      for(i=marginWidth;i<levelWidth;i++){
+      for(i=marginWidth;i<levelWidth;i++){ // FIXME: Display beginning of level while still cutting off notes
             for(j=0;j<27;j++){
                   x = ofsX + i - marginWidth;
                   y = ofsY + j;
@@ -502,8 +523,8 @@ function drawLevel(redrawMini,noDOM){
                   if(tile != null && isVisible(x,y,ofsX,ofsY)){
                         drawTile(tiles[tile],i*16,(drawY*16));
                         if(level.numberOfOccupants[i][j] > 1){ // Highlight any overalapping tiles in red
-                              conflictCount++;
-                              highlightTile(i,drawY,{style: 'rgba(255,0,0,0.4)'});
+                              //conflictCount++;
+                              //highlightTile(i,drawY,{style: 'rgba(255,0,0,0.4)'});
                         }
                         if(tile == 1 && level.isTrackOccupant[i][j][selectedTrack]){ // Outline note blocks of the selected track
                               outlineTile(i,drawY,2,'rgb(102,205,170)');
@@ -542,6 +563,7 @@ function drawLevel(redrawMini,noDOM){
                   document.getElementById('QEtext').style.color = 'limegreen';
             }
             //console.log('qeScore = '+qeScore);
+            let conflictCount = level.conflictCount;
             document.getElementById('NCtext').innerHTML = "Spatial Conficts: " + conflictCount;
             if(conflictCount > 20){document.getElementById('NCtext').style.color = 'orange';}
             else if(conflictCount > 0){document.getElementById('NCtext').style.color = 'limegreen';}
@@ -1635,7 +1657,7 @@ function ticksToBlocks(ticks){
 function getEquivalentBlocks(blocks){ // This function is only for research purposes and doesn't do anything meaningful otherwise.
       MM2Tempos.forEach((n) => {
             let val = (n.bpm/112)*blocks;
-            if( getFraction(val/0.5) < 0.2 && n.name.search('water') == -1 && n.name.search('wim') == -1){
+            if( getFraction(val/0.5) < 0.51 && n.name.search('water') == -1 && n.name.search('wim') == -1){
                   console.log(n.name + ': ' + val);
             }
       });

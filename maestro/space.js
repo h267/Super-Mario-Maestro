@@ -133,6 +133,7 @@ class Structure {
             this.hasModifiedBlueprint = false;
             this.conflictingStructures = [];
             this.isNote = false;
+            this.originalX = x;
             this.putInChunk();
 
             structures.push(this);
@@ -159,18 +160,24 @@ class Structure {
             chunks[this.chunkIndex].push(this);
       }
 
-      updateChunkLocation(){
+      updateChunkLocation(){ // TODO: Generalize for all structures or move to NoteStructure class
             let curChunk = this.chunkIndex;
             let newChunk = Math.floor(this.x/blocksPerChunk);
 
-            if(newChunk == curChunk) return;
+            if(newChunk != curChunk){
+                  // Remove a reference to the structure in the current chunk
+                  let foundIndex = chunks[curChunk].findIndex((thisStruct) => {return (thisStruct.id == this.id);});
+                  chunks[curChunk].splice(foundIndex, 1);
 
-            // Remove a reference to the structure in the current chunk
-            let foundIndex = chunks[curChunk].findIndex((thisStruct) => {return (thisStruct.id == this.id);});
-            chunks[curChunk].splice(foundIndex, 1);
+                  // Add to the new chunk
+                  this.putInChunk();
+            }
 
-            // Add to the new chunk
-            this.putInChunk();
+            // Remove from cell // TODO: Add to new cell 
+            // FIXME: Cells that get merged are not handled properly
+            let curCell = this.cell;
+            if(curCell == null) return;
+            curCell.removeStructure(this);
       }
 }
 
@@ -401,7 +408,7 @@ class Cell {
             if(this.members.length == 0) return;
             for (let i = this.startX; i <= this.endX; i++) { // First Pass: Expanding
                   if(this.locationMap[i] == undefined){
-                        console.log('Missing structure in cell??');
+                        console.log('Missing structure in cell.');
                         continue;
                   }
                   this.locationMap[i].list.forEach(struct => {
@@ -424,7 +431,9 @@ class Cell {
             if(this.locationMap[xPos] == undefined) this.locationMap[xPos] = {list: [], tallest: struct};
             else{
                   this.locationMap[xPos].list.forEach(localStruct => {
-                        if(localStruct.x > this.locationMap[xPos].tallest.collisionBox.x) this.locationMap[xPos].tallest = localStruct;
+                        let localStructHeight = localStruct.collisionBox.y + localStruct.collisionBox.h;
+                        let tallestStructHeight = this.locationMap[xPos].tallest.collisionBox.y + this.locationMap[xPos].tallest.collisionBox.h;
+                        if(localStructHeight > tallestStructHeight) this.locationMap[xPos].tallest = localStruct;
                   });
             }
             this.locationMap[xPos].list.push(struct);
@@ -433,6 +442,63 @@ class Cell {
       clear(){
             this.members = [];
             this.locationMap = {};
+      }
+
+      removeStructure(struct){
+
+            // Remove from member list
+            let origIndex = this.members.findIndex((thisStruct) => {return (thisStruct.id == struct.id);});
+            this.members.splice(origIndex, 1);
+
+            // Remove from location map
+            let origEntry = this.locationMap[struct.originalX];
+            let foundIndex = origEntry.list.findIndex((thisStruct) => {return (thisStruct.id == struct.id);});
+            origEntry.list.splice(foundIndex, 1);
+
+            // Remove from tallest structure if it is this cell, recalculate as necessary. Also recalculate starting and ending x coords
+            if(this.locationMap[struct.originalX].tallest.id == struct.id){
+                  let newStartX = 240;
+                  let newEndX = 0;
+                  if(origEntry.list.length == 0){
+                        delete this.locationMap[struct.originalX];
+                        if(struct.originalX != this.startX && struct.originalX != this.endX) this.split(origIndex); // FIXME: split by x-coords, safer
+                  }
+                  else{
+                        origEntry.tallest = origEntry.list[0];
+                        origEntry.list.forEach(localStruct => {
+                              let localStructHeight = localStruct.collisionBox.y + localStruct.collisionBox.h;
+                              let tallestStructHeight = origEntry.tallest.collisionBox.y + origEntry.tallest.collisionBox.h;
+                              if(localStructHeight > tallestStructHeight) origEntry.tallest = localStruct;
+                        });
+                  }
+                  this.members.forEach(localStruct => {
+                        if(localStruct.x < newStartX) newStartX = localStruct.x;
+                        if(localStruct.x > newEndX) newEndX = localStruct.x;
+                  });
+                  this.startX = newStartX;
+                  this.endX = newEndX;
+            }
+            struct.cell = null;
+      }
+
+      split(splitPoint){ // Split the cell in two, removing structures from this cell and creating a new one
+            // Store structures to be moved
+            let moveStructures = [];
+            for(let i = splitPoint; i < this.members.length; i++){
+                  moveStructures.push(this.members[i]);
+            }
+
+            // Remove structures to be moved from this cell
+            for(let i = moveStructures.length-1; i >= 0; i--){
+                  //console.log('split off '+i);
+                  this.removeStructure(moveStructures[i]);
+            }
+
+            // Add those structures to a new cell
+            let newCell = createCell();
+            for(let i = 0; i < moveStructures.length; i++){
+                  newCell.add(moveStructures[i]);
+            }
       }
 }
 
@@ -561,15 +627,16 @@ function createCell(){
 }
 
 // Where the magic happens
-function handleAllConflicts(){ // TODO: Search tree, breadth-first search
+function handleAllConflicts(){ // TODO: Search tree, breadth-first search FIXME: Conflicting notes always moved, even if the conflict gets resolved by the movement of the other note
+      // FIXME: SMW - Secret.mid, 4 bpb. Screenshot posted in Discord (see level.js)
       structures.forEach(struct => {
             if(struct.conflictingStructures.length > 0 && struct.isNote){
                   //console.log(struct);
                   let offsetConflicts = struct.getConflictsForSetups(); // TODO: Make this return an array of conflicting structs, or null if the offset is impossible
-                  console.log(offsetConflicts);
+                  //console.log(offsetConflicts);
                   for(let i = 0; i < offsetConflicts.length; i++){
                         if(offsetConflicts[i].length == 0){
-                              console.log('Move ' + setups[i].offset);
+                              //console.log('Move ' + setups[i].offset);
                               struct.moveBySetup(setups[i]);
                               struct.debug = setups[i].offset;
                               break;
@@ -579,14 +646,8 @@ function handleAllConflicts(){ // TODO: Search tree, breadth-first search
       });
 }
 
-/*
-// Remove the references to the collision
-let foundIndex = otherStruct.conflictingStructures.find((thisStruct) => {return (thisStruct.id == this.id);});
-otherStruct.conflictingStructures.splice(foundIndex, 1);
-*/
-
 function getNoteCollisionFromDists(dists){
-      if(dists.xdist == 0 && dists.ydist < -1) return false; // Cell merging needed
+      if(dists.xdist == 0 && dists.ydist < -1) return true; // TODO: Change to false and compute cell merging
       else if(dists.xdist == 0 && dists.ydist == -1) return false;
       else return (dists.xdist <= 0 && dists.ydist <= 0 && dists.xdist + dists.ydist < 0);
 }

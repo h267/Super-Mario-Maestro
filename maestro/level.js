@@ -65,6 +65,7 @@ class Level{
             structures = [];
             this.entityCount = 0;
             this.powerupCount = 0;
+            this.conflictCount = 0;
             this.width = 0;
             this.limitLine = null;
             var columnCounts = [];
@@ -111,7 +112,7 @@ class Level{
                               //if((this.powerupCount > 100 || this.entityCount > 100) && (this.limitLine == null)) this.limitLine = x + marginWidth + 1;
                               //this.overview.setTile(x,y+1,ins+2);
                               this.isTrackOccupant[x][y+1][i] = true;
-                              this.numberOfOccupants[x][y+1]++;
+                              //this.numberOfOccupants[x][y+1]++; // TODO: Also here
                         }
 
                         let newStruct = new NoteStructure(0, x, y);
@@ -135,17 +136,21 @@ class Level{
             handleAllConflicts();
 
             //resetSpatialData(false);
+            this.conflictCount = 0;
             structures.forEach((struct) => { // Second pass: Check for unhandled conflicts
                   struct.checkForCollisions();
-                  if(struct.conflictingStructures.length > 0) this.markTile(struct.x, struct.y, 1);
+                  if(struct.conflictingStructures.length > 0){
+                        this.markTile(struct.x, struct.y, 1);
+                        this.conflictCount++;
+                  }
             });
-            cells.forEach(cell => cell.build());
-            console.log(cells);
+            cells.forEach(cell => cell.build()); // FIXME: Collision with structs in cells needs to be checked again since the colboxes were extended
+            //console.log(cells);
             
             structures.forEach((struct) => { // Third pass: Draw the structures
                   that.drawStructure(struct);
             });
-            console.log('---');
+            //console.log('---');
       }
 
       refreshStructures(){
@@ -182,7 +187,7 @@ class Level{
             let color = colBox.x % 2;
             for(let i = 0; i < colBox.w; i++){
                   for(let j = 0; j < colBox.h; j++){
-                        this.markTile(colBox.x + i, colBox.y + colBox.h + 1 - j, color + 3);
+                        this.markTile(colBox.x + i, colBox.y + 1 - j, color + 3);
                   }
             }
       }
