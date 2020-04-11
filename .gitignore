@@ -1,5 +1,8 @@
-.vscode/launch.json
+.vscode/
 maestro/workspace
 maestro/tempCodeRunnerFile.js
 maestro/.jshintrc
 maestro/out/
+maestro/node_modules/
+maestro/package.json
+maestro/package-lock.json
