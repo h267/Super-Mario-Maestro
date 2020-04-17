@@ -1,6 +1,6 @@
 // Here we go!
 const noteHeightLimit = 6; // 3 block jump
-const setups = [ // TODO: Port to different tempos
+const setups = [ // TODO: Port to different tempos // TODO: Find an example of the always-move bug and then add offset 0 to the list
 	{ offset: -2, structType: 1 },
 	{ offset: -6, structType: 2 },
 	{ offset: -11, structType: 3 },
@@ -8,25 +8,32 @@ const setups = [ // TODO: Port to different tempos
 ];
 const blocksPerChunk = 8;
 const numStructChunks = 240 / blocksPerChunk;
-const noteColBoxHeights = [3, 5, 4, 5, 6];
 
+const noteColBoxHeights = [3, 5, 4, 5, 6, 6, 4];
 const structTemplates = [
-	{
+	{ // 0: Default
 		entityProperties: [{ parachute: false }]
 	},
-	{
+	{ // 1: 2 Block Drop
 		entityProperties: [{ parachute: false }]
 	},
-	{
+	{ // 2: 1 Block Parachute
 		entityProperties: [{ parachute: true }]
 	},
-	{
+	{ // 3: 2 Block Parachute
 		entityProperties: [{ parachute: true }]
 	},
-	{
+	{ // 4: 3 Block Parachute
 		entityProperties: [{ parachute: true }]
+	},
+	{ // 5: 3 Block Drop
+		entityProperties: [{ parachute: false }]
+	},
+	{ // 6: 1 Block Drop
+		entityProperties: [{ parachute: false }]
 	}
 ];
+const obfuscateNotes = false;
 
 let structures = [];
 let cells = [];
@@ -161,6 +168,7 @@ class Structure {
 	putInChunk() {
 		this.chunkIndex = Math.floor(this.x / blocksPerChunk);
 		chunks[this.chunkIndex].push(this);
+		if (this.x <= 27) console.log(this);
 	}
 
 	updateChunkLocation() { // TODO: Generalize for all structures or move to NoteStructure class
@@ -206,10 +214,11 @@ class NoteStructure extends Structure {
 		/* let tID = this.id;
             let oID = otherStruct.id;
             console.log(tID + ' @ ' + this.collisionBox.x + ' <-> ' + oID + ' @ ' + otherStruct.collisionBox.x); */
-		let highestPoint = Math.max(
+		let highestPairPoint = Math.max(
 			this.collisionBox.y + this.collisionBox.h,
 			otherStruct.collisionBox.y + otherStruct.collisionBox.h
 		);
+		let highestPoint;
 		let isAcceptable = true;
 		let thisCell = this.cell;
 		let otherCell = otherStruct.cell;
@@ -220,6 +229,7 @@ class NoteStructure extends Structure {
 		else isSameCell = (otherCell.id === thisCell.id);
 		if (isSameCell) return false;
 		if (thisCell !== null) {
+			highestPoint = Math.max(highestPairPoint, thisCell.highestPoint);
 			for (let i = 0; i < thisCell.members.length; i++) {
 				isAcceptable = isAcceptable
 				&& thisCell.members[i].isExtendableUpwardsTo(highestPoint)
@@ -228,6 +238,7 @@ class NoteStructure extends Structure {
 			isAcceptable = isAcceptable && this.canBeInCell;
 		}
 		if (otherCell !== null && !isSameCell) {
+			highestPoint = Math.max(highestPairPoint, otherCell.highestPoint);
 			if (!isSameCell) {
 				for (let i = 0; i < otherCell.members.length; i++) {
 					isAcceptable = isAcceptable
@@ -314,7 +325,11 @@ class NoteStructure extends Structure {
 	}
 
 	isExtendableUpwardsTo(yPos) {
-		return (yPos - this.collisionBox.y <= noteHeightLimit);
+		// return (Math.abs(yPos - this.collisionBox.y) <= noteHeightLimit);
+		if (yPos >= this.collisionBox.y) {
+			return yPos - this.collisionBox.y <= noteHeightLimit;
+		}
+		return this.collisionBox.y - yPos <= noteHeightLimit - 3;
 	}
 
 	// Hypothetically, if the note offset was something else, how many conflicts would there be?
@@ -334,7 +349,7 @@ class NoteStructure extends Structure {
 
 		for (let i = 0; i < setups.length; i++) {
 			const thisSetup = setups[i];
-			conflicts[i] = [];
+			conflicts[i] = { list: [], setup: i };
 			if (thisSetup.structType === this.type) continue;
 			testBox.h = noteColBoxHeights[thisSetup.structType];
 			testBox.x = baseX + thisSetup.offset;
@@ -347,7 +362,7 @@ class NoteStructure extends Structure {
 					let otherBox = otherStruct.collisionBox;
 					let dists = testBox.getCollisionDistWith(otherBox);
 					if (getNoteCollisionFromDists(dists)) {
-						conflicts[i].push(otherStruct);
+						conflicts[i].list.push(otherStruct);
 					}
 				});
 			}
@@ -475,7 +490,7 @@ class Cell {
 			if (origEntry.list.length === 0) {
 				delete this.locationMap[struct.originalX];
 				if (struct.originalX !== this.startX && struct.originalX !== this.endX) {
-					this.split(origIndex); // FIXME: split by x-coords, safer
+					this.split(struct.originalX); // FIXME: split by x-coords, safer and fixes AC2 4 bpb crash (get rid all insts except spktop, dryb, sldgbr)
 				}
 			} else {
 				[origEntry.tallest] = origEntry.list;
@@ -495,11 +510,16 @@ class Cell {
 		struct.cell = null;
 	}
 
-	split(splitPoint) { // Split the cell in two, removing structures from this cell and creating a new one
+	split(splitX) { // Split the cell in two, removing structures from this cell and creating a new one
 		// Store structures to be moved
 		let moveStructures = [];
-		for (let i = splitPoint; i < this.members.length; i++) {
+		/* for (let i = splitPoint; i < this.members.length; i++) {
 			moveStructures.push(this.members[i]);
+		} */
+		for (let i = splitX + 1; i <= this.endX; i++) {
+			this.locationMap[i].list.forEach((struct) => {
+				moveStructures.push(struct);
+			});
 		}
 
 		// Remove structures to be moved from this cell
@@ -576,6 +596,24 @@ function getStructTemplate(n) {
 		collisionBox: getColBox(n),
 		canBeInCell: false
 	};
+	case 5: return {
+		blueprint: getBlueprint(n),
+		entityPos: [{ x: 1, y: 2 }],
+		entityProperties: [{ parachute: false }],
+		xOfs: -1,
+		yOfs: -6,
+		collisionBox: getColBox(n),
+		canBeInCell: true
+	};
+	case 6: return {
+		blueprint: getBlueprint(n),
+		entityPos: [{ x: 1, y: 2 }],
+		entityProperties: [{ parachute: false }],
+		xOfs: -1,
+		yOfs: -4,
+		collisionBox: getColBox(n),
+		canBeInCell: true
+	};
 
 	default:
 		console.log('invalid setup');
@@ -625,6 +663,22 @@ function getBlueprint(n) {
 		[1, 0, 1],
 		[0, 3, 0]
 	]);
+	case 5: return new Blueprint([
+		[0, 1, 0],
+		[1, 0, 1],
+		[1, 2, 1],
+		[1, 0, 1],
+		[1, 0, 1],
+		[1, 0, 1],
+		[0, 3, 0]
+	]);
+	case 6: return new Blueprint([
+		[0, 1, 0],
+		[1, 0, 1],
+		[1, 2, 1],
+		[1, 0, 1],
+		[0, 3, 0]
+	]);
 	default:
 		console.log('invalid blueprint');
 		return null;
@@ -638,6 +692,8 @@ function getColBox(n) {
 	case 2: return new CollisionBox(1, 1, 1, 4);
 	case 3: return new CollisionBox(1, 1, 1, 5);
 	case 4: return new CollisionBox(1, 1, 1, 6);
+	case 5: return new CollisionBox(1, 1, 1, 6);
+	case 6: return new CollisionBox(1, 1, 1, 4);
 	default:
 		console.log('invalid collision box');
 		return null;
@@ -653,18 +709,19 @@ function createCell() {
 // Where the magic happens
 function handleAllConflicts() { // TODO: Search tree, breadth-first search
 	// FIXME: Conflicting notes always moved, even if the conflict gets resolved by the movement of the other note
-	// FIXME: SMW - Secret.mid, 4 bpb. Screenshot posted in Discord (see level.js)
 	structures.forEach((struct) => {
-		if (struct.conflictingStructures.length > 0 && struct.isNote) {
+		if ((struct.conflictingStructures.length > 0 || obfuscateNotes) && struct.isNote) {
 			// console.log(struct);
 			// TODO: Make this return an array of conflicting structs, or null if the offset is impossible
 			let offsetConflicts = struct.getConflictsForSetups();
+			if (obfuscateNotes) shuffleArray(offsetConflicts);
 			// console.log(offsetConflicts);
 			for (let i = 0; i < offsetConflicts.length; i++) {
-				if (offsetConflicts[i].length === 0) {
+				if (offsetConflicts[i].list.length === 0) {
+					let thisSetup = setups[offsetConflicts[i].setup];
 					// console.log('Move ' + setups[i].offset);
-					struct.moveBySetup(setups[i]);
-					struct.debug = setups[i].offset;
+					struct.moveBySetup(thisSetup);
+					struct.debug = thisSetup.offset;
 					break;
 				}
 			}
@@ -676,4 +733,16 @@ function getNoteCollisionFromDists(dists) {
 	if (dists.xdist === 0 && dists.ydist < -1) return true; // TODO: Change to false and compute cell merging
 	if (dists.xdist === 0 && dists.ydist === -1) return false;
 	return (dists.xdist <= 0 && dists.ydist <= 0 && dists.xdist + dists.ydist < 0);
+}
+
+function shuffleArray(array) {
+	let counter = array.length;
+	while (counter > 0) {
+		let index = Math.floor(Math.random() * counter);
+		counter--;
+		let temp = array[counter];
+		array[counter] = array[index];
+		array[index] = temp;
+	}
+	return array;
 }

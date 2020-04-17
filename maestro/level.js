@@ -143,8 +143,14 @@ class Level {
 				this.conflictCount++;
 			}
 		});
-		// FIXME: Collision with structs in cells needs to be checked again since the colboxes were extended
 		cells.forEach((cell) => cell.build());
+		cells.forEach((cell) => cell.members.forEach((struct) => {
+			struct.checkForCollisions();
+			if (struct.conflictingStructures.length > 0) {
+				this.markTile(struct.x, struct.y, 1);
+				this.conflictCount++;
+			}
+		}));
 		// console.log(cells);
 
 		structures.forEach((struct) => { // Third pass: Draw the structures
