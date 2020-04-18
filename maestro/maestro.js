@@ -16,6 +16,8 @@
 5. Build and unbuild button
 6. Loading animations, maybe prompt the user when long operations are needed
 7. Layer/semisolid view
+- Simple zooming
+- Level push-back
 
 8. Toolbar for display tools
 9. Conflict display when hovering over notes with magnifying glass tool, also display note pitch
@@ -599,16 +601,16 @@ function drawLevel(redrawMini = false, noDOM = false) {
 	}
 	powerupCount = 0;
 	entityCount = 0;
-	for (let i = marginWidth; i < levelWidth; i++) { // FIXME: Display beginning of level while still cutting off notes
+	for (let i = 0; i < levelWidth; i++) {
 		for (j = 0; j < 27; j++) {
-			x = ofsX + i - marginWidth;
+			x = ofsX + i;
 			y = ofsY + j;
 			let tile = level.checkTile(i, j); // Tile on the main screen
 			let bgTile = level.checkBgTile(i, j);
 			let fgTile = level.checkFgTile(i, j);
 			let drawY = 27 - j - 1;
 			if (bgTile !== null) drawTile(tiles[bgTile], i * 16, (drawY * 16));
-			if (tile !== null && isVisible(x, y, ofsX, ofsY)) {
+			if (tile !== null) {
 				drawTile(tiles[tile], i * 16, (drawY * 16));
 				if (level.numberOfOccupants[i][j] > 1) { // Highlight any overalapping tiles in red
 					// conflictCount++;
@@ -1717,7 +1719,7 @@ function refreshBlocks() {
 				note.instrument = getMidiInstrument(instrument);
 				note.pitch = 54;
 			}
-			if (levelX >= ofsX && levelX < ofsX + levelWidth - 27) {
+			if (levelX >= ofsX && levelX < ofsX + levelWidth) {
 				level.noteGroups[i].add(note.pitch, note.instrument, levelX);
 			}
 		}

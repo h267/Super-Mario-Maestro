@@ -1,6 +1,6 @@
-// Here we go!
 const noteHeightLimit = 6; // 3 block jump
-const setups = [ // TODO: Port to different tempos // TODO: Find an example of the always-move bug and then add offset 0 to the list
+const setups = [ // TODO: Port to different tempos
+	{ offset: 0, structType: 0 },
 	{ offset: -2, structType: 1 },
 	{ offset: -6, structType: 2 },
 	{ offset: -11, structType: 3 },
@@ -168,7 +168,6 @@ class Structure {
 	putInChunk() {
 		this.chunkIndex = Math.floor(this.x / blocksPerChunk);
 		chunks[this.chunkIndex].push(this);
-		if (this.x <= 27) console.log(this);
 	}
 
 	updateChunkLocation() { // TODO: Generalize for all structures or move to NoteStructure class
@@ -184,8 +183,8 @@ class Structure {
 			this.putInChunk();
 		}
 
-		// Remove from cell // TODO: Add to new cell
-		// FIXME: Cells that get merged are not handled properly
+		// Remove from cell // TODO: Add to new cell (Might not be necessary)
+		// TODO: Cells that get merged are not handled properly (Might not be a necessary fix)
 		let curCell = this.cell;
 		if (curCell === null) return;
 		curCell.removeStructure(this);
@@ -198,7 +197,7 @@ class NoteStructure extends Structure {
 		this.isNote = true;
 	}
 
-	checkCollisionWith(otherStruct) {
+	checkCollisionWith(otherStruct) { // TODO: Prevent entities from going off the top or further left than x = 27
 		let dists = this.collisionBox.getCollisionDistWith(otherStruct.collisionBox);
 		if (dists.xdist === 0 && dists.ydist < -1) { // Merge into a cell
 			return this.checkCellCollision(otherStruct, true);
@@ -350,7 +349,6 @@ class NoteStructure extends Structure {
 		for (let i = 0; i < setups.length; i++) {
 			const thisSetup = setups[i];
 			conflicts[i] = { list: [], setup: i };
-			if (thisSetup.structType === this.type) continue;
 			testBox.h = noteColBoxHeights[thisSetup.structType];
 			testBox.x = baseX + thisSetup.offset;
 			currentChunk = Math.floor(testBox.x / blocksPerChunk);
@@ -490,7 +488,7 @@ class Cell {
 			if (origEntry.list.length === 0) {
 				delete this.locationMap[struct.originalX];
 				if (struct.originalX !== this.startX && struct.originalX !== this.endX) {
-					this.split(struct.originalX); // FIXME: split by x-coords, safer and fixes AC2 4 bpb crash (get rid all insts except spktop, dryb, sldgbr)
+					this.split(struct.originalX);
 				}
 			} else {
 				[origEntry.tallest] = origEntry.list;
@@ -619,7 +617,7 @@ function getStructTemplate(n) {
 		console.log('invalid setup');
 		return null;
 
-            // TODO: More setups, like the "up 3" one
+            // FIXME: Some of the setups connect badly (like the 3 block drop)
 	}
 }
 
@@ -708,7 +706,6 @@ function createCell() {
 
 // Where the magic happens
 function handleAllConflicts() { // TODO: Search tree, breadth-first search
-	// FIXME: Conflicting notes always moved, even if the conflict gets resolved by the movement of the other note
 	structures.forEach((struct) => {
 		if ((struct.conflictingStructures.length > 0 || obfuscateNotes) && struct.isNote) {
 			// console.log(struct);
@@ -730,7 +727,7 @@ function handleAllConflicts() { // TODO: Search tree, breadth-first search
 }
 
 function getNoteCollisionFromDists(dists) {
-	if (dists.xdist === 0 && dists.ydist < -1) return true; // TODO: Change to false and compute cell merging
+	if (dists.xdist === 0 && dists.ydist < -1) return true; // TODO: Change to false and properly compute cell merging
 	if (dists.xdist === 0 && dists.ydist === -1) return false;
 	return (dists.xdist <= 0 && dists.ydist <= 0 && dists.xdist + dists.ydist < 0);
 }

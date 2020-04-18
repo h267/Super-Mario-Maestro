@@ -66,7 +66,7 @@ class Level {
 		this.entityCount = 0;
 		this.powerupCount = 0;
 		this.conflictCount = 0;
-		this.width = 0;
+		// this.width = 0;
 		this.limitLine = null;
 		let columnCounts = [];
 		let i;
@@ -106,7 +106,7 @@ class Level {
 						this.entityCount++;
 						columnCounts[x].entities++;
 					}
-					if (x > this.width) this.width = x;
+					// if (x > this.width) this.width = x;
 					// if((this.powerupCount > 100 || this.entityCount > 100) &&
 					// (this.limitLine === null)) this.limitLine = x + marginWidth + 1;
 					// this.overview.setTile(x,y+1,ins+2);
