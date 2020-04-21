@@ -59,6 +59,7 @@ const tutorialLink = 'https://docs.google.com/document/d/1UG-Y-2zbdcqE7ciMgPVT3H
 const contPlayback = false; // Dev toggle for full map playback
 const numParts = 20;
 const autoShowRatio = 0.7;
+const showDebugLabels = true;
 
 let reader = new FileReader();
 let numCommonTempos = 0;
@@ -624,6 +625,17 @@ function drawLevel(redrawMini = false, noDOM = false) {
 			if (fgTile !== null) drawTile(bgs[2 + fgTile], i * 16, (drawY * 16));
 		}
 		if (i > ofsX + levelWidth) { break; }
+	}
+	if (showDebugLabels) {
+		clearDisplayLayer(dlayer.overlayLayer);
+		for (let i = 0; i < structures.length; i++) {
+			drawLabel(
+				structures[i].x * 16,
+				canvas.height - structures[i].y * 16,
+				i,
+				dlayer.overlayLayer
+			);
+		}
 	}
 	if (redrawMini) { redrawMinimap(); }
 	if (level.limitLine !== null) { drawLimitLine(level.limitLine); }

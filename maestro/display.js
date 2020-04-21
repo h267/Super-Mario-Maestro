@@ -436,9 +436,10 @@ function drawGrid() {
  * @param {number} x The x-coordinate of the top left corner of the label.
  * @param {number} y The y-coordinate of the top left corner of the label.
  * @param {string} str The text to be displayed in the label.
+ * @param {number} layer (Optional) The layer ID of the layer to draw the label on.
  */
-function drawLabel(x, y, str) {
-	canvasLayers[dlayer.mouseLayer].text(x, y, str);
+function drawLabel(x, y, str, layer = dlayer.mouseLayer) {
+	canvasLayers[layer].text(x, y, str);
 }
 
 /**

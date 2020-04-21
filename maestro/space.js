@@ -33,7 +33,7 @@ const structTemplates = [
 		entityProperties: [{ parachute: false }]
 	}
 ];
-const obfuscateNotes = false;
+const obfuscateNotes = false; // TODO: Shuffle setups array multiple times to make this work
 
 let structures = [];
 let cells = [];
@@ -183,11 +183,11 @@ class Structure {
 			this.putInChunk();
 		}
 
-		// Remove from cell // TODO: Add to new cell (Might not be necessary)
-		// TODO: Cells that get merged are not handled properly (Might not be a necessary fix)
+		// Remove from cell // TODO: Add to new cell
+		// TODO: Cells that get merged are not handled properly? (Might not be a necessary fix)
 		let curCell = this.cell;
-		if (curCell === null) return;
-		curCell.removeStructure(this);
+		if (curCell !== null) curCell.removeStructure(this);
+		this.originalX = this.x;
 	}
 }
 
@@ -195,6 +195,7 @@ class NoteStructure extends Structure {
 	constructor(type, x, y) {
 		super(type, x, y);
 		this.isNote = true;
+		[this.setup] = setups;
 	}
 
 	checkCollisionWith(otherStruct) { // TODO: Prevent entities from going off the top or further left than x = 27
@@ -203,7 +204,7 @@ class NoteStructure extends Structure {
 			return this.checkCellCollision(otherStruct, true);
 		}
 		if (dists.xdist === 0 && dists.ydist === -1) {
-			return false;
+			return false; // Structures are next to each other, but don't need to be merged
 		}
 
 		return this.collisionBox.getCollisionWith(otherStruct.collisionBox);
@@ -234,7 +235,6 @@ class NoteStructure extends Structure {
 				&& thisCell.members[i].isExtendableUpwardsTo(highestPoint)
 				&& thisCell.members[i].canBeInCell;
 			}
-			isAcceptable = isAcceptable && this.canBeInCell;
 		}
 		if (otherCell !== null && !isSameCell) {
 			highestPoint = Math.max(highestPairPoint, otherCell.highestPoint);
@@ -245,8 +245,8 @@ class NoteStructure extends Structure {
 					&& otherCell.members[i].canBeInCell;
 				}
 			}
-			isAcceptable = isAcceptable && otherCell.canBeInCell;
 		}
+		isAcceptable = isAcceptable && this.canBeInCell && otherStruct.canBeInCell;
 
 
 		// Conflict if there is an issue
@@ -309,7 +309,7 @@ class NoteStructure extends Structure {
 		this.hasModifiedBlueprint = true;
 	}
 
-	// Specialized function for note blueprints that inserts a copy of the walls of the row at y1 to y2.
+	// [Unused] Specialized function for note blueprints that inserts a copy of the walls of the row at y1 to y2.
 	insertCopyRow(y1, y2) {
 		let row = [];
 		for (let i = 0; i < this.blueprint.width; i++) {
@@ -331,44 +331,6 @@ class NoteStructure extends Structure {
 		return this.collisionBox.y - yPos <= noteHeightLimit - 3;
 	}
 
-	// Hypothetically, if the note offset was something else, how many conflicts would there be?
-	getConflictsForSetups() {
-		let testBox = new CollisionBox(
-			this.collisionBox.xOfs,
-			this.collisionBox.yOfs,
-			this.collisionBox.w,
-			this.collisionBox.h,
-			0
-		);
-		testBox.x = this.collisionBox.x;
-		testBox.y = this.collisionBox.y;
-		let baseX = this.collisionBox.x;
-		let conflicts = [];
-		let currentChunk = 0;
-
-		for (let i = 0; i < setups.length; i++) {
-			const thisSetup = setups[i];
-			conflicts[i] = { list: [], setup: i };
-			testBox.h = noteColBoxHeights[thisSetup.structType];
-			testBox.x = baseX + thisSetup.offset;
-			currentChunk = Math.floor(testBox.x / blocksPerChunk);
-
-			for (let j = 0; j < 3; j++) {
-				if (currentChunk + j - 1 < 0 || currentChunk + j - 1 >= numStructChunks) continue;
-				const thisChunk = chunks[currentChunk + j - 1];
-				thisChunk.forEach((otherStruct) => {
-					let otherBox = otherStruct.collisionBox;
-					let dists = testBox.getCollisionDistWith(otherBox);
-					if (getNoteCollisionFromDists(dists)) {
-						conflicts[i].list.push(otherStruct);
-					}
-				});
-			}
-		}
-		return conflicts;
-		// TODO: Store total height of cells to quickly evalutate if the struct would make the cell too tall
-	}
-
 	moveBySetup(setup) {
 		// First, remove all references to collisions with this structure
 		this.conflictingStructures.forEach((otherStruct) => {
@@ -380,9 +342,10 @@ class NoteStructure extends Structure {
 		this.changeToType(setup.structType);
 
 		// Move structure
-		let xOfs = setup.offset;
+		let xOfs = setup.offset - this.setup.offset;
 		this.x += xOfs;
 		this.collisionBox.x += xOfs;
+		this.setup = setup;
 		this.conflictingStructures = [];
 
 		// Update Chunk
@@ -390,13 +353,37 @@ class NoteStructure extends Structure {
 	}
 
 	changeToType(typeNum) {
+		let template = getStructTemplate(typeNum);
 		this.blueprint = getBlueprint(typeNum);
 		let prevLoc = { x: this.collisionBox.x, y: this.collisionBox.y };
 		this.collisionBox = getColBox(typeNum);
 		this.collisionBox.x = prevLoc.x;
 		this.collisionBox.y = prevLoc.y;
 		this.yOfs = -this.collisionBox.h;
-		this.entityProperties = structTemplates[typeNum].entityProperties;
+		this.entityProperties = template.entityProperties;
+		this.canBeInCell = template.canBeInCell;
+	}
+
+	tryAllSetups() {
+		// Try to move a note to all available setups. Return the success, as well as all available nodes to traverse.
+		let origSetup = this.setup;
+		let availableMoves = [];
+		for (let i = 0; i < setups.length; i++) {
+			if (setups[i].offset === origSetup.offset) continue;
+			this.moveBySetup(setups[i]);
+			this.checkForCollisions();
+			let conflicts = this.conflictingStructures;
+			if (conflicts.length < 2) {
+				availableMoves.push({ setup: setups[i], struct: conflicts[0] });
+			}
+			if (this.conflictingStructures.length === 0) {
+				return { success: true, availableMoves: [] };
+			}
+		}
+
+		// If unsuccessful...
+		this.moveBySetup(origSetup);
+		return { success: false, availableMoves };
 	}
 }
 
@@ -548,6 +535,7 @@ function getRectangleDist(r1, r2) { // Thanks Tri
 */
 
 function getStructTemplate(n) {
+	// TODO: Allow other setups to be in cells after fixing interactions
 	switch (n) {
 	case 0: return {
 		blueprint: getBlueprint(n),
@@ -565,7 +553,7 @@ function getStructTemplate(n) {
 		xOfs: -1,
 		yOfs: -5,
 		collisionBox: getColBox(n),
-		canBeInCell: true
+		canBeInCell: false
 	};
 	case 2: return {
 		blueprint: getBlueprint(n),
@@ -601,7 +589,7 @@ function getStructTemplate(n) {
 		xOfs: -1,
 		yOfs: -6,
 		collisionBox: getColBox(n),
-		canBeInCell: true
+		canBeInCell: false
 	};
 	case 6: return {
 		blueprint: getBlueprint(n),
@@ -610,7 +598,7 @@ function getStructTemplate(n) {
 		xOfs: -1,
 		yOfs: -4,
 		collisionBox: getColBox(n),
-		canBeInCell: true
+		canBeInCell: false
 	};
 
 	default:
@@ -704,26 +692,63 @@ function createCell() {
 	return newCell;
 }
 
+// FIXME: Duplicate conflicts, some conflicts not attempted
 // Where the magic happens
 function handleAllConflicts() { // TODO: Search tree, breadth-first search
 	structures.forEach((struct) => {
 		if ((struct.conflictingStructures.length > 0 || obfuscateNotes) && struct.isNote) {
-			// console.log(struct);
 			// TODO: Make this return an array of conflicting structs, or null if the offset is impossible
-			let offsetConflicts = struct.getConflictsForSetups();
-			if (obfuscateNotes) shuffleArray(offsetConflicts);
-			// console.log(offsetConflicts);
-			for (let i = 0; i < offsetConflicts.length; i++) {
-				if (offsetConflicts[i].list.length === 0) {
-					let thisSetup = setups[offsetConflicts[i].setup];
-					// console.log('Move ' + setups[i].offset);
-					struct.moveBySetup(thisSetup);
-					struct.debug = thisSetup.offset;
+			/* let attemptData = struct.tryAllSetups();
+			if (!attemptData.success) {
+				let queue = [];
+				for (let i = 0; i < attemptData.availableMoves.length; i++) {
+					queue.push([{ struct, move: attemptData.availableMoves[i] }, {struct: struct.conflictingStructures[0], }]);
+				}
+				while (queue.length > 0) {
+					queue.shift();
+				}
+			} */
+			let nodes = 0;
+			let queue = [{ struct, history: [] }];
+			while (queue.length > 0) {
+				nodes++;
+				let entry = queue.shift();
+				entry.history.forEach((step) => step.struct.moveBySetup(step.setup));
+				let attempt = entry.struct.tryAllSetups();
+				if (attempt.success) {
+					if (nodes > 1) {
+						console.log(`success after ${nodes} attempts for struct ${struct.id}`);
+						for (let i = 0; i < entry.history.length; i++) {
+							console.log(`${i + 1}: Move ${entry.history[i].struct.id} to ${entry.history[i].setup.offset}`);
+						}
+						console.log(`${entry.history.length + 1}. Move ${entry.struct.id} to ${entry.struct.setup.offset}`);
+					}
+					break;
+				}
+				attempt.availableMoves.filter((move) => isInHistory(entry.history, move.struct));
+				for (let i = 0; i < attempt.availableMoves.length; i++) {
+					let history = entry.history.slice(0);
+					history.push({ struct: entry.struct, setup: attempt.availableMoves[i].setup, origSetup: entry.struct.setup });
+					queue.push({ struct: attempt.availableMoves[i].struct, history });
+				}
+				entry.history.forEach((step) => step.struct.moveBySetup(step.origSetup));
+				if (nodes >= 4096) { // Quit if no solutions are found in time
+					console.log('failed to find solution in time');
 					break;
 				}
 			}
 		}
 	});
+}
+
+function isInHistory(history, struct) {
+	for (let i = 0; i < history.length; i++) {
+		if (struct.id === history[i].struct.id) {
+			// console.log('dupe found');
+			return true;
+		}
+	}
+	return false;
 }
 
 function getNoteCollisionFromDists(dists) {
