@@ -60,6 +60,7 @@ const contPlayback = false; // Dev toggle for full map playback
 const numParts = 20;
 const autoShowRatio = 0.7;
 const showDebugLabels = true;
+const useSolver = true;
 
 let reader = new FileReader();
 let numCommonTempos = 0;

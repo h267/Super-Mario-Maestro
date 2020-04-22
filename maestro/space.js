@@ -368,22 +368,23 @@ class NoteStructure extends Structure {
 		// Try to move a note to all available setups. Return the success, as well as all available nodes to traverse.
 		let origSetup = this.setup;
 		let availableMoves = [];
+		let conflictAmount = Infinity;
 		for (let i = 0; i < setups.length; i++) {
 			if (setups[i].offset === origSetup.offset) continue;
 			this.moveBySetup(setups[i]);
 			this.checkForCollisions();
 			let conflicts = this.conflictingStructures;
-			if (conflicts.length < 2) {
-				availableMoves.push({ setup: setups[i], struct: conflicts[0] });
-			}
+			conflictAmount = Math.min(conflictAmount, this.conflictingStructures.length);
+			availableMoves.push({ setup: setups[i], structs: conflicts });
 			if (this.conflictingStructures.length === 0) {
 				return { success: true, availableMoves: [] };
 			}
 		}
+		availableMoves = availableMoves.filter((move) => move.structs.length === conflictAmount);
 
 		// If unsuccessful...
 		this.moveBySetup(origSetup);
-		return { success: false, availableMoves };
+		return { success: false, availableMoves, minConflicts: conflictAmount };
 	}
 }
 
@@ -692,63 +693,96 @@ function createCell() {
 	return newCell;
 }
 
-// FIXME: Duplicate conflicts, some conflicts not attempted
+// TODO: Conflict queue, push extra collisions into it that can have pre-filled blacklist
+// TODO: Maybe start the queue with both conflicting structures?
 // Where the magic happens
-function handleAllConflicts() { // TODO: Search tree, breadth-first search
-	structures.forEach((struct) => {
+function handleAllConflicts() {
+	let structQueue = [];
+	structures.forEach((struct) => structQueue.push({ struct, blacklist: [] }));
+	// structures.forEach((struct) => {
+	while (structQueue.length > 0) {
+		let structEntry = structQueue.shift();
+		let { struct } = structEntry;
+		let { blacklist } = structEntry;
+		struct.checkForCollisions();
 		if ((struct.conflictingStructures.length > 0 || obfuscateNotes) && struct.isNote) {
-			// TODO: Make this return an array of conflicting structs, or null if the offset is impossible
-			/* let attemptData = struct.tryAllSetups();
-			if (!attemptData.success) {
-				let queue = [];
-				for (let i = 0; i < attemptData.availableMoves.length; i++) {
-					queue.push([{ struct, move: attemptData.availableMoves[i] }, {struct: struct.conflictingStructures[0], }]);
-				}
-				while (queue.length > 0) {
-					queue.shift();
-				}
-			} */
-			let nodes = 0;
-			let queue = [{ struct, history: [] }];
-			while (queue.length > 0) {
-				nodes++;
-				let entry = queue.shift();
+			let success = false;
+			let nodeCount = 0;
+			let moveQueue = [{ struct, history: [] }];
+			while (moveQueue.length > 0) {
+				nodeCount++;
+				let entry = moveQueue.shift();
 				entry.history.forEach((step) => step.struct.moveBySetup(step.setup));
 				let attempt = entry.struct.tryAllSetups();
 				if (attempt.success) {
-					if (nodes > 1) {
-						console.log(`success after ${nodes} attempts for struct ${struct.id}`);
+					if (nodeCount > 1) {
+						console.log(`success after ${nodeCount} attempts for struct ${struct.id}`);
 						for (let i = 0; i < entry.history.length; i++) {
-							console.log(`${i + 1}: Move ${entry.history[i].struct.id} to ${entry.history[i].setup.offset}`);
+							console.log(`${i + 1}. Move ${entry.history[i].struct.id} to ${entry.history[i].setup.offset}`);
 						}
 						console.log(`${entry.history.length + 1}. Move ${entry.struct.id} to ${entry.struct.setup.offset}`);
 					}
+					success = true;
 					break;
 				}
-				attempt.availableMoves.filter((move) => isInHistory(entry.history, move.struct));
-				for (let i = 0; i < attempt.availableMoves.length; i++) {
+				if (!useSolver) break;
+				/* if (attempt.minConflicts > 1 && attempt.minConflicts !== Infinity) { // FIXME: Make sure new system is working as intended
+					console.log(`splitting ${attempt.minConflicts} conflicts from struct ${struct.id}`);
+					for (let i = 0; i < attempt.availableMoves.length; i++) {
+						let { structs } = attempt.availableMoves[i];
+						if (structs.length === attempt.minConflicts);
+						for (let j = 0; j < attempt.minConflicts; j++) {
+							console.log(`pushing struct ${structs[j].id}`);
+							let newBlacklist = mergeHistoryAndBlacklist(entry.history, blacklist);
+							newBlacklist.push(struct.id);
+							structQueue.push({ struct: structs[j], blacklist: newBlacklist });
+						}
+					}
+					continue;
+				} */
+				let availableMoves = attempt.availableMoves.filter(
+					(move) => (!(isAlreadyUsed(entry.history, blacklist, move.structs[0]) || move.structs.length > 1))
+				);
+				if (availableMoves.length === 0 && attempt.minConflicts <= 1) {
+					console.log(`queue exhausted for struct ${struct.id}`);
+				}
+				for (let i = 0; i < availableMoves.length; i++) {
 					let history = entry.history.slice(0);
-					history.push({ struct: entry.struct, setup: attempt.availableMoves[i].setup, origSetup: entry.struct.setup });
-					queue.push({ struct: attempt.availableMoves[i].struct, history });
+					history.push({ struct: entry.struct, setup: availableMoves[i].setup, origSetup: entry.struct.setup });
+					moveQueue.push({ struct: availableMoves[i].structs[0], history });
 				}
 				entry.history.forEach((step) => step.struct.moveBySetup(step.origSetup));
-				if (nodes >= 4096) { // Quit if no solutions are found in time
-					console.log('failed to find solution in time');
+				if (nodeCount >= 4096) { // Quit if no solutions are found in time
+					console.log(`failed to find solution in time for struct ${struct.id}`);
 					break;
 				}
 			}
+			// if (!success) console.log(`out of options for struct ${struct.id}...`);
 		}
-	});
+	// });
+	}
+	console.log('done');
 }
 
-function isInHistory(history, struct) {
+function isAlreadyUsed(history, blacklist, struct) {
 	for (let i = 0; i < history.length; i++) {
-		if (struct.id === history[i].struct.id) {
-			// console.log('dupe found');
-			return true;
-		}
+		if (struct.id === history[i].struct.id) return true;
+	}
+	for (let i = 0; i < blacklist.length; i++) {
+		if (struct.id === blacklist[i]) return true;
 	}
 	return false;
+}
+
+function mergeHistoryAndBlacklist(history, blacklist) {
+	let mergedArr = [];
+	for (let i = 0; i < history.length; i++) {
+		mergedArr.push(history[i].struct.id);
+	}
+	for (let i = 0; i < blacklist.length; i++) {
+		mergedArr.push(blacklist[i]);
+	}
+	return mergedArr;
 }
 
 function getNoteCollisionFromDists(dists) {
