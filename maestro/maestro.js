@@ -8,32 +8,38 @@
 /* TODO: New features:
 
 1.4:
-0. Finish offsets, search tree
-1. Entity-saving setups
-2. Collision exceptions (entities in the same cell, non-double hits due to timing differences or sheer height)
-3. Entity exceptions (P-Switches can't have parachutes, nor munchers, etc)
-4. Draw entities slightly lower than other blocks to make clouds more visible
-5. Build and unbuild button
-6. Loading animations, maybe prompt the user when long operations are needed
-7. Layer/semisolid view
+- Finish offsets, search tree
+- Collision exceptions (entities in the same cell, non-double hits due to timing differences or sheer height)
+- Entity exceptions (P-Switches can't have parachutes, nor munchers, etc)
+- Semisolid platforms
+- Draw entities slightly lower than other blocks to make clouds more visible
+- Build and unbuild button
+- Loading animations, maybe prompt the user when long operations are needed
+- Layer/semisolid view
 - Simple zooming
 - Level push-back
-
-8. Toolbar for display tools
-9. Conflict display when hovering over notes with magnifying glass tool, also display note pitch
-10. Note placer and eraser
-11. Single track edit view (all other blocks except the track being edited become transparent)
-12. New track button
-13. Simple Undodog
-14. Remove percussion; add percussion gallery instead
-15. Chord deconstructor
-16. Fix iOS/mobile somehow
+- Track-channel separation
+- Toolbar for display tools
+- Note placer and eraser
+- Single track edit view (all other blocks except the track being edited become transparent)
+- New track button
+- Track renaming
+- Simple undo button
+- Remove percussion; add percussion gallery instead
+- Drum machines
+- Allow percussion instruments to be changed
+- Unshow unsupported instruments, have an option to show
+- New instruments
+- Fix iOS/mobile somehow
 */
 
 /*
 1.5:
  - Selection tool, partitioning
+ - 2x2 entities
+ - Entity saving setups
  - Save files
+ - Conflict display when hovering over notes with magnifying glass tool, also display note pitch
 */
 
 /*
@@ -59,7 +65,7 @@ const tutorialLink = 'https://docs.google.com/document/d/1UG-Y-2zbdcqE7ciMgPVT3H
 const contPlayback = false; // Dev toggle for full map playback
 const numParts = 20;
 const autoShowRatio = 0.7;
-const showDebugLabels = true;
+const showDebugLabels = false;
 const useSolver = true;
 
 let reader = new FileReader();
