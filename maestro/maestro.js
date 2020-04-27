@@ -12,6 +12,7 @@
 - Collision exceptions (entities in the same cell, non-double hits due to timing differences or sheer height)
 - Entity exceptions (P-Switches can't have parachutes, nor munchers, etc)
 - Semisolid platforms
+- 1 way walls
 - Draw entities slightly lower than other blocks to make clouds more visible
 - Build and unbuild button
 - Loading animations, maybe prompt the user when long operations are needed
@@ -23,6 +24,7 @@
 - Note placer and eraser
 - Single track edit view (all other blocks except the track being edited become transparent)
 - New track button
+- Playback timing indicators/animations
 - Track renaming
 - Simple undo button
 - Remove percussion; add percussion gallery instead

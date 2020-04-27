@@ -156,8 +156,10 @@ class Level {
 
 		structures.forEach((struct) => { // Third pass: Draw the structures
 			that.drawStructure(struct);
+			// console.log(struct.id);
+			// console.log(struct);
 		});
-		// console.log('---');
+		console.log('---');
 	}
 
 	/* refreshStructures() {
@@ -184,6 +186,7 @@ class Level {
 			this.overview.setTile(x, y, structure.entities[i]);
 			if (structure.entityProperties[0].parachute) this.foreground.setTile(x, y + 1, 0);
 		}
+		// this.highlightCollisionBox(structure.collisionBox);
 	}
 
 	markTile(x, y, id = 2) {

@@ -94,8 +94,8 @@ class CollisionBox {
 		this.y = y + this.yOfs;
 	}
 
-	getCollisionWith(otherBox) {
-		let dists = this.getCollisionDistWith(otherBox);
+	getCollisionWith(otherBox, options = {}) {
+		let dists = this.getCollisionDistWith(otherBox, options);
 		switch (this.type) {
 		case 0:
 			return (dists.xdist <= 0 && dists.ydist <= 0 && dists.xdist + dists.ydist < 0);
@@ -109,18 +109,22 @@ class CollisionBox {
 		}
 	}
 
-	getCollisionDistWith(otherBox) {
+	getCollisionDistWith(otherBox, options = {}) {
+		let r1Height = this.h;
+		let r2Height = otherBox.h;
+		if (options.thisHeight !== undefined) r1Height = options.thisHeight;
+		if (options.otherHeight !== undefined) r2Height = options.otherHeight;
 		let r1 = {
 			x1: this.x,
 			x2: this.x + this.w,
 			y1: this.y,
-			y2: this.y + this.h
+			y2: this.y + r1Height
 		};
 		let r2 = {
 			x1: otherBox.x,
 			x2: otherBox.x + otherBox.w,
 			y1: otherBox.y,
-			y2: otherBox.y + otherBox.h
+			y2: otherBox.y + r2Height
 		};
 		return getRectangleDist(r1, r2);
 	}
@@ -195,19 +199,43 @@ class NoteStructure extends Structure {
 	constructor(type, x, y) {
 		super(type, x, y);
 		this.isNote = true;
+		this.mergedStructures = [];
 		[this.setup] = setups;
 	}
 
 	checkCollisionWith(otherStruct) { // TODO: Prevent entities from going off the top or further left than x = 27
-		let dists = this.collisionBox.getCollisionDistWith(otherStruct.collisionBox);
+		// Account for cell height gain
+		let options = {};
+
+		let thisCellHeight = null;
+		let otherCellHeight = null;
+		if (this.cell !== null) {
+			thisCellHeight = this.cell.highestPoint - this.collisionBox.y;
+		}
+		if (otherStruct.cell !== null) {
+			otherCellHeight = otherStruct.cell.highestPoint - otherStruct.collisionBox.y;
+		}
+
+		if (thisCellHeight != null) options.thisHeight = thisCellHeight;
+		if (otherCellHeight != null) options.otherHeight = otherCellHeight;
+
+		// Get collision distances
+		let dists = this.collisionBox.getCollisionDistWith(otherStruct.collisionBox, options);
 		if (dists.xdist === 0 && dists.ydist < -1) { // Merge into a cell
 			return this.checkCellCollision(otherStruct, true);
 		}
 		if (dists.xdist === 0 && dists.ydist === -1) {
 			return false; // Structures are next to each other, but don't need to be merged
 		}
+		if (this.x === otherStruct.x && this.y === otherStruct.y && this.setup !== otherStruct.setup) {
+			// TODO: Compare entity location instead, make it parachutes or 3 block drop only
+			return this.mergeIntoStruct(otherStruct);
+		}
+		if (this.x === otherStruct.x && dists.ydist === 0 && this.setup !== otherStruct.setup) {
+			return false; // Double hit won't happen, so there is no collision
+		}
 
-		return this.collisionBox.getCollisionWith(otherStruct.collisionBox);
+		return this.collisionBox.getCollisionWith(otherStruct.collisionBox, options);
 	}
 
 	checkCellCollision(otherStruct, doAdd) {
@@ -272,6 +300,47 @@ class NoteStructure extends Structure {
 		return false;
 	}
 
+	mergeIntoStruct(otherStruct) { // FIXME: Some structures unnecessarily expanded
+		// console.log(`Merge between struct ${this.id} and struct ${otherStruct.id}`);
+		let thisTop = this.collisionBox.y + this.collisionBox.h;
+		let otherTop = otherStruct.collisionBox.y + otherStruct.collisionBox.h;
+		if (thisTop > otherTop) {
+			if (otherStruct.isExtendableUpwardsTo(thisTop)) {
+				otherStruct.extendUpwardsBy(thisTop - otherTop);
+			} else {
+				console.log('oof');
+				return true;
+			}
+		} else if (thisTop < otherTop) {
+			if (this.isExtendableUpwardsTo(otherTop)) {
+				this.extendUpwardsBy(otherTop - thisTop);
+			} else {
+				console.log('oof');
+				return true;
+			}
+		}
+		this.mergedStructures.push(otherStruct);
+		otherStruct.mergedStructures.push(this);
+		return false;
+	}
+
+	unmergeFromStruct(otherStruct) {
+		let foundIndex = this.mergedStructures.findIndex((struct) => struct.id === otherStruct.id);
+		this.mergedStructures.splice(foundIndex, 1);
+		foundIndex = otherStruct.mergedStructures.findIndex((struct) => struct.id === this.id);
+		otherStruct.mergedStructures.splice(foundIndex, 1);
+
+		// Assumed: This structure's blueprint is getting reset
+
+		// Reset height of the other structure and adapt it to its other members
+		otherStruct.changeToType(otherStruct.type);
+		let newTop = otherStruct.collisionBox.y + otherStruct.collisionBox.h;
+		otherStruct.mergedStructures.forEach((struct) => {
+			newTop = Math.max(newTop, struct.collisionBox.y + struct.collisionBox.h);
+		});
+		otherStruct.extendUpwardsBy(newTop - (otherStruct.collisionBox.y + otherStruct.collisionBox.h));
+	}
+
 	trimSide(isRightSide, numBlocks) {
 		let x;
 		if (isRightSide) x = 2;
@@ -283,7 +352,7 @@ class NoteStructure extends Structure {
 	}
 
 	extendUpwardsBy(numBlocks, isCopyMode = false) {
-		if (numBlocks === 0) return;
+		if (numBlocks <= 0) return;
 		if (!isCopyMode) {
 			for (let i = 0; i < numBlocks; i++) {
 				this.shearInsertRow(3, 1, [1, 0, 1]);
@@ -338,6 +407,11 @@ class NoteStructure extends Structure {
 			otherStruct.conflictingStructures.splice(foundIndex, 1);
 		});
 
+		// Remove merged structures
+		while (this.mergedStructures.length > 0) {
+			this.unmergeFromStruct(this.mergedStructures[0]);
+		}
+
 		// Change structure type to the appropriate setup
 		this.changeToType(setup.structType);
 
@@ -361,17 +435,18 @@ class NoteStructure extends Structure {
 		this.collisionBox.y = prevLoc.y;
 		this.yOfs = -this.collisionBox.h;
 		this.entityProperties = template.entityProperties;
+		[this.entityPos[0]] = template.entityPos;
 		this.canBeInCell = template.canBeInCell;
 	}
 
-	tryAllSetups() {
+	tryAllSetups() { // FIXME: Structs in cells need to be checked using cell height
 		// Try to move a note to all available setups. Return the success, as well as all available nodes to traverse.
 		let origSetup = this.setup;
 		let availableMoves = [];
 		let conflictAmount = Infinity;
 		for (let i = 0; i < setups.length; i++) {
 			if (setups[i].offset === origSetup.offset) continue;
-			this.moveBySetup(setups[i]); // FIXME: originalX set incorrectly?
+			this.moveBySetup(setups[i]);
 			this.checkForCollisions();
 			let conflicts = this.conflictingStructures;
 			conflictAmount = Math.min(conflictAmount, this.conflictingStructures.length);
@@ -475,6 +550,7 @@ class Cell {
 		if (this.locationMap[struct.originalX].tallest.id === struct.id) {
 			let newStartX = 240;
 			let newEndX = 0;
+			let newHighestPoint = 0;
 			if (origEntry.list.length === 0) {
 				delete this.locationMap[struct.originalX];
 				if (struct.originalX !== this.startX && struct.originalX !== this.endX) {
@@ -491,9 +567,13 @@ class Cell {
 			this.members.forEach((localStruct) => {
 				if (localStruct.x < newStartX) newStartX = localStruct.x;
 				if (localStruct.x > newEndX) newEndX = localStruct.x;
+				if (localStruct.collisionBox.y + localStruct.collisionBox.h > newHighestPoint) {
+					newHighestPoint = localStruct.collisionBox.y + localStruct.collisionBox.h;
+				}
 			});
 			this.startX = newStartX;
 			this.endX = newEndX;
+			this.highestPoint = newHighestPoint;
 		}
 		struct.cell = null;
 	}
@@ -695,8 +775,6 @@ function createCell() {
 	return newCell;
 }
 
-// TODO: Conflict queue, push extra collisions into it that can have pre-filled blacklist
-// TODO: Maybe start the queue with both conflicting structures?
 // Where the magic happens
 function handleAllConflicts() {
 	let structQueue = [];
@@ -716,13 +794,11 @@ function handleAllConflicts() {
 				entry.history.forEach((step) => step.struct.moveBySetup(step.setup));
 				let attempt = entry.struct.tryAllSetups();
 				if (attempt.success) {
-					if (nodeCount > 1) {
-						console.log(`success after ${nodeCount} attempts for struct ${struct.id}`);
-						for (let i = 0; i < entry.history.length; i++) {
-							console.log(`${i + 1}. Move ${entry.history[i].struct.id} to ${entry.history[i].setup.offset}`);
-						}
-						console.log(`${entry.history.length + 1}. Move ${entry.struct.id} to ${entry.struct.setup.offset}`);
+					console.log(`success after ${nodeCount} attempts for struct ${struct.id}`);
+					for (let i = 0; i < entry.history.length; i++) {
+						console.log(`${i + 1}. Move ${entry.history[i].struct.id} to ${entry.history[i].setup.offset}`);
 					}
+					console.log(`${entry.history.length + 1}. Move ${entry.struct.id} to ${entry.struct.setup.offset}`);
 					success = true;
 					break;
 				}
