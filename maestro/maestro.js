@@ -2,61 +2,11 @@
 // made by h267
 
 // FIXME: Playback breaks after clicking different tracks?
+// FIXME: Suboptimal collision boxes
+// FIXME: Enabling unsupported instruments and selecting Sledge Bro uses Spike
+// TODO: Switch to original instrument when invalid instrument is switched to
 
 // TODO: Re-enable gtag when releasing
-
-/* TODO: New features:
-
-1.4:
-- Finish offsets, search tree
-- Collision exceptions (entities in the same cell, non-double hits due to timing differences or sheer height)
-- Entity exceptions (P-Switches can't have parachutes, nor munchers, etc)
-- Semisolid platforms
-- 1 way walls
-- Draw entities slightly lower than other blocks to make clouds more visible
-- Build and unbuild button
-- Loading animations, maybe prompt the user when long operations are needed
-- Layer/semisolid view
-- Simple zooming
-- Level push-back
-- Track-channel separation
-- Toolbar for display tools
-- Note placer and eraser
-- Single track edit view (all other blocks except the track being edited become transparent)
-- New track button
-- Playback timing indicators/animations
-- Track renaming
-- Simple undo button
-- Remove percussion; add percussion gallery instead
-- Drum machines
-- Allow percussion instruments to be changed
-- Unshow unsupported instruments, have an option to show
-- New instruments
-- Fix iOS/mobile somehow
-*/
-
-/*
-1.5:
- - Selection tool, partitioning
- - 2x2 entities
- - Entity saving setups
- - Save files
- - Conflict display when hovering over notes with magnifying glass tool, also display note pitch
-*/
-
-/*
-Maybe now or later:
-      - Hard blocks -> Ground tiles
-      - Animated entities with physics simulation
-      - CSS loading animation if needed
-      - Warning system
-      - Theme, style, day/night indicators
-      - Handle dynamic tempo changes
-      - Start music playback from anywhere in the blueprint
-      - Partition system where different settings can apply
-      - Support for larger entities
-      - Full level preview
-*/
 
 const levelWidth = 240;
 const marginWidth = 27;
@@ -74,178 +24,6 @@ let reader = new FileReader();
 let numCommonTempos = 0;
 let midi;
 let mapWidth;
-
-/**
- * Data on the various scroll speeds in Mario Maker 2. Tempos are stored in their 4 block per beat equivalents.
- */
-const MM2Tempos = [
-	{ name: 'Slow Autoscroll', bpm: 28, isCommon: false },
-	{ name: 'Backwards Normal Conveyor - Walking', bpm: 28, isCommon: false },
-	{ name: 'Underwater - Walking', bpm: 32, isCommon: false },
-	{ name: 'Normal Conveyor - Idle', bpm: 56, isCommon: false },
-	{ name: 'Medium Autoscroll', bpm: 56, isCommon: true },
-	{ name: 'Backwards Fast Conveyor - Running', bpm: 56, isCommon: false },
-	{ name: 'Swimming', bpm: 64, isCommon: false },
-	{ name: 'Walking', bpm: 84, isCommon: true },
-	{ name: 'Blaster in Cloud - Idle', bpm: 84, isCommon: false },
-	{ name: 'Normal Underwater Conveyor - Walking', bpm: 88, isCommon: false },
-	{ name: 'Swimming Holding Item', bpm: 101, isCommon: false },
-	{ name: 'Fast Autoscroll', bpm: 112, isCommon: true },
-	{ name: 'Backwards Normal Conveyor - Running', bpm: 112, isCommon: false },
-	{ name: 'Fast Conveyor - Idle', bpm: 112, isCommon: false },
-	{ name: 'Underwater Blaster in Cloud - Walking', bpm: 116, isCommon: false },
-	{ name: 'Normal Conveyor - Walking', bpm: 140, isCommon: false },
-	{ name: 'Fast Lava Lift', bpm: 140, isCommon: true },
-	{ name: 'Fast Underwater Conveyor - Walking', bpm: 144, isCommon: false },
-	{ name: 'Underwater Blaster in Cloud - Swimming', bpm: 148, isCommon: false },
-	{ name: 'Blaster in Cloud - Walking', bpm: 166, isCommon: false },
-	{ name: 'Running', bpm: 168, isCommon: true },
-	{ name: 'Underwater Blaster in Cloud - Swimming Holding Item', bpm: 186, isCommon: false },
-	{ name: 'Fast Conveyor - Walking', bpm: 194, isCommon: false },
-	{ name: 'Normal Conveyor - Running', bpm: 227, isCommon: false },
-	{ name: 'Blaster in Cloud - Running', bpm: 256, isCommon: false },
-	{ name: 'Fast Conveyor - Running', bpm: 279, isCommon: false }
-];
-
-/**
- * Data on the instruments available in Mario Maker 2.
- */
-const MM2Instruments = [
-	{
-		id: 'goomba', name: 'Goomba (Grand Piano)', octave: 1, isPowerup: false
-	},
-	{
-		id: 'buzzybeetle', name: 'Buzzy Shellmet (Detuned Bell)', octave: 1, isPowerup: false
-	},
-	{
-		id: '1up', name: '1-Up (Synth Organ)', octave: 0, isPowerup: true
-	},
-	{
-		id: 'spiketop', name: 'Spike Top (Harpsichord)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'sledgebro', name: 'Sledge Bro (Bass Guitar)', octave: -2, isPowerup: false
-	},
-	{
-		id: 'piranhaplant', name: 'Piranha Plant (Pizzicato Strings)', octave: 1, isPowerup: false
-	},
-	{
-		id: 'bobomb', name: 'Bob-Omb (Orchestra Hit)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'spiny', name: 'Spiny Shellmet (Trumpet)', octave: 1, isPowerup: false
-	},
-	{
-		id: 'drybones', name: 'Dry Bones Shell (Flute)', octave: 2, isPowerup: false
-	},
-	{
-		id: 'mushroom', name: 'Mushroom (Square Wave)', octave: 1, isPowerup: true
-	},
-	{
-		id: 'rottenmushroom', name: 'Rotten Mushroom (Low Synth)', octave: -2, isPowerup: true
-	},
-	{
-		id: 'greenbeachkoopa', name: 'Green Beach Koopa (Bark)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'montymole', name: 'Monty Mole (Banjo)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'pswitch', name: 'P-Switch (Snare Drum)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'redbeachkoopa', name: 'Red Beach Koopa (Meow)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'bigmushroom', name: 'Big Mushroom (Shamisen)', octave: 0, isPowerup: true
-	},
-	{
-		id: 'billblaster', name: 'Bill Blaster (Timpani)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'shoegoomba', name: 'Shoe Goomba (Low Accordion)', octave: -1, isPowerup: false
-	},
-	{
-		id: 'stilettogoomba', name: 'Stiletto Goomba (Accordion)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'cannon', name: 'Cannon (Timbales)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'chainchomp', name: 'Chain Chomp (Unchained) (Synth Piano)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'post', name: 'Chain Chomp Post (Wood Block)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'coin', name: 'Coin (Sleigh Bells)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'firepiranhaplant', name: 'Fire Piranha Plant (Legato Strings)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'fireflower', name: 'Fire Flower (Recorder)', octave: 1, isPowerup: true
-	},
-	{
-		id: 'goombrat', name: 'Goombrat (Honky-Tonk Piano)', octave: 1, isPowerup: false
-	},
-	{
-		id: 'greenkoopa', name: 'Green Koopa (Xylophone)', octave: 1, isPowerup: false
-	},
-	{
-		id: 'redkoopa', name: 'Red Koopa (Vibraphone)', octave: 1, isPowerup: false
-	},
-	{
-		id: 'hammerbro', name: 'Hammer Bro (Electric Guitar)', octave: 1, isPowerup: false
-	},
-	{
-		id: 'magikoopa', name: 'Magikoopa (Synth Choir)', octave: 1, isPowerup: false
-	},
-	{
-		id: 'muncher', name: 'Muncher (Synth Piano 2)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'pow', name: 'POW Block (Kick Drum)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'spring', name: 'Trampoline (Crash Cymbal)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'sidewaysspring', name: 'Sideways Trampoline (Hi-Hat)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'star', name: 'Super Star (Music Box)', octave: 1, isPowerup: true
-	},
-	{
-		id: 'superball', name: 'Superball Flower (Organ)', octave: 1, isPowerup: true
-	},
-	{
-		id: 'thwomp', name: 'Thwomp (Ethnic Drum)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'wiggler', name: 'Wiggler (Tubular Bells)', octave: 1, isPowerup: false
-	},
-	{
-		id: 'spike', name: 'Spike (Acoustic Bass Guitar)', octave: -2, isPowerup: false
-	},
-	{
-		id: 'spikeball', name: 'Spike Ball (Bass Drum)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'snowball', name: 'Snowball (Tom-Tom Drum)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'pokey', name: 'Pokey (Acoustic Guitar)', octave: 0, isPowerup: false
-	},
-	{
-		id: 'snowpokey', name: 'Snow Pokey (Kazoo)', octave: 1, isPowerup: false
-	},
-	{
-		id: 'sword', name: 'Master Sword (Synth Horn)', octave: 0, isPowerup: true
-	} /*
-	{id: 'toad', name: 'Toad (Suffering)', octave: 0, isPowerup: false}, */
-	// If you uncomment this, only pain and suffering awaits
-];
 let alphabetizedInstruments = alphabetizeInstruments(MM2Instruments);
 let tiles;
 let bgs;
@@ -289,6 +67,7 @@ let entityOverflowStatus = { entity: false, powerup: false };
 let noteRange = 0;
 let defaultZoom = 1;
 let hasLoadedBuffers = false;
+let showUnbuildables = false;
 
 // getEquivalentBlocks(1.5);
 
@@ -811,18 +590,18 @@ function getMM2Instrument(instrument) {
 	if (midiInstrument <= 8) { return 2; } // Piano
 	if (midiInstrument >= 9 && midiInstrument <= 16) { return 3; } // Chromatic Percussion
 	if (midiInstrument >= 17 && midiInstrument <= 24) { return 4; } // Organ
-	if (midiInstrument >= 25 && midiInstrument <= 32) { return 5; } // Guitar
-	if (midiInstrument >= 33 && midiInstrument <= 40) { return 6; } // Bass
-	if (midiInstrument >= 41 && midiInstrument <= 48) { return 7; } // Strings
+	if (midiInstrument >= 25 && midiInstrument <= 32) { return 22; } // Guitar
+	if (midiInstrument >= 33 && midiInstrument <= 40) { return 40; } // Bass
+	if (midiInstrument >= 41 && midiInstrument <= 48) { return 26; } // Strings
 	if (midiInstrument >= 49 && midiInstrument <= 56) { return 8; } // Ensemble
 	if (midiInstrument >= 57 && midiInstrument <= 72) { return 9; } // Brass, Lead
 	if (midiInstrument >= 73 && midiInstrument <= 80) { return 10; } // Pipe
 	if (midiInstrument >= 81 && midiInstrument <= 88) { return 11; } // Synth Lead
 	if (midiInstrument >= 89 && midiInstrument <= 96) { return 12; } // Synth Pad
-	if (midiInstrument >= 97 && midiInstrument <= 104) { return 13; } // Synth Effects
+	if (midiInstrument >= 97 && midiInstrument <= 104) { return 2; } // Synth Effects
 	if (midiInstrument >= 105 && midiInstrument <= 112) { return 14; } // Ethnic
 	if (midiInstrument >= 113 && midiInstrument <= 120) { return 15; } // Percussive
-	if (midiInstrument >= 121 && midiInstrument <= 127) { return 16; } // Sound Effects
+	if (midiInstrument >= 121 && midiInstrument <= 127) { return 2; } // Sound Effects
 
 	return midiInstrument - 127 + 16; // For new instruments
 }
@@ -832,7 +611,7 @@ function getMM2Instrument(instrument) {
  * @param {number} mm2Instrument The tile ID of the entity to convert to a MIDI instrument.
  * @returns {number} The MIDI instrument ID.
  */
-function getMidiInstrument(mm2Instrument) {
+function getMidiInstrument(mm2Instrument) { // TODO: WHY??
 	switch (mm2Instrument) {
 	case 2: return 0;
 	case 3: return 9;
@@ -1280,6 +1059,7 @@ function updateInstrumentContainer() {
 		allGroup.setAttribute('label', 'All Instruments');
 		numRecommendedInstruments = 0;
 		for (let j = 0; j < alphabetizedInstruments.length; j++) {
+			if (!alphabetizedInstruments[j].isBuildable && !showUnbuildables) continue;
 			let opt = document.createElement('option');
 			opt.value = j;
 			opt.innerHTML = `${alphabetizedInstruments[j].name} (`;
@@ -1642,10 +1422,17 @@ function refreshOutlines() {
  * @return {Object[]} The sorted instrument array.
  */
 function alphabetizeInstruments(arr) {
+	// TODO: When switching to keys instead of indices, use Object.values(MM2Instruments)
+	// to get an array of objects that can be sorted
 	let newArr = new Array(arr.length);
 	for (let i = 0; i < arr.length; i++) {
 		newArr[i] = {
-			id: arr[i].id, name: arr[i].name, octave: arr[i].octave, pos: i, isPowerup: arr[i].isPowerup
+			id: arr[i].id,
+			name: arr[i].name,
+			octave: arr[i].octave,
+			pos: i,
+			isPowerup: arr[i].isPowerup,
+			isBuildable: arr[i].isBuildable
 		};
 	}
 	newArr.sort((a, b) => {
@@ -1662,8 +1449,11 @@ function alphabetizeInstruments(arr) {
  */
 function getSortedInstrumentIndex(unsortedIndex) {
 	let i;
+	let idx = 0;
 	for (i = 0; i < alphabetizedInstruments.length; i++) {
-		if (unsortedIndex === alphabetizedInstruments[i].pos) { return i; }
+		if (!alphabetizedInstruments[i].isBuildable && !showUnbuildables) continue;
+		if (unsortedIndex === alphabetizedInstruments[i].pos) { return idx; }
+		idx++;
 	}
 	return -1;
 }
@@ -1860,4 +1650,9 @@ function setPlaybackWaitStatus(status) {
 		document.getElementById('stopbtn').innerHTML = 'Stop';
 		document.getElementById('stopbtn').disabled = false;
 	}
+}
+
+function toggleBuildRestriction() {
+	showUnbuildables = document.getElementById('buildbox').checked;
+	updateInstrumentContainer();
 }

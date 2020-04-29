@@ -206,18 +206,8 @@ class NoteStructure extends Structure {
 	checkCollisionWith(otherStruct) { // TODO: Prevent entities from going off the top or further left than x = 27
 		// Account for cell height gain
 		let options = {};
-
-		let thisCellHeight = null;
-		let otherCellHeight = null;
-		if (this.cell !== null) {
-			thisCellHeight = this.cell.highestPoint - this.collisionBox.y;
-		}
-		if (otherStruct.cell !== null) {
-			otherCellHeight = otherStruct.cell.highestPoint - otherStruct.collisionBox.y;
-		}
-
-		if (thisCellHeight != null) options.thisHeight = thisCellHeight;
-		if (otherCellHeight != null) options.otherHeight = otherCellHeight;
+		options.thisHeight = this.getEffectiveHeight();
+		options.otherHeight = otherStruct.getEffectiveHeight();
 
 		// Get collision distances
 		let dists = this.collisionBox.getCollisionDistWith(otherStruct.collisionBox, options);
@@ -227,12 +217,17 @@ class NoteStructure extends Structure {
 		if (dists.xdist === 0 && dists.ydist === -1) {
 			return false; // Structures are next to each other, but don't need to be merged
 		}
-		if (this.x === otherStruct.x && this.y === otherStruct.y && this.setup !== otherStruct.setup) {
-			// TODO: Compare entity location instead, make it parachutes or 3 block drop only
+		if (this.x === otherStruct.x && this.y === otherStruct.y && this.canMergeWith(otherStruct)) {
 			return this.mergeIntoStruct(otherStruct);
 		}
-		if (this.x === otherStruct.x && dists.ydist === 0 && this.setup !== otherStruct.setup) {
-			return false; // Double hit won't happen, so there is no collision
+		if (this.x === otherStruct.x && dists.ydist === 0) {
+			// Check for double hit exceptions
+			if (this.setup !== otherStruct.setup) return false;
+
+			let bottomHeight;
+			if (this.y > otherStruct.y) bottomHeight = otherStruct.getEffectiveHeight();
+			else bottomHeight = this.getEffectiveHeight();
+			if (bottomHeight > 3) return false;
 		}
 
 		return this.collisionBox.getCollisionWith(otherStruct.collisionBox, options);
@@ -460,6 +455,29 @@ class NoteStructure extends Structure {
 		// If unsuccessful...
 		this.moveBySetup(origSetup);
 		return { success: false, availableMoves, minConflicts: conflictAmount };
+	}
+
+	canMergeWith(otherStruct) {
+		// Can't be same setup
+		if (this.setup.structType === otherStruct.setup.structType) return false;
+
+		let thisTemplate = getStructTemplate(this.setup.structType);
+		let otherTemplate = getStructTemplate(otherStruct.setup.structType);
+
+		// Anything with a parachute is fine
+		if (thisTemplate.entityProperties[0].parachute) return true;
+		if (otherTemplate.entityProperties[0].parachute) return true;
+
+		// If they are over 2 blocks apart vertically, that's fine too
+		return Math.abs(thisTemplate.entityPos[0].y - otherTemplate.entityPos[0].y) > 2;
+	}
+
+	getEffectiveHeight() {
+		let cellHeight = 0;
+		if (this.cell !== null) {
+			cellHeight = this.cell.highestPoint - this.collisionBox.y;
+		}
+		return Math.max(this.collisionBox.h, cellHeight);
 	}
 }
 
@@ -794,11 +812,13 @@ function handleAllConflicts() {
 				entry.history.forEach((step) => step.struct.moveBySetup(step.setup));
 				let attempt = entry.struct.tryAllSetups();
 				if (attempt.success) {
-					console.log(`success after ${nodeCount} attempts for struct ${struct.id}`);
-					for (let i = 0; i < entry.history.length; i++) {
-						console.log(`${i + 1}. Move ${entry.history[i].struct.id} to ${entry.history[i].setup.offset}`);
+					if (nodeCount > 1) {
+						console.log(`success after ${nodeCount} attempts for struct ${struct.id}`);
+						for (let i = 0; i < entry.history.length; i++) {
+							console.log(`${i + 1}. Move ${entry.history[i].struct.id} to ${entry.history[i].setup.offset}`);
+						}
+						console.log(`${entry.history.length + 1}. Move ${entry.struct.id} to ${entry.struct.setup.offset}`);
 					}
-					console.log(`${entry.history.length + 1}. Move ${entry.struct.id} to ${entry.struct.setup.offset}`);
 					success = true;
 					break;
 				}

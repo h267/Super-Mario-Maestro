@@ -89,9 +89,16 @@
                               </div>
                          </div>
                     </div>
-                    <div>
-                         <input id="advbox" type="checkbox" onchange="toggleAdvancedMode()"></input>
-                         <label for="advbox" style="position: relative; bottom: 3px; right: 4px;">Advanced Settings</label>
+                    <div style="display: flex;">
+                         <div>
+                              <input id="buildbox" type="checkbox" onchange="toggleBuildRestriction()"></input>
+                              <label for="buildbox" style="position: relative; bottom: 3px; right: 4px;">Allow Unsupported Entities</label>
+                         </div>
+                         <div>
+                              <input id="advbox" type="checkbox" onchange="toggleAdvancedMode()"></input>
+                              <label for="advbox" style="position: relative; bottom: 3px; right: 4px;">Advanced Settings</label>
+                         </div>
+                         
                     </div>
                </div>
                <p id="filetext" class="displaytext" style="float:left; margin-top: 17px;">MIDI File:</p>
@@ -106,6 +113,7 @@
                </div>
           </div>
           
+          <script src="data.js"></script>
           <script src="display.js"></script> 
           <script src="space.js"></script>
           <script src="level.js"></script> 

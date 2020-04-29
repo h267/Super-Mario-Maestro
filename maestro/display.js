@@ -446,7 +446,7 @@ function drawLabel(x, y, str, layer = dlayer.mouseLayer) {
  * Loads all of the tiles used for display on the level grid.
  * @returns {Promise<Image[]>} An array of image objects containing the tile image data.
  */
-function loadTiles() {
+function loadTiles() { // TODO: Put with entities or make tile data array in data.js
 	return new Promise(((resolve, reject) => {
 		Promise.all(
 			[
