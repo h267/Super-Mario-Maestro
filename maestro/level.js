@@ -94,7 +94,7 @@ class Level {
 				// this.numberOfOccupants[x][y]++; // TODO: Properly update this information after conflict resolution
 
 				// Set instrument
-				let ins = getMM2Instrument(thisNote.instrument) - 2;
+				let ins = thisNote.instrument;
 				if (y < 26) {
 					if (columnCounts[x] === undefined) {
 						columnCounts[x] = { entities: 0, powerups: 0 };

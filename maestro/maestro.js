@@ -2,9 +2,14 @@
 // made by h267
 
 // FIXME: Playback breaks after clicking different tracks?
-// FIXME: Suboptimal collision boxes
-// FIXME: Enabling unsupported instruments and selecting Sledge Bro uses Spike
+// FIXME: Sometimes playback cannot be stopped
+// FIXME: Suboptimal collision boxes from unnecessary expansion
+
 // TODO: Switch to original instrument when invalid instrument is switched to
+// TODO: Finish replacing midi tracks with Maestro tracks
+// TODO: Eliminate instrument changes array, just use instrument of first note
+
+// TODO: Virtual channels? Maybe detect groups of chords and allow each layer to be enabled/disabled
 
 // TODO: Re-enable gtag when releasing
 
@@ -23,6 +28,7 @@ const useSolver = true;
 let reader = new FileReader();
 let numCommonTempos = 0;
 let midi;
+let tracks = [];
 let mapWidth;
 let alphabetizedInstruments = alphabetizeInstruments(MM2Instruments);
 let tiles;
@@ -48,16 +54,10 @@ let cursor;
 let isNewFile;
 let noiseThreshold = 0;
 let selectedTrack = 0;
-let octaveShifts = [];
-let notesAboveScreen = [];
-let notesBelowScreen = [];
-let instrumentChanges;
 let quantizeErrorAggregate = 0;
 let scrollPos = 0;
-let hasVisibleNotes;
 let conflictCount = 0;
 let usingAdvSettings = false;
-let semitoneShifts = [];
 let acceptableBPBs = null;
 let reccBPB;
 let lastBPB;
@@ -131,6 +131,11 @@ function loadData(bytes) { // Load file from the file input element
 	}
 	if (!fileLoaded) { showEverything(); }
 	midi = new MIDIfile(bytes);
+	tracks = [];
+	midi.trks.forEach((midiTrk) => {
+		tracks.push(new MaestroTrack(midiTrk));
+	});
+	console.log(tracks);
 	document.getElementById('advbox').checked = false;
 	resetOffsets();
 	if (fileLoaded) {
@@ -141,22 +146,14 @@ function loadData(bytes) { // Load file from the file input element
 	document.getElementById('trkcontainer').innerHTML = '';
 	// document.getElementById('trkselect').innerHTML = '';
 	selectedTrack = 0;
-	octaveShifts = new Array(midi.trks.length).fill(0);
-	semitoneShifts = new Array(midi.trks.length).fill(0);
-	instrumentChanges = new Array(midi.trks.length);
-	hasVisibleNotes = new Array(midi.trks.length).fill(false);
 	let i;
 	let j;
-	for (i = 0; i < instrumentChanges.length; i++) {
-		instrumentChanges[i] = [];
+	for (i = 0; i < tracks.length; i++) {
+		tracks[i].instrumentChanges = [];
 		for (j = 0; j < midi.trks[i].usedInstruments.length; j++) {
-			instrumentChanges[i][j] = getMM2Instrument(midi.trks[i].usedInstruments[j]) - 2;
+			tracks[i].instrumentChanges[j] = getMM2Instrument(midi.trks[i].usedInstruments[j]) - 2;
 		}
 	}
-	notesAboveScreen = new Array(midi.trks.length);
-	notesAboveScreen.fill(0);
-	notesBelowScreen = new Array(midi.trks.length);
-	notesBelowScreen.fill(0);
 	document.getElementById('octaveshift').value = 0;
 	document.getElementById('semitoneshift').value = 0;
 	blocksPerBeat = midi.blocksPerBeat;
@@ -170,10 +167,11 @@ function loadData(bytes) { // Load file from the file input element
 	mapWidth = Math.ceil(ticksToBlocks(midi.duration));
 	level.noteGroups = [];
 	outlineLayers = new Array(midi.trks.length);
-	for (i = 0; i < midi.trks.length; i++) {
+	for (i = 0; i < midi.trks.length; i++) { // TODO: Better separation
 		level.addNoteGroup(new PreloadedNoteGroup());
 		if (midi.trks[i].usedInstruments.length > 1) {
 			sepInsFromTrk(midi.trks[i]);
+			tracks[i].notes = [];
 		}
 		if (midi.trks[i].hasPercussion) {
 			let isInPartitions = new Array(numParts).fill(false);
@@ -190,12 +188,11 @@ function loadData(bytes) { // Load file from the file input element
 		}
 		outlineLayers[i] = new DrawLayer(canvas.width, canvas.height);
 		if (midi.trks[i].usedInstruments.length === 0 || midi.trks[i].hasPercussion) { continue; }
-		octaveShifts[i] = MM2Instruments[getMM2Instrument(midi.trks[i].usedInstruments[0]) - 2].octave * -1;
+		tracks[i].octaveShift = MM2Instruments[getMM2Instrument(midi.trks[i].usedInstruments[0]) - 2].octave * -1;
 		if (midi.trks[i].highestNote === null || midi.trks[i].highestNote === null) { continue; }
 		let thisRange = Math.max(Math.abs(64 - midi.trks[i].lowestNote), Math.abs(64 - midi.trks[i].highestNote));
 		if (thisRange > noteRange) { noteRange = thisRange; }
 	}
-	// console.log(noteRange);
 	refreshBlocks();
 	updateUI(false, true);
 	isNewFile = false;
@@ -203,11 +200,6 @@ function loadData(bytes) { // Load file from the file input element
 	document.getElementById('bpbpicker').disabled = false;
 	document.getElementById('tempotext').innerHTML = `Original: ${Math.round(songBPM)} bpm`;
 	document.getElementById('advbox').checked = usingAdvSettings;
-	/* var newTrack = new MIDItrack();
-      newTrack.label = 'test'
-      newTrack.notes[0] = new Note(0,0,1,0,0);
-      addTrack(newTrack); */
-	// console.log(midi.noteCount+' notes total');
 }
 
 /**
@@ -224,7 +216,7 @@ function updateUI(limitedUpdate, reccTempo) {
 		recommendBPB();
 	}
 	if (midi.firstTempo !== 0) { songBPM = 60000000 / midi.firstTempo; }
-	for (i = 0; i < midi.trks.length; i++) {
+	for (i = 0; i < tracks.length; i++) {
 		// Add checkbox with label for each track
 		if (!limitedUpdate) {
 			let div = document.createElement('div');
@@ -249,12 +241,12 @@ function updateUI(limitedUpdate, reccTempo) {
 			rad.style = 'display:none';
 			// rad.setAttribute('onclick','selectTrack(this.value);');
 			let labl = document.createElement('label');
-			if (midi.trks[i].notes.length === 0) { // Patch this in without breaking anything
+			if (tracks[i].notes.length === 0) { // Hide empty tracks
 				chkbox.style.display = 'none';
 				labl.style.display = 'none';
 			}
 			labl.appendChild(rad);
-			labl.innerHTML += midi.trks[i].label;
+			labl.innerHTML += tracks[i].label;
 			labl.setAttribute('for', rad.id);
 			labl.style.position = 'relative';
 			labl.style.bottom = '3px';
@@ -268,10 +260,10 @@ function updateUI(limitedUpdate, reccTempo) {
                   } */
 
 			// Add a new track option
-			if (midi.trks[i].label.charAt(0) !== '[') {
+			if (tracks[i].label.charAt(0) !== '[') {
 				let opt = document.createElement('option');
 				opt.value = i;
-				opt.innerHTML = midi.trks[i].label;
+				opt.innerHTML = tracks[i].label;
 				// document.getElementById('trkselect').appendChild(opt);
 			}
 		}
@@ -325,27 +317,26 @@ function drawLevel(redrawMini = false, noDOM = false) {
 	if (fileLoaded && !noDOM) { // Update offscreen note count (and octave shift button)
 		// Enable button if recommended octave shift and actual octave shift don't match
 		document.getElementById('shiftbutton')
-			.disabled = (octaveShifts[selectedTrack] === getViewOctaveShift(selectedTrack));
-		hasVisibleNotes = new Array(midi.trks.length).fill(false);
-		for (let i = 0; i < midi.trks.length; i++) {
-			notesAboveScreen[i] = 0;
-			notesBelowScreen[i] = 0;
-			for (j = 0; j < midi.trks[i].notes.length; j++) {
-				let note = midi.trks[i].notes[j];
+			.disabled = (tracks[selectedTrack].octaveShift === getViewOctaveShift(selectedTrack));
+		for (let i = 0; i < tracks.length; i++) {
+			tracks[i].hasVisibleNotes = false;
+			tracks[i].numNotesOffscreen.above = 0;
+			tracks[i].numNotesOffscreen.below = 0;
+			for (j = 0; j < tracks[i].notes.length; j++) {
+				let note = tracks[i].notes[j];
 				let x = Math.round(ticksToBlocks(note.time));
-				let y;
-				if (note.channel !== 9) { y = note.pitch + 1 + level.noteGroups[i].ofsY; } else { y = 54; }
+				let y = note.pitch + 1 + level.noteGroups[i].ofsY;
 				// Omit the notes on the very top row for now
 				if (y <= ofsY) {
-					notesBelowScreen[i]++;
+					tracks[i].numNotesOffscreen.below++;
 				} else if (y > ofsY + 26) {
-					notesAboveScreen[i]++;
+					tracks[i].numNotesOffscreen.above++;
 				} else if (x >= ofsX && x < ofsX + levelWidth) { // Check if notes are visible
-					hasVisibleNotes[i] = true;
+					tracks[i].hasVisibleNotes = true;
 				}
 			}
 			// if(!isNewFile){
-			if (hasVisibleNotes[i]) {
+			if (tracks[i].hasVisibleNotes) {
 				if (i === selectedTrack) {
 					document.getElementById(`trklabl${i}`).style.color = 'black';
 				} else {
@@ -369,13 +360,13 @@ function drawLevel(redrawMini = false, noDOM = false) {
 	}
 	if (!isNewFile && fileLoaded) {
 		clearDisplayLayer(dlayer.outlineLayer);
-		if (outlineLayers.length !== midi.trks.length) {
-			outlineLayers = new Array(midi.trks.length);
-			for (let i = 0; i < midi.trks.length; i++) {
+		if (outlineLayers.length !== tracks.length) {
+			outlineLayers = new Array(tracks.length);
+			for (let i = 0; i < tracks.length; i++) {
 				outlineLayers[i] = new DrawLayer(canvas.width, canvas.height);
 			}
 		} else {
-			for (let i = 0; i < midi.trks.length; i++) {
+			for (let i = 0; i < tracks.length; i++) {
 				if (outlineLayers[i] === undefined) {
 					outlineLayers[i] = new DrawLayer(canvas.width, canvas.height);
 					continue;
@@ -431,7 +422,6 @@ function drawLevel(redrawMini = false, noDOM = false) {
 		document.getElementById('ELtext').innerHTML = `Entities in Area: ${level.entityCount}`;
 		document.getElementById('PLtext').innerHTML = `Powerups in Area: ${level.powerupCount}`;
 
-		// console.log(quantizeErrorAggregate / midi.noteCount / blocksPerBeat);
 		let qeScore = quantizeErrorAggregate / midi.noteCount / blocksPerBeat;
 		if (qeScore === 0) {
 			document.getElementById('QEtext').innerHTML = 'BPB Quality: Perfect';
@@ -567,7 +557,7 @@ function recommendTempo(origBPM, bpb) {
  */
 function chkRefresh() {
 	let i;
-	for (i = 0; i < midi.trks.length; i++) {
+	for (i = 0; i < tracks.length; i++) {
 		level.noteGroups[i].setVisibility(document.getElementById(`chk${i}`).checked);
 	}
 	enableMouse();
@@ -602,36 +592,7 @@ function getMM2Instrument(instrument) {
 	if (midiInstrument >= 105 && midiInstrument <= 112) { return 14; } // Ethnic
 	if (midiInstrument >= 113 && midiInstrument <= 120) { return 15; } // Percussive
 	if (midiInstrument >= 121 && midiInstrument <= 127) { return 2; } // Sound Effects
-
-	return midiInstrument - 127 + 16; // For new instruments
-}
-
-/**
- * Determines the equivalent zero-indexed MIDI instrument ID for a given Mario Maker 2 tile ID.
- * @param {number} mm2Instrument The tile ID of the entity to convert to a MIDI instrument.
- * @returns {number} The MIDI instrument ID.
- */
-function getMidiInstrument(mm2Instrument) { // TODO: WHY??
-	switch (mm2Instrument) {
-	case 2: return 0;
-	case 3: return 9;
-	case 4: return 17;
-	case 5: return 25;
-	case 6: return 33;
-	case 7: return 41;
-	case 8: return 49;
-	case 9: return 57;
-	case 10: return 73;
-	case 11: return 81;
-	case 12: return 89;
-	case 13: return 97;
-	case 14: return 105;
-	case 15: return 113;
-	case 16: return 121;
-	default: return mm2Instrument + 127 - 17;
-            // case 17: return 128;
-            // default: return mm2Instrument + 127 - 16;
-	}
+	return null;
 }
 
 /**
@@ -940,9 +901,9 @@ function changeNoiseThreshold() {
  */
 function shiftTrackOctave() {
 	cancelPlayback();
-	octaveShifts[selectedTrack] = parseInt(document.getElementById('octaveshift').value, 10);
-	semitoneShifts[selectedTrack] = parseInt(document.getElementById('semitoneshift').value, 10);
-	level.noteGroups[selectedTrack].ofsY = octaveShifts[selectedTrack] * 12 + semitoneShifts[selectedTrack];
+	tracks[selectedTrack].octaveShift = parseInt(document.getElementById('octaveshift').value, 10);
+	tracks[selectedTrack].semitoneShift = parseInt(document.getElementById('semitoneshift').value, 10);
+	level.noteGroups[selectedTrack].ofsY = tracks[selectedTrack].octaveShift * 12 + tracks[selectedTrack].semitoneShift;
 	calculateNoteRange();
 	adjustZoom();
 	softRefresh();
@@ -958,7 +919,7 @@ function selectTrack(trkID) {
 	let initSelect = (trkID === -1);
 	let trackID = trkID;
 	if (trackID === -1) {
-		for (let i = 0; i < midi.trks.length; i++) { // Find the first visible checkbox to select
+		for (let i = 0; i < tracks.length; i++) { // Find the first visible checkbox to select
 			trackID = i;
 			if (document.getElementById(`chk${i}`).style.display !== 'none') { break; }
 		}
@@ -967,21 +928,21 @@ function selectTrack(trkID) {
 	if (document.getElementById(`chk${trackID}`)
 		.checked !== level.noteGroups[trackID].isVisible && !initSelect) { return; }
 	selectedTrack = trackID;
-	document.getElementById('octaveshift').value = octaveShifts[selectedTrack];
-	document.getElementById('semitoneshift').value = semitoneShifts[selectedTrack];
+	document.getElementById('octaveshift').value = tracks[selectedTrack].octaveShift;
+	document.getElementById('semitoneshift').value = tracks[selectedTrack].semitoneShift;
 	document.getElementById('shiftbutton')
-		.disabled = (octaveShifts[selectedTrack] === getViewOctaveShift(selectedTrack));
-	if (midi.trks[selectedTrack].hasPercussion || usingAdvSettings) {
+		.disabled = (tracks[selectedTrack].octaveShift === getViewOctaveShift(selectedTrack));
+	if (tracks[selectedTrack].hasPercussion || usingAdvSettings) {
 		document.getElementById('semishiftdiv').style.display = 'inline';
 	} else {
 		document.getElementById('semishiftdiv').style.display = 'none';
 	}
-	for (let i = 0; i < midi.trks.length; i++) {
+	for (let i = 0; i < tracks.length; i++) {
 		let trkdiv = document.getElementById(`item${i}`);
 		if (i !== trackID) {
 			trkdiv.style.backgroundColor = '';
 			trkdiv.style.borderWidth = '0px';
-			if (hasVisibleNotes[i]) {
+			if (tracks[i].hasVisibleNotes) {
 				document.getElementById(`trklabl${i}`).style.color = '';
 			} else {
 				document.getElementById(`trklabl${i}`).style.color = 'lightgray';
@@ -989,7 +950,7 @@ function selectTrack(trkID) {
 		} else {
 			trkdiv.style.backgroundColor = 'mediumaquamarine';
 			trkdiv.style.borderWidth = '2px';
-			if (hasVisibleNotes[i]) {
+			if (tracks[i].hasVisibleNotes) {
 				document.getElementById(`trklabl${i}`).style.color = 'black';
 			} else {
 				document.getElementById(`trklabl${i}`).style.color = 'gray';
@@ -1010,9 +971,9 @@ function selectTrack(trkID) {
  */
 function changeInstrument(trk, ins, newIns) {
 	let i;
-	for (i = 0; i < midi.trks[trk].notes.length; i++) {
+	for (i = 0; i < tracks[trk].notes.length; i++) {
 		if (getMM2Instrument(midi.trks[trk].notes[i].originalInstrument) === ins) {
-			midi.trks[trk].notes[i].instrument = getMidiInstrument(newIns);
+			tracks[trk].notes[i].instrument = newIns - 2;
 		}
 	}
 	refreshBlocks();
@@ -1024,7 +985,7 @@ function changeInstrument(trk, ins, newIns) {
  * the current instrument's octave and entity counts.
  */
 function updateInstrumentContainer() {
-	if (midi.trks[selectedTrack].hasPercussion) {
+	if (tracks[selectedTrack].hasPercussion) { // TODO: Remove; add percussion names, selection category
 		document.getElementById('instrumentcontainer').style.display = 'none';
 		return;
 	}
@@ -1033,7 +994,7 @@ function updateInstrumentContainer() {
 
 	let container = document.getElementById('instrumentcontainer');
 	container.innerHTML = '';
-	let targetOctave = -octaveShifts[selectedTrack];
+	let targetOctave = -tracks[selectedTrack].octaveShift;
 	let i;
 	for (i = 0; i < midi.trks[selectedTrack].usedInstruments.length; i++) {
 		let div = document.createElement('div');
@@ -1061,7 +1022,7 @@ function updateInstrumentContainer() {
 		for (let j = 0; j < alphabetizedInstruments.length; j++) {
 			if (!alphabetizedInstruments[j].isBuildable && !showUnbuildables) continue;
 			let opt = document.createElement('option');
-			opt.value = j;
+			opt.value = j; // alphabetizedInstruments[j].id;
 			opt.innerHTML = `${alphabetizedInstruments[j].name} (`;
 			if (alphabetizedInstruments[j].octave >= 0) {
 				opt.innerHTML += `+${alphabetizedInstruments[j].octave} 8va)`;
@@ -1101,7 +1062,7 @@ function updateInstrumentContainer() {
 		if (hasOctaveRec) { picker.appendChild(recOctGroup); }
 		if (hasEntityRec) { picker.appendChild(recEntGroup); }
 		picker.appendChild(allGroup);
-		picker.selectedIndex = getSortedInstrumentIndex(instrumentChanges[selectedTrack][i])
+		picker.selectedIndex = getSortedInstrumentIndex(tracks[selectedTrack].instrumentChanges[i])
 		+ numRecommendedInstruments;
 		container.appendChild(div);
 		updateOutOfBoundsNoteCounts();
@@ -1113,12 +1074,13 @@ function updateInstrumentContainer() {
  */
 function triggerInstrChange(selectedInstrument) {
 	let selectedInsIndex = alphabetizedInstruments[document.getElementById(`inspicker${selectedInstrument}`).value].pos;
+	// let selectedInsIndex = getInstrumentById(document.getElementById(`inspicker${selectedInstrument}`).value);
 	changeInstrument(
 		selectedTrack,
 		getMM2Instrument(midi.trks[selectedTrack].usedInstruments[selectedInstrument]),
 		selectedInsIndex + 2
 	);
-	instrumentChanges[selectedTrack][selectedInstrument] = selectedInsIndex;
+	tracks[selectedTrack].instrumentChanges[selectedInstrument] = selectedInsIndex;
 }
 
 /**
@@ -1128,14 +1090,14 @@ function triggerInstrChange(selectedInstrument) {
 function updateOutOfBoundsNoteCounts() {
 	let nasText = document.getElementById('NASText');
 	let nbsText = document.getElementById('NBSText');
-	let denom = midi.trks[selectedTrack].notes.length;
-	let nasPercent = Math.round((notesAboveScreen[selectedTrack] * 100) / denom);
+	let denom = tracks[selectedTrack].notes.length;
+	let nasPercent = Math.round((tracks[selectedTrack].numNotesOffscreen.above * 100) / denom);
 	nasText.innerHTML = `Notes above screen: ${nasPercent}%`;
 	if (nasPercent === 0) nasText.style.color = 'lime';
 	else if (nasPercent <= 15) nasText.style.color = 'limegreen';
 	else if (nasPercent <= 30) nasText.style.color = 'orange';
 	else nasText.style.color = 'red';
-	let nbsPercent = Math.round((notesBelowScreen[selectedTrack] * 100) / denom);
+	let nbsPercent = Math.round((tracks[selectedTrack].numNotesOffscreen.below * 100) / denom);
 	nbsText.innerHTML = `Notes below screen: ${nbsPercent}%`;
 	if (nbsPercent === 0) nbsText.style.color = 'lime';
 	else if (nbsPercent <= 15) nbsText.style.color = 'limegreen';
@@ -1161,7 +1123,6 @@ function getInstrumentById(name) { // Not the fastest solution, but it's conveni
  * @returns {number} The instrument ID of the recommended instrument.
  */
 function getPercussionInstrument(key) {
-	let percussionKey = key + 1;
 	switch (key) {
 	case 35: return getInstrumentById('pow');
 	case 36: return getInstrumentById('pow');
@@ -1192,7 +1153,7 @@ function getPercussionInstrument(key) {
  * Splits a track with multiple instruments into multiple tracks - one for each instrument.
  * @param {number} trk The ID of the multiple-instrument track to separate.
  */
-function sepInsFromTrk(trk) { // Create new
+function sepInsFromTrk(trk) { // Create new // TODO: Use MaestroTracks instead
 	let i;
 	let newTrks = new Array(trk.usedInstruments.length);
 	for (i = 0; i < trk.usedInstruments.length; i++) {
@@ -1242,12 +1203,9 @@ function sepInsFromTrk(trk) { // Create new
  * @param {MIDItrack} track The MIDItrack object of the track to add to the level.
  */
 function addTrack(track) {
+	console.log('new track');
 	midi.trks.push(track);
-	octaveShifts.push(0);
-	semitoneShifts.push(0);
-	notesAboveScreen.push(0);
-	notesBelowScreen.push(0);
-	instrumentChanges.push([getMM2Instrument(track.usedInstruments[0]) - 2]);
+	tracks.push(new MaestroTrack(track));
 }
 
 /**
@@ -1301,17 +1259,17 @@ function scrollDisplayTo(pixelsOfs) {
  */
 function toggleAdvancedMode() {
 	usingAdvSettings = document.getElementById('advbox').checked;
-	if (midi.trks[selectedTrack].hasPercussion || usingAdvSettings) {
+	if (tracks[selectedTrack].hasPercussion || usingAdvSettings) {
 		document.getElementById('semishiftdiv').style.display = 'inline';
 	} else {
 		// Reset semitone shifts on tracks where it can only be changed with Advanced Settings
 		document.getElementById('semitoneshift').value = 0;
 		document.getElementById('semishiftdiv').style.display = 'none';
 		let i;
-		for (i = 0; i < midi.trks.length; i++) {
-			if (!midi.trks[i].hasPercussion) {
-				semitoneShifts[i] = 0;
-				level.noteGroups[selectedTrack].ofsY = octaveShifts[selectedTrack] * 12;
+		for (i = 0; i < tracks.length; i++) {
+			if (!tracks[i].hasPercussion) {
+				tracks[i].semitoneShift = 0;
+				level.noteGroups[selectedTrack].ofsY = tracks[selectedTrack].octaveShift * 12;
 			}
 		}
 		softRefresh();
@@ -1383,10 +1341,10 @@ function filterBPB() {
 function getViewOctaveShift(trkID) {
 	let sum = 0;
 	let i;
-	for (i = 0; i < midi.trks[trkID].notes.length; i++) {
-		sum += midi.trks[trkID].notes[i].pitch;
+	for (i = 0; i < tracks[trkID].notes.length; i++) {
+		sum += tracks[trkID].notes[i].pitch;
 	}
-	let avg = sum / midi.trks[trkID].notes.length;
+	let avg = sum / tracks[trkID].notes.length;
 	return Math.round((avg - (60 + (ofsY - baseOfsY))) / 12) * -1;
 }
 
@@ -1396,10 +1354,10 @@ function getViewOctaveShift(trkID) {
 function shiftTrackIntoView() {
 	cancelPlayback();
 	let shift = getViewOctaveShift(selectedTrack);
-	octaveShifts[selectedTrack] = shift;
-	semitoneShifts[selectedTrack] = 0;
+	tracks[selectedTrack].octaveShift = shift;
+	tracks[selectedTrack].semitoneShift = 0;
 	document.getElementById('octaveshift').value = shift;
-	level.noteGroups[selectedTrack].ofsY = octaveShifts[selectedTrack] * 12 + semitoneShifts[selectedTrack];
+	level.noteGroups[selectedTrack].ofsY = tracks[selectedTrack].octaveShift * 12 + tracks[selectedTrack].semitoneShift;
 	calculateNoteRange();
 	adjustZoom();
 	softRefresh();
@@ -1493,13 +1451,13 @@ function calculateNoteRange() {
  */
 function redrawMinimap() {
 	miniClear(0);
-	for (let i = 0; i <= midi.trks.length; i++) {
+	for (let i = 0; i <= tracks.length; i++) {
 		let index = i;
 		if (i === selectedTrack) continue;
-		if (i === midi.trks.length) index = selectedTrack; // Draw the selected track last
-		for (let j = 0; j < midi.trks[index].notes.length; j++) {
-			if (!level.noteGroups[index].isVisible || midi.trks[index].notes.length === 0) continue;
-			let note = midi.trks[index].notes[j];
+		if (i === tracks.length) index = selectedTrack; // Draw the selected track last
+		for (let j = 0; j < tracks[index].notes.length; j++) {
+			if (!level.noteGroups[index].isVisible || tracks[index].notes.length === 0) continue;
+			let note = tracks[index].notes[j];
 			if (note.volume < noiseThreshold) continue;
 			let x = Math.round(ticksToBlocks(note.time));
 			let y = note.pitch + level.noteGroups[index].ofsY;
@@ -1514,22 +1472,22 @@ function redrawMinimap() {
  */
 function refreshBlocks() {
 	let highestX = 0;
-	for (let i = 0; i < midi.trks.length; i++) {
+	for (let i = 0; i < tracks.length; i++) {
 		level.clearNoteGroup(i);
-		level.noteGroups[i].ofsY = octaveShifts[i] * 12 + semitoneShifts[i];
-		for (let j = 0; j < midi.trks[i].notes.length; j++) {
-			let note = midi.trks[i].notes[j];
+		level.noteGroups[i].ofsY = tracks[i].octaveShift * 12 + tracks[i].semitoneShift;
+		for (let j = 0; j < tracks[i].notes.length; j++) {
+			let note = tracks[i].notes[j];
 			if (note.volume < noiseThreshold) { continue; } // Skip notes with volume below noise threshold
 			x = ticksToBlocks(note.time);
 			let levelX = Math.round(x);
 			if (levelX > highestX) highestX = levelX;
-			let instrument = getMM2Instrument(note.instrument);
+			/* let instrument = note.instrument;
 			if (note.channel === 9) {
 				// Use note.key to avoid the pitch overwrite to 54 here
 				instrument = getPercussionInstrument(note.key) + 2;
 				note.instrument = getMidiInstrument(instrument);
 				note.pitch = 54;
-			}
+			} */
 			if (levelX >= ofsX && levelX < ofsX + levelWidth) {
 				level.noteGroups[i].add(note.pitch, note.instrument, levelX);
 			}
@@ -1549,40 +1507,6 @@ function setLevelXTo(ox) {
 	if (ofsX > limX) { ofsX = limX; }
 	if (ofsX < 0) { ofsX = 0; }
 	quickLevelRefresh();
-}
-
-/**
- * Refreshes and redraws the level in a barebones but efficient way for use during playback.
- */
-// Redraw the level with only the bare necessities - the notes, and the entities on top of them
-function quickLevelRefresh() {
-	clearDisplayLayer(dlayer.noteLayer);
-	for (let i = 0; i < midi.trks.length; i++) {
-		if (!level.noteGroups[i].isVisible) continue;
-		for (let j = 0; j < midi.trks[i].notes.length; j++) {
-			let note = midi.trks[i].notes[j];
-			if (note.volume < noiseThreshold) continue; // Skip notes with volume below noise threshold
-			let levelX = Math.round(ticksToBlocks(note.time));
-			if (levelX > ofsX + levelWidth + marginWidth) break;
-			let instrument = getMM2Instrument(note.instrument);
-			if (note.channel === 9) {
-				// Use note.key to avoid the pitch overwrite to 54 here
-				instrument = getPercussionInstrument(note.key) + 2;
-				note.instrument = getMidiInstrument(instrument);
-				note.pitch = 54;
-			}
-			let levelY = note.pitch + level.noteGroups[i].ofsY - ofsY + 1;
-			if (levelX >= ofsX && levelX < ofsX + levelWidth - marginWidth && levelY >= 0 && levelY <= 27) {
-				let drawY = 27 - levelY;
-				drawTile(tiles[1], (levelX - ofsX + marginWidth) * 16, (drawY * 16));
-				drawTile(tiles[instrument], (levelX - ofsX + marginWidth) * 16, ((drawY - 1) * 16));
-			}
-		}
-	}
-	miniClear(1);
-	drawScrubber(ofsX, ofsY + 27, canvas.width / 16 - 27, canvas.height / 16);
-	refreshMini();
-	refreshCanvas();
 }
 
 /**

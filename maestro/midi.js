@@ -293,6 +293,9 @@ class MIDIfile {
 				if (isNotInArr(this.trks[tpos].usedInstruments, ins)) {
 					this.trks[tpos].usedInstruments.push(ins);
 				}
+				if (isNotInArr(this.trks[tpos].usedChannels, channel)) {
+					this.trks[tpos].usedChannels.push(channel);
+				}
 				break;
 			case 0xC:
 				if (!rs) { data.push(this.fetchBytes(1)); }
@@ -478,6 +481,7 @@ class MIDItrack {
 		this.label = '';
 		this.quantizeErrors = new Array(16).fill(0);
 		this.usedInstruments = [];
+		this.usedChannels = [];
 		this.notes = [];
 		this.hasPercussion = false;
 		this.highestNote = null;

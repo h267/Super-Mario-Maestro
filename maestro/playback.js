@@ -124,7 +124,7 @@ async function playLvl(midi, level, bpm, blocksPerBeat, ofsX, ofsY) {
 			let xPos = thisNote.x - ofsX;
 			// Prevent things from getting too loud
 			if (noteCount[xPos][pitch] <= polyphonyCap || noteCount[xPos][pitch] === undefined) {
-				notes[xPos].push({ note: pitch, instrument: getMM2Instrument(thisNote.instrument) - 2 });
+				notes[xPos].push({ note: pitch, instrument: thisNote.instrument });
 				if (noteCount[xPos][pitch] === undefined) noteCount[xPos][pitch] = 1;
 				else noteCount[xPos][pitch]++;
 			}
@@ -134,46 +134,6 @@ async function playLvl(midi, level, bpm, blocksPerBeat, ofsX, ofsY) {
 		advanceSchTime(PPQ / blocksPerBeat);
 	}
 	prerenderAndPlay(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth), false);
-}
-
-/**
- * Prepares the whole MIDI for playback, then triggers playback for the whole song.
- */
-async function playMap(midi, level, bpm, blocksPerBeat, ofsX, ofsY) {
-	stopAudio();
-	schTime = 0;
-	isContinuousPlayback = true;
-	endBound = mapWidth;
-	framesPerColumn = 1 / ((blocksPerBeat * bpm) / 3600);
-	notes = [];
-	let noteCount = [];
-	for (i = 0; i < endBound; i++) {
-		notes[i] = [];
-		noteCount[i] = {};
-	}
-	for (i = 0; i < level.noteGroups.length; i++) {
-		if (!level.noteGroups[i].isVisible) continue;
-		for (j = 0; j < midi.trks[i].notes.length; j++) { // TODO: Can binary search for the starting bound
-			let thisNote = midi.trks[i].notes[j];
-			let yPos = thisNote.pitch + level.noteGroups[i].ofsY;
-			if ((yPos < ofsY || yPos >= ofsY + levelHeight - 1) && restrictPitchRange) continue;
-			let pitch = yPos - (ofsY - baseOfsY);
-			let xPos = Math.round(ticksToBlocks(thisNote.time)) - ofsX;
-			if (xPos < 0) continue;
-			// Prevent things from getting too loud
-			if (noteCount[xPos][pitch] <= polyphonyCap || noteCount[xPos][pitch] === undefined) {
-				notes[xPos].push({ note: pitch, instrument: getMM2Instrument(thisNote.instrument) - 2 });
-				if (noteCount[xPos][pitch] === undefined) noteCount[xPos][pitch] = 1;
-				else noteCount[xPos][pitch]++;
-			}
-		}
-	}
-	while (pos <= endBound) {
-		advanceSchTime(PPQ / blocksPerBeat);
-	}
-	clearDisplayLayer(dlayer.overlayLayer);
-	clearDisplayLayer(dlayer.outlineLayer);
-	prerenderAndPlay(bpm, blocksPerBeat, endBound, true);
 }
 
 /**

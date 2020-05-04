@@ -1,4 +1,4 @@
-
+// TODO: Save as JSON files
 /**
  * Data on the various scroll speeds in Mario Maker 2. Tempos are stored in their 4 block per beat equivalents.
  */
@@ -457,13 +457,16 @@ const MM2Tiles = { // TODO: Convert all tiles to this format maybe
 };
 
 class MaestroTrack {
-	constructor(midiTrk = null) {
+	constructor(midiTrk) {
 		this.notes = [];
 		this.octaveShift = 0;
 		this.semitoneShift = 0;
 		this.instrumentChanges = [];
+		if (midiTrk.usedInstruments[0] !== undefined) this.instrumentChanges.push(midiTrk.usedInstruments[0]);
 		this.hasVisibleNotes = false;
-		this.numNotesOffScreen = { above: 0, below: 0 };
+		this.numNotesOffscreen = { above: 0, below: 0 };
+		this.label = midiTrk.label;
+		this.hasPercussion = midiTrk.hasPercussion;
 
 		if (midiTrk === null) return;
 		midiTrk.notes.forEach((midiNote) => {
@@ -475,5 +478,13 @@ class MaestroTrack {
 class MaestroNote {
 	constructor(midiNote) {
 		this.pitch = midiNote.pitch;
+		this.time = midiNote.time; // TODO: Store x coord at 4 bpb
+		let insId;
+		if (midiNote.channel !== 9) insId = getMM2Instrument(midiNote.instrument) - 2;
+		else {
+			insId = getPercussionInstrument(midiNote.instrument);
+			this.pitch = 56;
+		}
+		this.instrument = insId;
 	}
 }
