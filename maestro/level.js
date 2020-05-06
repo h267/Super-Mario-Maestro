@@ -307,12 +307,16 @@ class PreloadedNote {
        * @param {number} pitch The MIDI pitch of the note.
        * @param {number} instrument The MIDI instrument of the note.
        * @param {number} x The x-coordinate of the note to be placed in relation to the entire MIDI file.
+	 * @param {number} y The y-coordinate of the note to be placed in relation to the entire MIDI file.
+	 * @param {MaestroNote} origNote The corresponding MaestroNote object.
        * @constructor
        */
-	constructor(pitch, instrument, x) {
+	constructor(pitch, instrument, x, y, origNote) {
 		this.pitch = pitch;
 		this.instrument = instrument;
 		this.x = x;
+		this.y = y;
+		this.origNote = origNote;
 	}
 }
 
@@ -334,9 +338,10 @@ class PreloadedNoteGroup {
        * @param {number} pitch The MIDI pitch of the note.
        * @param {number} instrument The MIDI instrument of the note.
        * @param {number} x The x-coordinate of the note to be placed in relation to the entire MIDI file.
+	 * TODO: update
        */
-	add(pitch, instrument, x) {
-		this.notes.push(new PreloadedNote(pitch, instrument, x));
+	add(pitch, instrument, x, y, origNote) {
+		this.notes.push(new PreloadedNote(pitch, instrument, x, y, origNote));
 	}
 
 	/**
@@ -345,6 +350,18 @@ class PreloadedNoteGroup {
        */
 	setVisibility(visible) {
 		this.isVisible = visible;
+	}
+
+	getNoteAt(x, y) {
+		// TODO: Replace with binary search
+		// FIXME: Doesn't always work
+		let i = 0;
+		for (i = 0; i < this.notes.length; i++) {
+			let note = this.notes[i];
+			if (note.x > x) break;
+			if (note.x === x && note.y === y) return { result: note, pos: i };
+		}
+		return { result: null, pos: i };
 	}
 }
 

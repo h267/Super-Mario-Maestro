@@ -34,6 +34,7 @@ let alphabetizedInstruments = alphabetizeInstruments(MM2Instruments);
 let tiles;
 let bgs;
 let marioSprites;
+let toolIcons;
 let speed = 10;
 let level = new Level();
 let ofsX = 0;
@@ -45,12 +46,10 @@ let blocksPerBeat = 4;
 let recmdBlocksPerBeat = 4;
 let currentHighlight = { x: -1, y: -1 };
 let prevHighlighted = false;
-let clickedTile = null;
 let minimapData = null;
 let displayData = null;
 let bbar = 1;
 let noMouse = false;
-let cursor;
 let isNewFile;
 let noiseThreshold = 0;
 let selectedTrack = 0;
@@ -73,8 +72,8 @@ let showUnbuildables = false;
 
 // Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener('mouseout', handleOut, false);
-getImg('icon/ruler.png').then(async (cursorImg) => {
-	cursor = cursorImg;
+loadToolIcons().then(async (icons) => {
+	toolIcons = icons;
 	tiles = await loadTiles();
 	bgs = await loadBGs();
 	marioSprites = await loadMario();
@@ -133,6 +132,9 @@ function loadData(bytes) { // Load file from the file input element
 	midi = new MIDIfile(bytes);
 	tracks = [];
 	midi.trks.forEach((midiTrk) => {
+		if (midiTrk.usedChannels.length > 1) {
+			console.log(midiTrk.label);
+		}
 		tracks.push(new MaestroTrack(midiTrk));
 	});
 	console.log(tracks);
@@ -593,111 +595,6 @@ function getMM2Instrument(instrument) {
 	if (midiInstrument >= 113 && midiInstrument <= 120) { return 15; } // Percussive
 	if (midiInstrument >= 121 && midiInstrument <= 127) { return 2; } // Sound Effects
 	return null;
-}
-
-/**
- * Handles when the main canvas is clicked, and toggle the ruler.
- * @param {MouseEvent} e The mouse event.
- */
-function handleClick(e) {
-	if (noMouse) { return; } // Exit if the mouse is disabled
-	if (clickedTile !== null) {
-		// If the ruler is on...
-		clickedTile = null; // Turn off the ruler
-		clearDisplayLayer(dlayer.mouseLayer);
-		refreshCanvas();
-		return;
-	}
-	// Else, if the ruler is off...
-	let canvasOfs = getOffset(e);
-	let div = document.getElementById('displaycontainer');
-	let scrollOfs = { x: div.scrollLeft, y: div.scrollTop };
-	let offset = { x: canvasOfs.x + scrollOfs.x, y: canvasOfs.y + scrollOfs.y };
-	let tilePos = { x: Math.floor(offset.x / 16), y: 27 - Math.floor(offset.y / 16) };
-	let levelPos = { x: tilePos.x + ofsX - 27, y: tilePos.y + ofsY };
-	clickedTile = levelPos; // Turn on the ruler
-}
-
-/**
- * Handles when the mouse is moved across the main canvas.
- * @param {MouseEvent} e The mouse event.
- */
-function handleMove(e) {
-	if (noMouse) { return; } // Exit if the mouse is disabled
-	let canvasOfs = getOffset(e);
-	let div = document.getElementById('displaycontainer');
-	let scrollOfs = { x: div.scrollLeft, y: div.scrollTop };
-	let offset = { x: canvasOfs.x + scrollOfs.x, y: canvasOfs.y + scrollOfs.y };
-	let tilePos = { x: Math.floor(offset.x / 16), y: 27 - Math.floor(offset.y / 16) };
-	let realTpos = tilePos;
-	let levelPos = { x: tilePos.x + ofsX - 27, y: tilePos.y + ofsY };
-	let refresh = false;
-
-	if (currentHighlight.x !== tilePos.x || currentHighlight.y !== tilePos.y) {
-		// Draw the cursor
-		clearDisplayLayer(dlayer.mouseLayer);
-		// Lightly highlight the tile the cursor is on
-		highlightTile(tilePos.x, 27 - tilePos.y, { style: 'rgba(0,0,0,0.1)', layer: dlayer.mouseLayer });
-		drawTile(cursor, (tilePos.x - 1) * 16, (27 - (tilePos.y + 1)) * 16, dlayer.mouseLayer); // Draw the cursor icon
-		refreshCanvas();
-		currentHighlight = { x: tilePos.x, y: tilePos.y };
-		refresh = true;
-	}
-
-	if (clickedTile === null) { return; }
-
-	if (refresh) { // If the highlighted tile position has changed, redraw the ruler
-		let i = levelPos.x;
-		let j = levelPos.y;
-		levelPos = clickedTile;
-		tilePos = { x: levelPos.x - ofsX + 27, y: levelPos.y - ofsY };
-
-		let dirStr = { h: '', v: '' }; // The string to display next to the ruler
-		let k;
-		if (i - levelPos.x > 0) {
-			dirStr.h = 'Right';
-			for (k = 0; k < i - levelPos.x; k++) {
-				highlightTile(tilePos.x + k + 1, 27 - tilePos.y, { layer: dlayer.mouseLayer });
-			}
-		} else if (i - levelPos.x < 0) {
-			dirStr.h = 'Left';
-			for (k = 0; k < (i - levelPos.x) * -1; k++) {
-				highlightTile(tilePos.x - k - 1, 27 - tilePos.y, { layer: dlayer.mouseLayer });
-			}
-		}
-
-		if (j - levelPos.y > 0) {
-			dirStr.v = 'Up';
-			for (k = 0; k < j - levelPos.y; k++) {
-				highlightTile(
-					(tilePos.x + (i - levelPos.x)),
-					27 - (j - ofsY - k),
-					{ style: 'rgba(0,191,0,0.5)', layer: dlayer.mouseLayer }
-				);
-			}
-		} else if (j - levelPos.y < 0) {
-			dirStr.v = 'Down';
-			for (k = 0; k < (j - levelPos.y) * -1; k++) {
-				highlightTile(
-					(tilePos.x + (i - levelPos.x)),
-					27 - (j - ofsY + k),
-					{ style: 'rgba(0,191,0,0.5)', layer: dlayer.mouseLayer }
-				);
-			}
-		}
-		if (dirStr.h !== '' && dirStr.v !== '') {
-			drawLabel(
-				realTpos.x * 16 - 24,
-				(27 - realTpos.y) * 16 - 8,
-				`${dirStr.h} ${Math.abs(i - levelPos.x)}, ${dirStr.v} ${Math.abs(j - levelPos.y)}`
-			);
-		} else if (dirStr.h === '' && dirStr.v !== '') {
-			drawLabel(realTpos.x * 16 - 24, (27 - realTpos.y) * 16 - 8, `${dirStr.v} ${Math.abs(j - levelPos.y)}`);
-		} else {
-			drawLabel(realTpos.x * 16 - 24, (27 - realTpos.y) * 16 - 8, `${dirStr.h} ${Math.abs(i - levelPos.x)}`);
-		}
-	}
-	refreshCanvas();
 }
 
 /**
@@ -1481,15 +1378,9 @@ function refreshBlocks() {
 			x = ticksToBlocks(note.time);
 			let levelX = Math.round(x);
 			if (levelX > highestX) highestX = levelX;
-			/* let instrument = note.instrument;
-			if (note.channel === 9) {
-				// Use note.key to avoid the pitch overwrite to 54 here
-				instrument = getPercussionInstrument(note.key) + 2;
-				note.instrument = getMidiInstrument(instrument);
-				note.pitch = 54;
-			} */
+			let levelY = note.pitch + 1 + level.noteGroups[i].ofsY;
 			if (levelX >= ofsX && levelX < ofsX + levelWidth) {
-				level.noteGroups[i].add(note.pitch, note.instrument, levelX);
+				level.noteGroups[i].add(note.pitch, note.instrument, levelX, levelY, note);
 			}
 		}
 	}
@@ -1579,4 +1470,18 @@ function setPlaybackWaitStatus(status) {
 function toggleBuildRestriction() {
 	showUnbuildables = document.getElementById('buildbox').checked;
 	updateInstrumentContainer();
+}
+
+function addNote(trkId, x, y, idx) {
+	let note;
+	// x = Math.round(ticksToBlocks(note.time));
+	// note.pitch = 
+	// let levelY = note.pitch + 1 + level.noteGroups[i].ofsY;
+}
+
+function removeNote(trkId, idx) {
+	level.noteGroups[trkId].notes.splice(idx, 1);
+	tracks[trkId].notes.splice(idx, 1);
+	midi.trks[trkId].notes.splice(idx, 1);
+	softRefresh();
 }

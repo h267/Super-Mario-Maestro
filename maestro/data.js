@@ -456,6 +456,14 @@ const MM2Tiles = { // TODO: Convert all tiles to this format maybe
 	}
 };
 
+const toolIconFilenames = [
+	'info',
+	'zoom',
+	'ruler',
+	'add',
+	'erase'
+];
+
 class MaestroTrack {
 	constructor(midiTrk) {
 		this.notes = [];

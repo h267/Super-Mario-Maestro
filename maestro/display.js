@@ -228,93 +228,6 @@ function setMiniWidth(w) {
 }
 
 /**
- * Moves the file scrubber to the cursor position when the minimap is clicked.
- * @param {MouseEvent} e The mouse event.
- */
-function handleMouseDown(e) {
-	let coords = getRealMiniOfs(e);
-	mx = coords.x;
-	my = coords.y;
-	moveOffsetTo(mx / minimap.width, null);
-	dragging = true;
-}
-
-/**
- * Handles when the mouse is no longer dragging the file scrubber.
- * @param {MouseEvent} e The mouse event.
- */
-function handleMouseUp(e) {
-	let coords = getRealMiniOfs(e);
-	mx = coords.x;
-	my = coords.y;
-	dragging = false;
-}
-
-/**
- * Handles when the mouse is no longer hovering over the minimap.
- * @param {MouseEvent} e The mouse event.
- */
-function handleMouseOut(e) {
-	let coords = getRealMiniOfs(e);
-	mx = coords.x;
-	my = coords.y;
-	dragging = false;
-}
-
-/**
- * Handles when the mouse is moved over the minimap.
- * @param {MouseEvent} e The mouse event.
- */
-function handleMouseMove(e) {
-	let coords = getRealMiniOfs(e);
-	mx = coords.x;
-	my = coords.y;
-	if (dragging) {
-		moveOffsetTo(mx / minimap.width, null);
-	}
-}
-
-/**
- * Obtains the x and y coordinates of the mouse's location over a canvas element.
- * @param {MouseEvent} evt The mouse event.
- * @returns {Object} An object containing the x and y coordinates of the cursor.
- */
-function getOffset(evt) {
-	let el = evt.target;
-	let x = 0;
-	let y = 0;
-
-	while (el && !Number.isNaN(el.offsetLeft) && !Number.isNaN(el.offsetTop)) {
-		x += el.offsetLeft - el.scrollLeft;
-		y += el.offsetTop - el.scrollTop;
-		el = el.offsetParent;
-	}
-
-	x = evt.clientX - x;
-	y = evt.clientY - y;
-
-	return { x, y };
-}
-
-/**
- * Gets the horizontal of the mouse cursor relative the the whole minimap, factoring out the scroll position.
- * @param {MouseEvent} e The mouse event.
- * @returns {number} The x-coordinate of the mouse cursor relative to the minimap.
- */
-function getRealMiniOfs(e) {
-	if (clickedTile !== null) {
-		clickedTile = null;
-		drawLevel();
-		return null;
-	}
-	let canvasOfs = getOffset(e);
-	let div = document.getElementById('minimapcontainer');
-	let scrollOfs = { x: div.scrollLeft, y: div.scrollTop };
-	let offset = { x: canvasOfs.x + scrollOfs.x, y: canvasOfs.y + scrollOfs.y };
-	return offset;
-}
-
-/**
  * Highlights a tile on the main display.
  * @param {number} tx The x-coordinate of the tile to be highlighted, in tile units.
  * @param {number} ty The y-coordinate of the tile to be highlighted, in tile units.
@@ -545,6 +458,14 @@ function loadMario() {
 	}));
 }
 
+function loadToolIcons() {
+	let promises = [];
+	toolIconFilenames.forEach((filename) => {
+		promises.push(getImg(`icon/${filename}.png`));
+	});
+	return Promise.all(promises);
+}
+
 /**
  * Creates an array of DrawLayers for use with a canvas element.
  * @param {number} amount The number of layers to make.
@@ -598,11 +519,3 @@ function refreshMini() {
 function setMiniZoomY(zoom) {
 	minimapZoomY = zoom;
 }
-
-minimap.onmousedown = (e) => { handleMouseDown(e); };
-minimap.onmousemove = (e) => { handleMouseMove(e); };
-minimap.onmouseup = (e) => { handleMouseUp(e); };
-minimap.onmouseout = (e) => { handleMouseOut(e); };
-
-canvas.onmousemove = (e) => { handleMove(e); };
-canvas.onclick = (e) => { handleClick(e); };
