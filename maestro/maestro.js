@@ -5,13 +5,13 @@
 // FIXME: Sometimes playback cannot be stopped
 // FIXME: Suboptimal collision boxes from unnecessary expansion
 
-// TODO: Switch to original instrument when invalid instrument is switched to
+// TODO: Switch to original instrument when invalid instrument is switched to (adv settings toggle)
 // TODO: Finish replacing midi tracks with Maestro tracks
 // TODO: Eliminate instrument changes array, just use instrument of first note
-
-// TODO: Virtual channels? Maybe detect groups of chords and allow each layer to be enabled/disabled
+// TODO: Build mode restrictions, button disable
 
 // TODO: Re-enable gtag when releasing
+// TODO: Disable auto tool enable when releasing
 
 const levelWidth = 240;
 const marginWidth = 27;
@@ -67,6 +67,8 @@ let noteRange = 0;
 let defaultZoom = 1;
 let hasLoadedBuffers = false;
 let showUnbuildables = false;
+let canvasZoom = 1;
+let isBuildMode = false;
 
 // getEquivalentBlocks(1.5);
 
@@ -207,7 +209,7 @@ function loadData(bytes) { // Load file from the file input element
 /**
  * Refreshes the state of the user interface.
  */
-function updateUI(limitedUpdate, reccTempo) {
+function updateUI(limitedUpdate, reccTempo, doBPB = true) {
 	let i;
 	let width = mapWidth;
 	setMiniWidth(width);
@@ -215,7 +217,7 @@ function updateUI(limitedUpdate, reccTempo) {
 	bbar = midi.firstBbar;
 	if (!limitedUpdate) {
 		document.getElementById('trkcontainer').innerHTML = '';
-		recommendBPB();
+		if(doBPB) recommendBPB();
 	}
 	if (midi.firstTempo !== 0) { songBPM = 60000000 / midi.firstTempo; }
 	for (i = 0; i < tracks.length; i++) {
@@ -243,7 +245,7 @@ function updateUI(limitedUpdate, reccTempo) {
 			rad.style = 'display:none';
 			// rad.setAttribute('onclick','selectTrack(this.value);');
 			let labl = document.createElement('label');
-			if (tracks[i].notes.length === 0) { // Hide empty tracks
+			if (tracks[i].notes.length === 0 && !tracks[i].isFromUser) { // Hide empty tracks
 				chkbox.style.display = 'none';
 				labl.style.display = 'none';
 			}
@@ -383,29 +385,29 @@ function drawLevel(redrawMini = false, noDOM = false) {
 	}
 	powerupCount = 0;
 	entityCount = 0;
-	for (let i = 0; i < levelWidth; i++) {
+	for (let i = 0; i < levelWidth * numBlockSubdivisions; i++) {
 		for (j = 0; j < 27; j++) {
-			x = ofsX + i;
-			y = ofsY + j;
 			let tile = level.checkTile(i, j); // Tile on the main screen
 			let bgTile = level.checkBgTile(i, j);
 			let fgTile = level.checkFgTile(i, j);
 			let drawY = 27 - j - 1;
-			if (bgTile !== null) drawTile(tiles[bgTile], i * 16, (drawY * 16));
+			let drawX = i / numBlockSubdivisions;
+
+			if (bgTile !== null) drawTile(tiles[bgTile], drawX * 16, drawY * 16);
 			if (tile !== null) {
-				drawTile(tiles[tile], i * 16, (drawY * 16));
-				if (level.numberOfOccupants[i][j] > 1) { // Highlight any overalapping tiles in red
-					// conflictCount++;
-					// highlightTile(i,drawY,{style: 'rgba(255,0,0,0.4)'});
+				drawTile(tiles[tile], drawX * 16, drawY * 16);
+				if (level.numberOfOccupants[i][j] > 1 && !isBuildMode) { // Highlight any overalapping tiles in red
+					conflictCount++;
+					highlightTile(drawX, drawY, { style: 'rgba(255,0,0,0.4)' });
 				}
 				// Outline note blocks of the selected track
 				if (tile === 1 && level.isTrackOccupant[i][j][selectedTrack]) {
-					outlineTile(i, drawY, 2, 'rgb(102,205,170)');
+					outlineTile(drawX, drawY, 2, 'rgb(102,205,170)');
 				}
 			}
-			if (fgTile !== null) drawTile(bgs[2 + fgTile], i * 16, (drawY * 16));
+			if (fgTile !== null) drawTile(bgs[2 + fgTile], drawX * 16, drawY * 16);
 		}
-		if (i > ofsX + levelWidth) { break; }
+		if (i / numBlockSubdivisions > ofsX + levelWidth) { break; }
 	}
 	if (showDebugLabels) {
 		clearDisplayLayer(dlayer.overlayLayer);
@@ -419,7 +421,7 @@ function drawLevel(redrawMini = false, noDOM = false) {
 		}
 	}
 	if (redrawMini) { redrawMinimap(); }
-	if (level.limitLine !== null) { drawLimitLine(level.limitLine); }
+	if (level.limitLine !== null) { drawLimitLine(level.limitLine / numBlockSubdivisions); }
 	if (!noDOM) {
 		document.getElementById('ELtext').innerHTML = `Entities in Area: ${level.entityCount}`;
 		document.getElementById('PLtext').innerHTML = `Powerups in Area: ${level.powerupCount}`;
@@ -593,7 +595,7 @@ function getMM2Instrument(instrument) {
 	if (midiInstrument >= 97 && midiInstrument <= 104) { return 2; } // Synth Effects
 	if (midiInstrument >= 105 && midiInstrument <= 112) { return 14; } // Ethnic
 	if (midiInstrument >= 113 && midiInstrument <= 120) { return 15; } // Percussive
-	if (midiInstrument >= 121 && midiInstrument <= 127) { return 2; } // Sound Effects
+	if (midiInstrument >= 121 && midiInstrument <= 128) { return 2; } // Sound Effects
 	return null;
 }
 
@@ -881,11 +883,14 @@ function changeInstrument(trk, ins, newIns) {
  * Refreshes the options in the instrument dropdown menu, recommending instruments based on
  * the current instrument's octave and entity counts.
  */
-function updateInstrumentContainer() {
-	if (tracks[selectedTrack].hasPercussion) { // TODO: Remove; add percussion names, selection category
+function updateInstrumentContainer() { // TODO: Refactor grouping code
+	/* if (tracks[selectedTrack].hasPercussion) { // TODO: Remove; add MIDI percussion names, selection category
 		document.getElementById('instrumentcontainer').style.display = 'none';
 		return;
-	}
+	} */
+
+	// TODO: Show only percussion on percussion tracks unless in advanced mode
+	// Don't show percussion on non-percussion unless in advanced mode
 
 	document.getElementById('instrumentcontainer').style.display = '';
 
@@ -901,18 +906,24 @@ function updateInstrumentContainer() {
 		picker.id = `inspicker${i}`;
 		picker.setAttribute('onchange', `triggerInstrChange(${i});`);
 		picker.setAttribute('class', 'dropdown');
+
 		let isPowerupOverflow = level.entityCount > 100;
 		let isEntityOverflow = level.powerupCount > 100;
 		let hasOctaveRec = false;
 		let hasEntityRec = false;
+		let hasPercussion = false;
+
 		let recOctGroup = document.createElement('optgroup');
 		recOctGroup.setAttribute('label', 'Recommended: Complementary Octave');
+		let percussionGroup = document.createElement('optgroup');
+		percussionGroup.setAttribute('label', 'Percussion');
 		let recEntGroup = document.createElement('optgroup');
 		if (isEntityOverflow && !isPowerupOverflow) {
 			recEntGroup.setAttribute('label', 'Recommended - General Entities');
 		} else if (isPowerupOverflow && !isEntityOverflow) {
 			recEntGroup.setAttribute('label', 'Recommended - Powerups');
 		}
+
 		let allGroup = document.createElement('optgroup');
 		allGroup.setAttribute('label', 'All Instruments');
 		numRecommendedInstruments = 0;
@@ -927,6 +938,12 @@ function updateInstrumentContainer() {
 				opt.innerHTML += `${alphabetizedInstruments[j].octave} 8vb)`;
 			}
 			let optClone;
+			if (alphabetizedInstruments[j].isPercussion) {
+				optClone = opt.cloneNode(true);
+				percussionGroup.appendChild(optClone);
+				numRecommendedInstruments++;
+				hasPercussion = true;
+			}
 			if (alphabetizedInstruments[j].octave === targetOctave) {
 				optClone = opt.cloneNode(true);
 				recOctGroup.appendChild(optClone);
@@ -958,6 +975,7 @@ function updateInstrumentContainer() {
 		div.appendChild(picker);
 		if (hasOctaveRec) { picker.appendChild(recOctGroup); }
 		if (hasEntityRec) { picker.appendChild(recEntGroup); }
+		if (hasPercussion || usingAdvSettings) { picker.appendChild(percussionGroup); }
 		picker.appendChild(allGroup);
 		picker.selectedIndex = getSortedInstrumentIndex(tracks[selectedTrack].instrumentChanges[i])
 		+ numRecommendedInstruments;
@@ -1025,13 +1043,13 @@ function getPercussionInstrument(key) {
 	case 36: return getInstrumentById('pow');
 	case 37: return getInstrumentById('pow');
 	case 40: return getInstrumentById('pswitch');
-	case 41: return getInstrumentById('spikeball');
+	case 41: return getInstrumentById('pswitch');
 	case 42: return getInstrumentById('pow');
-	case 43: return getInstrumentById('spikeball');
+	case 43: return getInstrumentById('pswitch');
 	case 44: return getInstrumentById('sidewaysspring');
-	case 45: return getInstrumentById('spikeball');
+	case 45: return getInstrumentById('pswitch');
 	case 46: return getInstrumentById('sidewaysspring');
-	case 47: return getInstrumentById('spikeball');
+	case 47: return getInstrumentById('pswitch');
 	case 48: return getInstrumentById('spring');
 	case 51: return getInstrumentById('spring');
 	case 52: return getInstrumentById('spring');
@@ -1103,6 +1121,7 @@ function addTrack(track) {
 	console.log('new track');
 	midi.trks.push(track);
 	tracks.push(new MaestroTrack(track));
+	level.noteGroups.push(new PreloadedNoteGroup())
 }
 
 /**
@@ -1276,9 +1295,7 @@ function refreshOutlines() {
  * @param {Object[]} arr The instrument array to sort.
  * @return {Object[]} The sorted instrument array.
  */
-function alphabetizeInstruments(arr) {
-	// TODO: When switching to keys instead of indices, use Object.values(MM2Instruments)
-	// to get an array of objects that can be sorted
+function alphabetizeInstruments(arr) { // TODO: Use Object.assign
 	let newArr = new Array(arr.length);
 	for (let i = 0; i < arr.length; i++) {
 		newArr[i] = {
@@ -1286,6 +1303,7 @@ function alphabetizeInstruments(arr) {
 			name: arr[i].name,
 			octave: arr[i].octave,
 			pos: i,
+			isPercussion: arr[i].isPercussion,
 			isPowerup: arr[i].isPowerup,
 			isBuildable: arr[i].isBuildable
 		};
@@ -1376,9 +1394,10 @@ function refreshBlocks() {
 			let note = tracks[i].notes[j];
 			if (note.volume < noiseThreshold) { continue; } // Skip notes with volume below noise threshold
 			x = ticksToBlocks(note.time);
-			let levelX = Math.round(x);
+			// let levelX = Math.round(x);
+			let levelX = roundBlocks(x);
 			if (levelX > highestX) highestX = levelX;
-			let levelY = note.pitch + 1 + level.noteGroups[i].ofsY;
+			let levelY = note.pitch + 1;
 			if (levelX >= ofsX && levelX < ofsX + levelWidth) {
 				level.noteGroups[i].add(note.pitch, note.instrument, levelX, levelY, note);
 			}
@@ -1416,6 +1435,15 @@ function getFraction(n) {
  */
 function ticksToBlocks(ticks) {
 	return (ticks / midi.timing) * blocksPerBeat;
+}
+
+function blocksToTicks(blocks) {
+	return (blocks / blocksPerBeat) * midi.timing;
+}
+
+function roundBlocks(numBlocks) {
+	let numUnits = Math.round(numBlocks * numBlockSubdivisions);
+	return numUnits / numBlockSubdivisions;
 }
 
 /**
@@ -1473,15 +1501,71 @@ function toggleBuildRestriction() {
 }
 
 function addNote(trkId, x, y, idx) {
-	let note;
-	// x = Math.round(ticksToBlocks(note.time));
-	// note.pitch = 
-	// let levelY = note.pitch + 1 + level.noteGroups[i].ofsY;
+	let note = new MaestroNote();
+	note.pitch = y - 1 - level.noteGroups[trkId].ofsY;
+	note.time = blocksToTicks(x);
+	note.instrument = tracks[trkId].instrumentChanges[0];
+	note.x = x;
+	note.y = y - level.noteGroups[trkId].ofsY;
+	let prevNote = level.noteGroups[trkId].notes[idx];
+
+	level.noteGroups[trkId].notes.splice(idx, 0, note);
+
+	// Search for matching pitch and x position globally
+	let globalIdx = tracks[trkId].notes.findIndex((thisNote) => {
+		let thisX = ticksToBlocks(thisNote.time);
+		return (thisNote.pitch === prevNote.pitch && thisX === prevNote.x);
+	});
+
+	tracks[trkId].notes.splice(globalIdx, 0, note);
+	midi.trks[trkId].notes.splice(globalIdx, 0, note);
+
+	softRefresh();
 }
 
 function removeNote(trkId, idx) {
+	let note = level.noteGroups[trkId].notes[idx];
 	level.noteGroups[trkId].notes.splice(idx, 1);
-	tracks[trkId].notes.splice(idx, 1);
-	midi.trks[trkId].notes.splice(idx, 1);
+	
+	// Search for matching pitch and x position globally
+	let globalIdx = tracks[trkId].notes.findIndex((thisNote) => {
+		let thisX = ticksToBlocks(thisNote.time);
+		return (thisNote.pitch === note.pitch && thisX === note.x);
+	});
+
+	tracks[trkId].notes.splice(globalIdx, 1);
+	midi.trks[trkId].notes.splice(globalIdx, 1);
+
+	softRefresh();
+}
+
+function toggleBuildMode() {
+	isBuildMode = !isBuildMode;
+	softRefresh(false, true);
+}
+
+function setSecondaryTrack() {
+	secondaryTrack = selectedTrack;
+}
+
+function createNewTrack() {
+	let newTrk = new MIDItrack();
+
+	newTrk.usedInstruments = [0];
+	newTrk.hasPercussion = false;
+	newTrk.highestNote = null;
+	newTrk.lowestNote = null;
+	newTrk.isFromUser = true;
+
+	let labl;
+	if (newTrk.hasPercussion) {
+		labl = 'Percussion';
+	} else {
+		labl = getInstrumentLabel(newTrk.usedInstruments[0]);
+	}
+	newTrk.label = `${labl} ${midi.getLabelNumber(labl)}`;
+
+	addTrack(newTrk);
+	updateUI(false, false, false);
 	softRefresh();
 }

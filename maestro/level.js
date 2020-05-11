@@ -5,14 +5,16 @@ class Level {
        * @constructor
        */
 	constructor() {
+		this.width = levelWidth * numBlockSubdivisions;
+		this.height = levelHeight;
 		this.noteGroups = [];
 		this.overview = new Area(this.width, this.height);
 		this.isTrackOccupant = new Array(this.width);
 		this.numberOfOccupants = new Array(this.width);
 		this.entityCount = 0;
 		this.powerupCount = 0;
-		this.width = levelWidth;
 		this.maxWidth = 0;
+		this.resolution = numBlockSubdivisions;
 		this.limitLine = null;
 		this.refresh();
 	}
@@ -57,11 +59,11 @@ class Level {
        */
 	refresh() {
 		console.log('rf');
-		this.overview = new Area(levelWidth, levelHeight);
-		this.background = new Area(levelWidth, levelHeight);
-		this.foreground = new Area(levelWidth, levelHeight);
-		this.isTrackOccupant = new Array(levelWidth);
-		this.numberOfOccupants = new Array(levelWidth);
+		this.overview = new Area(levelWidth * numBlockSubdivisions, levelHeight);
+		this.background = new Area(levelWidth * numBlockSubdivisions, levelHeight);
+		this.foreground = new Area(levelWidth * numBlockSubdivisions, levelHeight);
+		this.isTrackOccupant = new Array(levelWidth * numBlockSubdivisions);
+		this.numberOfOccupants = new Array(levelWidth * numBlockSubdivisions);
 		structures = [];
 		this.entityCount = 0;
 		this.powerupCount = 0;
@@ -71,7 +73,7 @@ class Level {
 		let columnCounts = [];
 		let i;
 		let j;
-		for (i = 0; i < levelWidth; i++) {
+		for (i = 0; i < levelWidth * numBlockSubdivisions; i++) {
 			this.isTrackOccupant[i] = new Array(levelHeight);
 			this.numberOfOccupants[i] = new Array(levelHeight);
 			for (j = 0; j < levelHeight; j++) {
@@ -80,18 +82,20 @@ class Level {
 			}
 		}
 		resetSpatialData(true);
+		// TODO: Use notegroup xShifts to draw notes offset from one another
+		// But also have it so if shifted and non-shifted notes overlap, they are both visible
 		for (i = 0; i < this.noteGroups.length; i++) {
 			if (!this.noteGroups[i].isVisible) { continue; }
 			for (j = 0; j < this.noteGroups[i].notes.length; j++) {
 				let thisNote = this.noteGroups[i].notes[j];
-				let x = thisNote.x + marginWidth - ofsX;
+				let x = (thisNote.x + marginWidth - ofsX) * numBlockSubdivisions;
 				let y = thisNote.pitch + this.noteGroups[i].ofsY - ofsY;
-				if (!isVisible(x, y, marginWidth, 0)) { continue; }
+				if (!isVisible(x / numBlockSubdivisions, y, marginWidth, 0)) { continue; }
 
 				// Set note
-				// this.overview.setTile(x,y,1);
+				if(!isBuildMode) this.overview.setTile(x, y, 1);
 				this.isTrackOccupant[x][y][i] = true;
-				// this.numberOfOccupants[x][y]++; // TODO: Properly update this information after conflict resolution
+				this.numberOfOccupants[x][y]++; // TODO: Properly update this information after conflict resolution
 
 				// Set instrument
 				let ins = thisNote.instrument;
@@ -109,13 +113,15 @@ class Level {
 					// if (x > this.width) this.width = x;
 					// if((this.powerupCount > 100 || this.entityCount > 100) &&
 					// (this.limitLine === null)) this.limitLine = x + marginWidth + 1;
-					// this.overview.setTile(x,y+1,ins+2);
+					if(!isBuildMode) this.overview.setTile(x,y+1,ins+2);
 					this.isTrackOccupant[x][y + 1][i] = true;
-					// this.numberOfOccupants[x][y+1]++; // TODO: Also here
+					this.numberOfOccupants[x][y+1]++; // TODO: Also here
 				}
 
-				let newStruct = new NoteStructure(0, x, y);
-				newStruct.entities[0] = ins + 2;
+				if(isBuildMode) {
+					let newStruct = new NoteStructure(0, x / numBlockSubdivisions, y);
+					newStruct.entities[0] = ins + 2;
+				}
 			}
 		}
 		let curCount = { entities: 0, powerups: 0 };
@@ -171,7 +177,7 @@ class Level {
 			for (let j = 0; j < structure.blueprint.height; j++) {
 				let tile = structure.blueprint.get(i, j);
 				if (tile === 0) continue;
-				let x = structure.x + structure.xOfs + i;
+				let x = (structure.x + structure.xOfs + i) * numBlockSubdivisions;
 				let y = structure.y - structure.yOfs - j;
 				// Don't replace note blocks with hard blocks
 				if (this.overview.getTile(x, y, true) === 1 && tile === 1) continue;
@@ -181,7 +187,7 @@ class Level {
 			}
 		}
 		for (let i = 0; i < structure.entities.length; i++) {
-			let x = structure.x - structure.xOfs - structure.entityPos[i].x;
+			let x = (structure.x - structure.xOfs - structure.entityPos[i].x) * numBlockSubdivisions;
 			let y = structure.y - structure.yOfs - structure.entityPos[i].y;
 			this.overview.setTile(x, y, structure.entities[i]);
 			if (structure.entityProperties[0].parachute) this.foreground.setTile(x, y + 1, 0);
@@ -190,7 +196,7 @@ class Level {
 	}
 
 	markTile(x, y, id = 2) {
-		this.foreground.setTile(x, y, id);
+		this.foreground.setTile(x * numBlockSubdivisions, y, id);
 	}
 
 	highlightCollisionBox(colBox) {
@@ -254,8 +260,6 @@ class Area {
 	setTile(x, y, n) {
 		if (!this.isInBounds(x, y)) { return; }
 		this.grid[x][y] = n;
-		if (x >= this.w) { this.w = x + 1; }
-		if (y >= this.h) { this.h = y + 1; }
 	}
 
 	/**
@@ -314,7 +318,10 @@ class PreloadedNote {
 	constructor(pitch, instrument, x, y, origNote) {
 		this.pitch = pitch;
 		this.instrument = instrument;
-		this.x = x;
+
+		this.x = x; // Math.floor(x);
+		// this.xShift = x - this.x;
+
 		this.y = y;
 		this.origNote = origNote;
 	}
@@ -352,14 +359,15 @@ class PreloadedNoteGroup {
 		this.isVisible = visible;
 	}
 
-	getNoteAt(x, y) {
+	getNoteAt(x, y, doRound = true) {
 		// TODO: Replace with binary search
-		// FIXME: Doesn't always work
 		let i = 0;
 		for (i = 0; i < this.notes.length; i++) {
 			let note = this.notes[i];
-			if (note.x > x) break;
-			if (note.x === x && note.y === y) return { result: note, pos: i };
+			let xPos = note.x;
+			if (doRound) xPos = Math.floor(xPos);
+			if (xPos > x) break;
+			if (xPos === x && note.y + this.ofsY === y) return { result: note, pos: i };
 		}
 		return { result: null, pos: i };
 	}

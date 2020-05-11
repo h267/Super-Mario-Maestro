@@ -104,7 +104,7 @@ async function playLvl(midi, level, bpm, blocksPerBeat, ofsX, ofsY) {
 	stopAudio();
 	schTime = 0;
 	isContinuousPlayback = false;
-	endBound = level.width;
+	endBound = level.width * numBlockSubdivisions;
 	framesPerColumn = 1 / ((blocksPerBeat * bpm) / 3600);
 	let i;
 	let j;
@@ -121,7 +121,7 @@ async function playLvl(midi, level, bpm, blocksPerBeat, ofsX, ofsY) {
 			let yPos = thisNote.pitch + level.noteGroups[i].ofsY;
 			if ((yPos < ofsY || yPos >= ofsY + levelHeight - 1) && restrictPitchRange) continue;
 			let pitch = yPos - (ofsY - baseOfsY);
-			let xPos = thisNote.x - ofsX;
+			let xPos = (thisNote.x - ofsX) * numBlockSubdivisions;
 			// Prevent things from getting too loud
 			if (noteCount[xPos][pitch] <= polyphonyCap || noteCount[xPos][pitch] === undefined) {
 				notes[xPos].push({ note: pitch, instrument: thisNote.instrument });
@@ -131,7 +131,7 @@ async function playLvl(midi, level, bpm, blocksPerBeat, ofsX, ofsY) {
 		}
 	}
 	while (pos < endBound - marginWidth + 1) {
-		advanceSchTime(PPQ / blocksPerBeat);
+		advanceSchTime(PPQ / blocksPerBeat / numBlockSubdivisions);
 	}
 	prerenderAndPlay(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth), false);
 }

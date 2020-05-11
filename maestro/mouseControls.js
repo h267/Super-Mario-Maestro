@@ -1,15 +1,25 @@
+let isLoaded = false;
+
 let lastClickedTile = null;
 let lastClickedLvlPos = null;
-let mouseToolId = 0;
+
+let mouseToolId = 2;
 let cursorImg;
 let currentMouseTool = null;
 let editHistory = [];
+let isMainMouseHolding = false;
 
 let showRuler = false;
+let isToolsEnabled = false;
+
+let secondaryTrack = 0;
+
+enableMouseTools();
 
 window.addEventListener('load', () => { // Wait for everything to load before executing
 	setupToolIcons();
 	refreshMouseTool();
+	isLoaded = true;
 });
 
 // TODO: Functionality
@@ -17,35 +27,59 @@ window.addEventListener('load', () => { // Wait for everything to load before ex
 const mouseTools = [
 	{
 		name: 'Info',
+		isHoldable: false,
 		onLeftClick: () => infoTool(),
 		onRightClick: () => {},
 		close: () => {}
 	},
 	{
 		name: 'Zoom',
-		onLeftClick: () => console.log('zoom in'),
-		onRightClick: () => console.log('zoom out'),
+		isHoldable: false,
+		onLeftClick: () => zoomInTool(),
+		onRightClick: () => zoomOutTool(),
 		close: () => {}
 	},
 	{
 		name: 'Ruler',
+		isHoldable: false,
 		onLeftClick: () => rulerTool(),
 		onRightClick: () => {},
 		close: () => { showRuler = false; }
 	},
 	{
 		name: 'Add Note',
+		isHoldable: true,
 		onLeftClick: () => addNoteTool(),
 		onRightClick: () => {},
 		close: () => {}
 	},
 	{
 		name: 'Erase Note',
-		onLeftClick: () => console.log('erase note'),
+		isHoldable: true,
+		onLeftClick: () => eraseNoteTool(),
+		onRightClick: () => {},
+		close: () => {}
+	},
+	{
+		name: 'Select Notes',
+		isHoldable: true,
+		onLeftClick: () => {},
+		onRightClick: () => {},
+		close: () => {}
+	},
+	{
+		name: 'Change Track',
+		isHoldable: true,
+		onLeftClick: () => changeTrackTool(),
 		onRightClick: () => {},
 		close: () => {}
 	}
 ];
+
+function enableMouseTools() {
+	isToolsEnabled = true;
+	console.log('Mouse tools enabled. Use the scroll wheel on the canvas to change tools.');
+}
 
 function setupToolIcons() {
 	toolIcons.forEach((icon, i) => {
@@ -68,8 +102,8 @@ function getMainMouseTilePos(e) {
 	let canvasOfs = getOffset(e);
 	let div = document.getElementById('displaycontainer');
 	let scrollOfs = { x: div.scrollLeft, y: div.scrollTop };
-	let offset = { x: canvasOfs.x + scrollOfs.x, y: canvasOfs.y + scrollOfs.y };
-	let tilePos = { x: Math.floor(offset.x / 16), y: 27 - Math.floor(offset.y / 16) };
+	let offset = { x: (canvasOfs.x + scrollOfs.x) / canvasZoom, y: (canvasOfs.y + scrollOfs.y) / canvasZoom };
+	let tilePos = { x: Math.floor(offset.x / 16), y: (27 - Math.floor(offset.y / 16)) };
 	return tilePos;
 }
 
@@ -77,13 +111,22 @@ function getMainMouseTilePos(e) {
  * Handles when the main canvas is clicked, and toggle the ruler.
  * @param {MouseEvent} e The mouse event.
  */
-function handleMainClick(e) {
-	if (noMouse) { return; } // Exit if the mouse is disabled
+function handleMainMouseDown(e) { // TODO: Distinguish left and right click
+	if (noMouse || e.button != 0) { return; } // Exit if the mouse is disabled
+	isMainMouseHolding = true;
+	processClick(e);
+}
 
+function processClick(e) {
 	lastClickedTile = getMainMouseLevelPos(e);
 	lastClickedLvlPos = getMainMouseLevelPos(e);
 
 	currentMouseTool.onLeftClick();
+}
+
+function handleMainMouseUp(e) {
+	if (noMouse) { return; } // Exit if the mouse is disabled
+	isMainMouseHolding = false;
 }
 
 function handleMainRightClick(e) {
@@ -103,6 +146,7 @@ function handleMainRightClick(e) {
  */
 function handleMainMove(e) {
 	if (noMouse) { return; } // Exit if the mouse is disabled
+
 	let tilePos = getMainMouseTilePos(e);
 	let levelPos = getMainMouseLevelPos(e);
 	let refresh = false;
@@ -113,6 +157,11 @@ function handleMainMove(e) {
 		refresh = true;
 	}
 
+	if (isMainMouseHolding && refresh) {
+		processClick(e); // Repeat click actions on new tiles if the mouse is held
+		return;
+	}
+
 	if (refresh && showRuler) { // If the highlighted tile position has changed, redraw the ruler
 		drawRuler(levelPos, tilePos);
 	}
@@ -121,6 +170,7 @@ function handleMainMove(e) {
 }
 
 function handleMainWheel(e) {
+	if (noMouse || !isToolsEnabled) { return; } // Exit if the mouse is disabled
 	let tilePos = getMainMouseTilePos(e);
 
 	let change = Math.sign(e.deltaY); // +/- 1, depending on scroll direction
@@ -135,7 +185,15 @@ function handleMainWheel(e) {
 	e.preventDefault();
 }
 
+function switchTool(tilePos) {
+	currentMouseTool.close();
+	refreshMouseTool();
+	drawCursor(tilePos);
+	refreshCanvas();
+}
+
 function drawCursor(tilePos) {
+	if(!isLoaded) return;
 	// Draw the cursor
 	clearDisplayLayer(dlayer.mouseLayer);
 	// Lightly highlight the tile the cursor is on
@@ -304,20 +362,49 @@ function infoTool() {
 	let queryY = lastClickedLvlPos.y;
 	let foundNote = level.noteGroups[selectedTrack].getNoteAt(queryX, queryY);
 	console.log(foundNote);
-	if (foundNote.result !== null) removeNote(selectedTrack, foundNote.pos);
 }
 
 function addNoteTool() {
 	if (!fileLoaded) return;
-	console.log(`Add note at ${lastClickedLvlPos.x}, ${lastClickedLvlPos.y}`);
+	let placeX = lastClickedLvlPos.x;
+	let placeY = lastClickedLvlPos.y;
+	let insertIndex = level.noteGroups[selectedTrack].getNoteAt(placeX, placeY).pos;
+	addNote(selectedTrack, placeX, placeY, insertIndex);
+	// console.log(`Add note at ${placeX}, ${placeY}`);
 }
 
-function switchTool(tilePos) {
-	currentMouseTool.close();
-	refreshMouseTool();
-	drawCursor(tilePos);
-	refreshCanvas();
+function eraseNoteTool() {
+	if (!fileLoaded) return;
+	let queryX = lastClickedLvlPos.x;
+	let queryY = lastClickedLvlPos.y;
+	let foundNote = level.noteGroups[selectedTrack].getNoteAt(queryX, queryY);
+	// console.log(foundNote);
+	if (foundNote.result !== null) removeNote(selectedTrack, foundNote.pos);
 }
+
+function zoomInTool() {
+	canvasZoom *= 2;
+	document.getElementById('canvas').style.transform = `scale(${canvasZoom})`;
+}
+
+function zoomOutTool() {
+	canvasZoom /= 2;
+	document.getElementById('canvas').style.transform = `scale(${canvasZoom})`;
+}
+
+function changeTrackTool() {
+	if (!fileLoaded) return;
+	let placeX = lastClickedLvlPos.x;
+	let placeY = lastClickedLvlPos.y;
+	let foundNote = level.noteGroups[selectedTrack].getNoteAt(placeX, placeY);
+	if (foundNote.result !== null){
+		removeNote(selectedTrack, foundNote.pos);
+		let insertIndex = level.noteGroups[secondaryTrack].getNoteAt(placeX, placeY).pos;
+		addNote(secondaryTrack, placeX, placeY, insertIndex);
+	}
+}
+
+
 
 minimap.onmousedown = (e) => { handleMiniMouseDown(e); };
 minimap.onmousemove = (e) => { handleMiniMouseMove(e); };
@@ -325,6 +412,7 @@ minimap.onmouseup = (e) => { handleMiniMouseUp(e); };
 minimap.onmouseout = (e) => { handleMiniMouseOut(e); };
 
 canvas.onmousemove = (e) => { handleMainMove(e); };
-canvas.onclick = (e) => { handleMainClick(e); };
+canvas.onmousedown = (e) => { handleMainMouseDown(e); };
+canvas.onmouseup = (e) => { handleMainMouseUp(e); };
 canvas.oncontextmenu = (e) => { handleMainRightClick(e); };
 canvas.onwheel = (e) => { handleMainWheel(e); };

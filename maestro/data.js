@@ -2,136 +2,165 @@
 /**
  * Data on the various scroll speeds in Mario Maker 2. Tempos are stored in their 4 block per beat equivalents.
  */
+
+const numBlockSubdivisions = 2;
+
 const MM2Tempos = [
 	{
 		name: 'Slow Autoscroll',
 		bpm: 28,
-		isCommon: false
+		isCommon: false,
+		isBuildable: true
 	},
 	{
 		name: 'Backwards Normal Conveyor - Walking',
 		bpm: 28,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Underwater - Walking',
 		bpm: 32,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Normal Conveyor - Idle',
 		bpm: 56,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Medium Autoscroll',
 		bpm: 56,
-		isCommon: true
+		isCommon: true,
+		isBuildable: true
 	},
 	{
 		name: 'Backwards Fast Conveyor - Running',
 		bpm: 56,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Swimming',
 		bpm: 64,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Walking',
 		bpm: 84,
-		isCommon: true
+		isCommon: true,
+		isBuildable: true
 	},
 	{
 		name: 'Blaster in Cloud - Idle',
 		bpm: 84,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Normal Underwater Conveyor - Walking',
 		bpm: 88,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Swimming Holding Item',
 		bpm: 101,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Fast Autoscroll',
 		bpm: 112,
-		isCommon: true
+		isCommon: true,
+		isBuildable: true
 	},
 	{
 		name: 'Backwards Normal Conveyor - Running',
 		bpm: 112,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Fast Conveyor - Idle',
 		bpm: 112,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Underwater Blaster in Cloud - Walking',
 		bpm: 116,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Normal Conveyor - Walking',
 		bpm: 140,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Fast Lava Lift',
 		bpm: 140,
-		isCommon: true
+		isCommon: true,
+		isBuildable: true
 	},
 	{
 		name: 'Fast Underwater Conveyor - Walking',
 		bpm: 144,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Underwater Blaster in Cloud - Swimming',
 		bpm: 148,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Blaster in Cloud - Walking',
 		bpm: 166,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Running',
 		bpm: 168,
-		isCommon: true
+		isCommon: true,
+		isBuildable: true
 	},
 	{
 		name: 'Underwater Blaster in Cloud - Swimming Holding Item',
 		bpm: 186,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Fast Conveyor - Walking',
 		bpm: 194,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Normal Conveyor - Running',
 		bpm: 227,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Blaster in Cloud - Running',
 		bpm: 256,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	},
 	{
 		name: 'Fast Conveyor - Running',
 		bpm: 279,
-		isCommon: false
+		isCommon: false,
+		isBuildable: false
 	}
 ];
 
@@ -144,6 +173,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Goomba (Grand Piano)',
 		octave: 1,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 3
@@ -151,6 +181,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Buzzy Shellmet (Detuned Bell)',
 		octave: 1,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 4
@@ -158,6 +189,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: '1-Up (Synth Organ)',
 		octave: 0,
 		isPowerup: true,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 5
@@ -165,6 +197,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Spike Top (Harpsichord)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: false
 	},
 	{ // 6
@@ -172,6 +205,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Sledge Bro (Bass Guitar)',
 		octave: -2,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: false
 	},
 	{ // 7
@@ -179,6 +213,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Piranha Plant (Pizzicato Strings)',
 		octave: 1,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: false
 	},
 	{ // 8
@@ -186,6 +221,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Bob-Omb (Orchestra Hit)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 9
@@ -193,6 +229,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Spiny Shellmet (Trumpet)',
 		octave: 1,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 10
@@ -200,6 +237,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Dry Bones Shell (Flute)',
 		octave: 2,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 11
@@ -207,6 +245,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Mushroom (Square Wave)',
 		octave: 1,
 		isPowerup: true,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 12
@@ -214,6 +253,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Rotten Mushroom (Low Synth)',
 		octave: -2,
 		isPowerup: true,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 13
@@ -221,6 +261,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Green Beach Koopa (Bark)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: false
 	},
 	{ // 14
@@ -228,6 +269,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Monty Mole (Banjo)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 15
@@ -235,6 +277,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'P-Switch (Snare Drum)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: true,
 		isBuildable: false
 	},
 	{ // 16
@@ -242,6 +285,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Red Beach Koopa (Meow)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: false
 	},
 	{ // 17
@@ -249,6 +293,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Big Mushroom (Shamisen)',
 		octave: 0,
 		isPowerup: true,
+		isPercussion: false,
 		isBuildable: false
 	},
 	{ // 18
@@ -256,6 +301,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Bill Blaster (Timpani)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: true,
 		isBuildable: false
 	},
 	{ // 19
@@ -263,6 +309,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Shoe Goomba (Low Accordion)',
 		octave: -1,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 20
@@ -270,6 +317,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Stiletto Goomba (Accordion)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 21
@@ -277,6 +325,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Cannon (Timbales)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: true,
 		isBuildable: false
 	},
 	{ // 22
@@ -284,6 +333,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Chain Chomp (Unchained) (Synth Piano)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 23
@@ -291,6 +341,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Chain Chomp Post (Wood Block)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: true,
 		isBuildable: false
 	},
 	{ // 24
@@ -298,6 +349,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Coin (Sleigh Bells)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: true,
 		isBuildable: false
 	},
 	{ // 25
@@ -305,6 +357,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Fire Piranha Plant (Legato Strings)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: false
 	},
 	{ // 26
@@ -312,6 +365,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Fire Flower (Recorder)',
 		octave: 1,
 		isPowerup: true,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 27
@@ -319,6 +373,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Goombrat (Honky-Tonk Piano)',
 		octave: 1,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 28
@@ -326,6 +381,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Green Koopa (Xylophone)',
 		octave: 1,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 29
@@ -333,6 +389,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Red Koopa (Vibraphone)',
 		octave: 1,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 30
@@ -340,6 +397,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Hammer Bro (Electric Guitar)',
 		octave: 1,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: false
 	},
 	{ // 31
@@ -347,6 +405,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Magikoopa (Synth Choir)',
 		octave: 1,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: false
 	},
 	{ // 32
@@ -354,6 +413,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Muncher (Synth Piano 2)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: false
 	},
 	{ // 33
@@ -361,6 +421,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'POW Block (Kick Drum)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: true,
 		isBuildable: false
 	},
 	{ // 34
@@ -368,6 +429,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Trampoline (Crash Cymbal)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: true,
 		isBuildable: false
 	},
 	{ // 35
@@ -375,6 +437,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Sideways Trampoline (Hi-Hat)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: true,
 		isBuildable: false
 	},
 	{ // 36
@@ -382,6 +445,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Super Star (Music Box)',
 		octave: 1,
 		isPowerup: true,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 37
@@ -389,6 +453,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Superball Flower (Organ)',
 		octave: 1,
 		isPowerup: true,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 38
@@ -396,6 +461,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Thwomp (Ethnic Drum)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: true,
 		isBuildable: false
 	},
 	{ // 39
@@ -403,6 +469,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Wiggler (Tubular Bells)',
 		octave: 1,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 40
@@ -410,6 +477,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Spike (Acoustic Bass Guitar)',
 		octave: -2,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: true
 	},
 	{ // 41
@@ -417,6 +485,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Spike Ball (Bass Drum)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: true,
 		isBuildable: false
 	},
 	{ // 42
@@ -424,6 +493,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Snowball (Tom-Tom Drum)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: true,
 		isBuildable: false
 	},
 	{ // 43
@@ -431,6 +501,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Pokey (Acoustic Guitar)',
 		octave: 0,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: false
 	},
 	{ // 44
@@ -438,6 +509,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Snow Pokey (Kazoo)',
 		octave: 1,
 		isPowerup: false,
+		isPercussion: false,
 		isBuildable: false
 	},
 	{ // 45
@@ -445,6 +517,7 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		name: 'Master Sword (Synth Horn)',
 		octave: 0,
 		isPowerup: true,
+		isPercussion: false,
 		isBuildable: true
 	}
 ];
@@ -461,7 +534,9 @@ const toolIconFilenames = [
 	'zoom',
 	'ruler',
 	'add',
-	'erase'
+	'erase',
+	'select',
+	'transfer'
 ];
 
 class MaestroTrack {
@@ -475,6 +550,8 @@ class MaestroTrack {
 		this.numNotesOffscreen = { above: 0, below: 0 };
 		this.label = midiTrk.label;
 		this.hasPercussion = midiTrk.hasPercussion;
+		this.isFromUser = false;
+		if (midiTrk.isFromUser) this.isFromUser = true;
 
 		if (midiTrk === null) return;
 		midiTrk.notes.forEach((midiNote) => {
@@ -484,7 +561,8 @@ class MaestroTrack {
 }
 
 class MaestroNote {
-	constructor(midiNote) {
+	constructor(midiNote = null) {
+		if (midiNote === null) return;
 		this.pitch = midiNote.pitch;
 		this.time = midiNote.time; // TODO: Store x coord at 4 bpb
 		let insId;

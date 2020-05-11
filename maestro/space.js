@@ -40,6 +40,8 @@ let cells = [];
 let chunks = [];
 for (let i = 0; i < numStructChunks; i++) chunks[i] = [];
 
+// FIXME: Half tiles
+
 class Blueprint {
 	constructor(arr2d) {
 		this.grid = [];
@@ -135,7 +137,7 @@ class Structure {
 		Object.assign(this, getStructTemplate(type));
 
 		this.type = type;
-		this.x = x;
+		this.x = Math.floor(x);
 		this.y = y;
 
 		this.collisionBox.moveTo(this.x + this.xOfs, this.y);
@@ -147,7 +149,7 @@ class Structure {
 		this.hasModifiedBlueprint = false;
 		this.conflictingStructures = [];
 		this.isNote = false;
-		this.originalX = x;
+		this.originalX = this.x;
 		this.putInChunk();
 
 		structures.push(this);
@@ -198,6 +200,7 @@ class Structure {
 class NoteStructure extends Structure {
 	constructor(type, x, y) {
 		super(type, x, y);
+		this.hasSemisolid = (this.x < x); // Add semisolid if on a half tile
 		this.isNote = true;
 		this.mergedStructures = [];
 		[this.setup] = setups;
