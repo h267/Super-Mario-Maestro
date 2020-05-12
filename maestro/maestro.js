@@ -1502,20 +1502,29 @@ function toggleBuildRestriction() {
 
 function addNote(trkId, x, y, idx) {
 	let note = new MaestroNote();
+	let isAtEnd = false;
 	note.pitch = y - 1 - level.noteGroups[trkId].ofsY;
 	note.time = blocksToTicks(x);
 	note.instrument = tracks[trkId].instrumentChanges[0];
+	note.originalInstrument = note.instrument;
 	note.x = x;
 	note.y = y - level.noteGroups[trkId].ofsY;
 	let prevNote = level.noteGroups[trkId].notes[idx];
+	if (prevNote === undefined){
+		isAtEnd = true;
+		prevNote = level.noteGroups[trkId].notes[idx - 1];
+	}
 
 	level.noteGroups[trkId].notes.splice(idx, 0, note);
 
 	// Search for matching pitch and x position globally
-	let globalIdx = tracks[trkId].notes.findIndex((thisNote) => {
+	let globalIdx;
+	if (isAtEnd) globalIdx = tracks[trkId].notes.length;
+	else if (prevNote !== undefined) globalIdx = tracks[trkId].notes.findIndex((thisNote) => {
 		let thisX = ticksToBlocks(thisNote.time);
 		return (thisNote.pitch === prevNote.pitch && thisX === prevNote.x);
 	});
+	if (globalIdx === -1) globalIdx = 0;
 
 	tracks[trkId].notes.splice(globalIdx, 0, note);
 	midi.trks[trkId].notes.splice(globalIdx, 0, note);

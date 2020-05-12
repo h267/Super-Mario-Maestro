@@ -149,6 +149,7 @@ class Level {
 				this.markTile(struct.x, struct.y, 1);
 				this.conflictCount++;
 			}
+			if (struct.hasSemisolid) this.markTile(struct.x, struct.y, 3);
 		});
 		cells.forEach((cell) => cell.build());
 		cells.forEach((cell) => cell.members.forEach((struct) => {
@@ -164,6 +165,7 @@ class Level {
 			that.drawStructure(struct);
 			// console.log(struct.id);
 			// console.log(struct);
+			
 		});
 		console.log('---');
 	}
@@ -367,7 +369,9 @@ class PreloadedNoteGroup {
 			let xPos = note.x;
 			if (doRound) xPos = Math.floor(xPos);
 			if (xPos > x) break;
-			if (xPos === x && note.y + this.ofsY === y) return { result: note, pos: i };
+			if (xPos === x && note.y + this.ofsY === y) {
+				return { result: note, pos: i };
+			}
 		}
 		return { result: null, pos: i };
 	}

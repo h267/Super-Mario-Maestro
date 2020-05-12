@@ -237,6 +237,7 @@ class NoteStructure extends Structure {
 	}
 
 	checkCellCollision(otherStruct, doAdd) {
+		if (this.hasSemisolid || otherStruct.hasSemisolid) return true; // TODO: Allow semisolids in cells
 		/* let tID = this.id;
             let oID = otherStruct.id;
             console.log(tID + ' @ ' + this.collisionBox.x + ' <-> ' + oID + ' @ ' + otherStruct.collisionBox.x); */
@@ -463,6 +464,9 @@ class NoteStructure extends Structure {
 	canMergeWith(otherStruct) {
 		// Can't be same setup
 		if (this.setup.structType === otherStruct.setup.structType) return false;
+
+		// Can't have one be semisolid and the other not
+		if (this.hasSemisolid !== otherStruct.hasSemisolid) return false;
 
 		let thisTemplate = getStructTemplate(this.setup.structType);
 		let otherTemplate = getStructTemplate(otherStruct.setup.structType);
