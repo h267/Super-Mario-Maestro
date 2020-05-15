@@ -40,7 +40,7 @@ let cells = [];
 let chunks = [];
 for (let i = 0; i < numStructChunks; i++) chunks[i] = [];
 
-// FIXME: Half tiles
+let forbiddenTiles = [];
 
 class Blueprint {
 	constructor(arr2d) {
@@ -137,7 +137,7 @@ class Structure {
 		Object.assign(this, getStructTemplate(type));
 
 		this.type = type;
-		this.x = Math.floor(x);
+		this.x = Math.ceil(x);
 		this.y = y;
 
 		this.collisionBox.moveTo(this.x + this.xOfs, this.y);
@@ -173,6 +173,7 @@ class Structure {
 
 	putInChunk() {
 		this.chunkIndex = Math.floor(this.x / blocksPerChunk);
+		if (this.chunkIndex > 29) this.chunkIndex = 29;
 		chunks[this.chunkIndex].push(this);
 	}
 
@@ -195,13 +196,27 @@ class Structure {
 		if (curCell !== null) curCell.removeStructure(this);
 		this.originalX = this.x;
 	}
+
+	isInForbiddenTile() {
+		let thisX = this.x - marginWidth - ofsX;
+		let thisY = this.y + 1 + ofsY;
+		for (let j = 0; j < forbiddenTiles.length; j++) {
+			if (thisX === forbiddenTiles[j].x && thisY === forbiddenTiles[j].y){
+				return true;
+			}
+		}
+		return false;
+	}
 }
 
 class NoteStructure extends Structure {
-	constructor(type, x, y) {
+	constructor(type, x, y, entityType) {
 		super(type, x, y);
-		this.hasSemisolid = (this.x < x); // Add semisolid if on a half tile
 		this.isNote = true;
+		this.entityType = entityType;
+		this.buildRules = {}; // MM2Instruments[entityType].buildRules;
+		Object.assign(this.buildRules, stdBuildRules, MM2Instruments[entityType].buildRules);
+		this.hasSemisolid = (this.x > x) && this.buildRules.canHaveSemisolid; // Add semisolid if on a half tile and the entity allows it
 		this.mergedStructures = [];
 		[this.setup] = setups;
 	}
@@ -237,6 +252,7 @@ class NoteStructure extends Structure {
 	}
 
 	checkCellCollision(otherStruct, doAdd) {
+		if (!this.buildRules.canBeInCell || !this.buildRules.canBeInCell)
 		if (this.hasSemisolid || otherStruct.hasSemisolid) return true; // TODO: Allow semisolids in cells
 		/* let tID = this.id;
             let oID = otherStruct.id;
@@ -436,6 +452,8 @@ class NoteStructure extends Structure {
 		this.entityProperties = template.entityProperties;
 		[this.entityPos[0]] = template.entityPos;
 		this.canBeInCell = template.canBeInCell;
+		this.hasFall = template.hasFall;
+		this.hasParachute = template.hasParachute;
 	}
 
 	tryAllSetups() { // FIXME: Structs in cells need to be checked using cell height
@@ -443,14 +461,17 @@ class NoteStructure extends Structure {
 		let origSetup = this.setup;
 		let availableMoves = [];
 		let conflictAmount = Infinity;
+		let isForbidden = false; // TODO: Rework
 		for (let i = 0; i < setups.length; i++) {
 			if (setups[i].offset === origSetup.offset) continue;
 			this.moveBySetup(setups[i]);
+			isForbidden = this.isInForbiddenTile();
 			this.checkForCollisions();
+			if (!this.checkForLegality()) continue;
 			let conflicts = this.conflictingStructures;
 			conflictAmount = Math.min(conflictAmount, this.conflictingStructures.length);
-			availableMoves.push({ setup: setups[i], structs: conflicts });
-			if (this.conflictingStructures.length === 0) {
+			if (!isForbidden) availableMoves.push({ setup: setups[i], structs: conflicts });
+			if (this.conflictingStructures.length === 0 && !isForbidden) {
 				return { success: true, availableMoves: [] };
 			}
 		}
@@ -462,6 +483,8 @@ class NoteStructure extends Structure {
 	}
 
 	canMergeWith(otherStruct) {
+		if (!this.buildRules.canVerticalStack || !this.buildRules.canVerticalStack) return false;
+		
 		// Can't be same setup
 		if (this.setup.structType === otherStruct.setup.structType) return false;
 
@@ -485,6 +508,14 @@ class NoteStructure extends Structure {
 			cellHeight = this.cell.highestPoint - this.collisionBox.y;
 		}
 		return Math.max(this.collisionBox.h, cellHeight);
+	}
+
+	checkForLegality() {
+		let isLegal = true;
+		if (this.hasSemisolid) isLegal &= this.buildRules.canHaveSemisolid;
+		if (this.hasFall) isLegal &= (this.buildRules.canFallNextToWall && this.buildRules.canFreeFall);
+		if (this.hasParachute) isLegal &= this.buildRules.canParachute;
+		return isLegal;
 	}
 }
 
@@ -652,7 +683,9 @@ function getStructTemplate(n) {
 		xOfs: -1,
 		yOfs: -3,
 		collisionBox: getColBox(n),
-		canBeInCell: true
+		canBeInCell: true,
+		hasFall: false,
+		hasParachute: false
 	};
 	case 1: return {
 		blueprint: getBlueprint(n),
@@ -661,7 +694,9 @@ function getStructTemplate(n) {
 		xOfs: -1,
 		yOfs: -5,
 		collisionBox: getColBox(n),
-		canBeInCell: false
+		canBeInCell: false,
+		hasFall: true,
+		hasParachute: false
 	};
 	case 2: return {
 		blueprint: getBlueprint(n),
@@ -670,7 +705,9 @@ function getStructTemplate(n) {
 		xOfs: -1,
 		yOfs: -4,
 		collisionBox: getColBox(n),
-		canBeInCell: false
+		canBeInCell: false,
+		hasFall: false,
+		hasParachute: true
 	};
 	case 3: return {
 		blueprint: getBlueprint(n),
@@ -679,7 +716,9 @@ function getStructTemplate(n) {
 		xOfs: -1,
 		yOfs: -5,
 		collisionBox: getColBox(n),
-		canBeInCell: false
+		canBeInCell: false,
+		hasFall: false,
+		hasParachute: true
 	};
 	case 4: return {
 		blueprint: getBlueprint(n),
@@ -688,7 +727,9 @@ function getStructTemplate(n) {
 		xOfs: -1,
 		yOfs: -6,
 		collisionBox: getColBox(n),
-		canBeInCell: false
+		canBeInCell: false,
+		hasFall: false,
+		hasParachute: true
 	};
 	case 5: return {
 		blueprint: getBlueprint(n),
@@ -697,7 +738,9 @@ function getStructTemplate(n) {
 		xOfs: -1,
 		yOfs: -6,
 		collisionBox: getColBox(n),
-		canBeInCell: false
+		canBeInCell: false,
+		hasFall: true,
+		hasParachute: false
 	};
 	case 6: return {
 		blueprint: getBlueprint(n),
@@ -706,7 +749,9 @@ function getStructTemplate(n) {
 		xOfs: -1,
 		yOfs: -4,
 		collisionBox: getColBox(n),
-		canBeInCell: false
+		canBeInCell: false,
+		hasFall: true,
+		hasParachute: false
 	};
 
 	default:
@@ -801,7 +846,7 @@ function createCell() {
 }
 
 // Where the magic happens
-function handleAllConflicts() {
+function handleAllConflicts() { // TODO: Let either colliding structure move each other
 	let structQueue = [];
 	structures.forEach((struct) => structQueue.push({ struct, blacklist: [], forceMove: false }));
 	while (structQueue.length > 0) {
@@ -809,7 +854,7 @@ function handleAllConflicts() {
 		let { struct } = structEntry;
 		let { blacklist } = structEntry;
 		struct.checkForCollisions();
-		if ((struct.conflictingStructures.length > 0 || obfuscateNotes || structEntry.forceMove) && struct.isNote) {
+		if ((struct.conflictingStructures.length > 0 || obfuscateNotes || structEntry.forceMove || struct.isInForbiddenTile()) && struct.isNote) {
 			let success = false;
 			let nodeCount = 0;
 			let moveQueue = [{ struct, history: [] }];

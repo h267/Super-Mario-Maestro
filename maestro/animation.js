@@ -59,7 +59,7 @@ function animatePlayback(blocksPerFrame, maxX, delay) {
 	playbackAnim = new Animation(((anim) => {
 		canvasLayers[dlayer.mouseLayer].clear();
 		let xPos = Math.floor((marginWidth + (blocksPerFrame * anim.frameCount)) * 16);
-		if (xPos / 16 > maxX - marginWidth) {
+		if (xPos / 16 > maxX) {
 			if (isAnimating) {
 				setTimeout(() => stopAudio(), 2000);
 				isAnimating = false;

@@ -73,6 +73,13 @@ const mouseTools = [
 		onLeftClick: () => changeTrackTool(),
 		onRightClick: () => {},
 		close: () => {}
+	},
+	{
+		name: 'Forbid Tile',
+		isHoldable: true,
+		onLeftClick: () => forbidTool(),
+		onRightClick: () => unforbidTool(),
+		close: () => {}
 	}
 ];
 
@@ -404,7 +411,27 @@ function changeTrackTool() {
 	}
 }
 
+function forbidTool() {
+	let forbidTile = {
+		x: lastClickedLvlPos.x,
+		y: lastClickedLvlPos.y
+	};
+	if (forbiddenTiles.findIndex((tile) => {
+		return tile.x === forbidTile.x && tile.y === forbidTile.y;
+	}) === -1){
+		forbiddenTiles.push(forbidTile);
+		console.log(forbidTile);
+	}
+	softRefresh(true, false);
+}
 
+function unforbidTool() {
+	let queryX = lastClickedLvlPos.x;
+	let queryY = lastClickedLvlPos.y;
+	let idx = forbiddenTiles.findIndex((tile) => tile.x === queryX && tile.y === queryY);
+	forbiddenTiles.splice(idx, 1);
+	softRefresh(true, true);
+}
 
 minimap.onmousedown = (e) => { handleMiniMouseDown(e); };
 minimap.onmousemove = (e) => { handleMiniMouseMove(e); };

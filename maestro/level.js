@@ -119,7 +119,7 @@ class Level {
 				}
 
 				if(isBuildMode) {
-					let newStruct = new NoteStructure(0, x / numBlockSubdivisions, y);
+					let newStruct = new NoteStructure(0, x / numBlockSubdivisions, y, ins);
 					newStruct.entities[0] = ins + 2;
 				}
 			}
@@ -166,6 +166,12 @@ class Level {
 			// console.log(struct.id);
 			// console.log(struct);
 			
+		});
+
+		forbiddenTiles.forEach((forbiddenTile) => {
+			let markX = forbiddenTile.x + marginWidth - ofsX;
+			let markY =  forbiddenTile.y - 1 - ofsY;
+			this.markTile(markX, markY, 5);
 		});
 		console.log('---');
 	}

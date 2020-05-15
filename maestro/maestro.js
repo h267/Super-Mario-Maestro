@@ -1385,7 +1385,7 @@ function redrawMinimap() {
 /**
  * Updates the stored values for tile positions in the level.
  */
-function refreshBlocks() {
+function refreshBlocks() { // TODO: Somehow quantize the notes further when the user switches to wigglers without losing data
 	let highestX = 0;
 	for (let i = 0; i < tracks.length; i++) {
 		level.clearNoteGroup(i);

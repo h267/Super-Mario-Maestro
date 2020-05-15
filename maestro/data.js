@@ -167,14 +167,15 @@ const MM2Tempos = [
 /**
  * Data on the entities in Maestro.
  */
-const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
+const MM2Instruments = [
 	{ // 2
 		id: 'goomba',
 		name: 'Goomba (Grand Piano)',
 		octave: 1,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	},
 	{ // 3
 		id: 'buzzybeetle',
@@ -182,7 +183,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: false,
+		buildRules: {}
 	},
 	{ // 4
 		id: '1up',
@@ -190,7 +192,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: true,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	},
 	{ // 5
 		id: 'spiketop',
@@ -198,7 +201,10 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {
+			canFallNextToWall: false,
+		}
 	},
 	{ // 6
 		id: 'sledgebro',
@@ -206,7 +212,11 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: -2,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {
+			width: 2,
+			height: 2
+		}
 	},
 	{ // 7
 		id: 'piranhaplant',
@@ -214,7 +224,10 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: false
+		isBuildable: true,
+		buildRules: {
+			canFallNextToWall: false
+		}
 	},
 	{ // 8
 		id: 'bobomb',
@@ -222,7 +235,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	},
 	{ // 9
 		id: 'spiny',
@@ -230,7 +244,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	},
 	{ // 10
 		id: 'drybones',
@@ -238,7 +253,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 2,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	},
 	{ // 11
 		id: 'mushroom',
@@ -246,7 +262,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: true,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	},
 	{ // 12
 		id: 'rottenmushroom',
@@ -254,7 +271,10 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: -2,
 		isPowerup: true,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {
+			canHaveSemisolid: false
+		}
 	},
 	{ // 13
 		id: 'greenbeachkoopa',
@@ -262,7 +282,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {}
 	},
 	{ // 14
 		id: 'montymole',
@@ -270,7 +291,11 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: false,
+		buildRules: {
+			bounceHeight: 1,
+			semiBounceHeight: 2
+		}
 	},
 	{ // 15
 		id: 'pswitch',
@@ -278,7 +303,11 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: true,
-		isBuildable: false
+		isBuildable: true,
+		buildRules: {
+			canParachute: false,
+			canVerticalStack: false
+		}
 	},
 	{ // 16
 		id: 'redbeachkoopa',
@@ -286,7 +315,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {}
 	},
 	{ // 17
 		id: 'bigmushroom',
@@ -294,7 +324,11 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: true,
 		isPercussion: false,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {
+			width: 2,
+			height: 2
+		}
 	},
 	{ // 18
 		id: 'billblaster',
@@ -302,7 +336,14 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: true,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {
+			canVerticalStack: false,
+			canParachute: false,
+			bounceHeight: 3,
+			semiBounceHeight: 4,
+			height: 2
+		}
 	},
 	{ // 19
 		id: 'shoegoomba',
@@ -310,7 +351,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: -1,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	},
 	{ // 20
 		id: 'stilettogoomba',
@@ -318,7 +360,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	},
 	{ // 21
 		id: 'cannon',
@@ -326,7 +369,12 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: true,
-		isBuildable: false
+		isBuildable: true,
+		buildRules: {
+			canFallNextToWall: false,
+			canParachute: false,
+			canVerticalStack: false
+		}
 	},
 	{ // 22
 		id: 'chainchomp',
@@ -334,7 +382,10 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {
+			canHaveSemisolid: false
+		}
 	},
 	{ // 23
 		id: 'post',
@@ -342,7 +393,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: true,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {}
 	},
 	{ // 24
 		id: 'coin',
@@ -350,7 +402,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: true,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {}
 	},
 	{ // 25
 		id: 'firepiranhaplant',
@@ -358,7 +411,10 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: false
+		isBuildable: true,
+		buildRules: {
+			canFallNextToWall: false
+		}
 	},
 	{ // 26
 		id: 'fireflower',
@@ -366,7 +422,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: true,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	},
 	{ // 27
 		id: 'goombrat',
@@ -374,7 +431,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	},
 	{ // 28
 		id: 'greenkoopa',
@@ -382,7 +440,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	},
 	{ // 29
 		id: 'redkoopa',
@@ -390,7 +449,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	},
 	{ // 30
 		id: 'hammerbro',
@@ -398,7 +458,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {}
 	},
 	{ // 31
 		id: 'magikoopa',
@@ -406,7 +467,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {}
 	},
 	{ // 32
 		id: 'muncher',
@@ -414,7 +476,11 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: false
+		isBuildable: true,
+		buildRules: {
+			canVerticalStack: false,
+			canParachute: false
+		}
 	},
 	{ // 33
 		id: 'pow',
@@ -422,7 +488,11 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: true,
-		isBuildable: false
+		isBuildable: true,
+		buildRules: {
+			canVerticalStack: false,
+			canParachute: false
+		}
 	},
 	{ // 34
 		id: 'spring',
@@ -430,7 +500,11 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: true,
-		isBuildable: false
+		isBuildable: true,
+		buildRules: {
+			canVerticalStack: false,
+			canParachute: false
+		}
 	},
 	{ // 35
 		id: 'sidewaysspring',
@@ -438,7 +512,11 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: true,
-		isBuildable: false
+		isBuildable: true,
+		buildRules: {
+			canVerticalStack: false,
+			canParachute: false
+		}
 	},
 	{ // 36
 		id: 'star',
@@ -446,7 +524,11 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: true,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {
+			canHaveSemisolid: false,
+			semiBounceHeight: 2
+		}
 	},
 	{ // 37
 		id: 'superball',
@@ -454,7 +536,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: true,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	},
 	{ // 38
 		id: 'thwomp',
@@ -462,7 +545,11 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: true,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {
+			width: 2,
+			height: 2
+		}
 	},
 	{ // 39
 		id: 'wiggler',
@@ -470,7 +557,10 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {
+			canHaveSemisolid: false
+		}
 	},
 	{ // 40
 		id: 'spike',
@@ -478,7 +568,10 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: -2,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {
+			canFreeFall: false
+		}
 	},
 	{ // 41
 		id: 'spikeball',
@@ -486,7 +579,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: true,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {}
 	},
 	{ // 42
 		id: 'snowball',
@@ -494,7 +588,8 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: true,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {}
 	},
 	{ // 43
 		id: 'pokey',
@@ -502,7 +597,10 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {
+			height: 2
+		}
 	},
 	{ // 44
 		id: 'snowpokey',
@@ -510,7 +608,10 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 1,
 		isPowerup: false,
 		isPercussion: false,
-		isBuildable: false
+		isBuildable: false,
+		buildRules: {
+			height: 2
+		}
 	},
 	{ // 45
 		id: 'sword',
@@ -518,9 +619,23 @@ const MM2Instruments = [ // TODO: Switch to keys and move away from IDs
 		octave: 0,
 		isPowerup: true,
 		isPercussion: false,
-		isBuildable: true
+		isBuildable: true,
+		buildRules: {}
 	}
 ];
+
+const stdBuildRules = {
+	canFreeFall: true,
+	canFallNextToWall: true,
+	canParachute: true,
+	canHaveSemisolid: true,
+	canBeInCell: true,
+	canVerticalStack: true,
+	bounceHeight: 5,
+	semiBounceHeight: 6,
+	width: 1,
+	height: 1
+};
 
 const MM2Tiles = { // TODO: Convert all tiles to this format maybe
 	ground: {
@@ -536,7 +651,8 @@ const toolIconFilenames = [
 	'add',
 	'erase',
 	'select',
-	'transfer'
+	'transfer',
+	'forbid'
 ];
 
 class MaestroTrack {

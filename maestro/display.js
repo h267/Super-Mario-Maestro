@@ -433,7 +433,8 @@ function loadBGs() {
 			getImg('icon/alert.png'),
 			getImg('icon/marker.png'),
 			getImg('icon/highlight.png'),
-			getImg('icon/highlight2.png')
+			getImg('icon/highlight2.png'),
+			getImg('icon/forbidden.png'),
 		]).then((loaded) => {
 			// console.log('BGs loaded');
 			resolve(loaded);
