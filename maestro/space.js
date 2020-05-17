@@ -1,11 +1,5 @@
 const noteHeightLimit = 6; // 3 block jump
-const setups = [ // TODO: Port to different tempos
-	{ offset: 0, structType: 0 },
-	{ offset: -2, structType: 1 },
-	{ offset: -6, structType: 2 },
-	{ offset: -11, structType: 3 },
-	{ offset: -16, structType: 4 }
-];
+let buildSetups = [];
 const blocksPerChunk = 8;
 const numStructChunks = 240 / blocksPerChunk;
 
@@ -137,7 +131,8 @@ class Structure {
 		Object.assign(this, getStructTemplate(type));
 
 		this.type = type;
-		this.x = Math.ceil(x);
+		this.efX = x;
+		this.updateXFromEfX();
 		this.y = y;
 
 		this.collisionBox.moveTo(this.x + this.xOfs, this.y);
@@ -212,13 +207,13 @@ class Structure {
 class NoteStructure extends Structure {
 	constructor(type, x, y, entityType) {
 		super(type, x, y);
+		this.updateXFromEfX();
 		this.isNote = true;
 		this.entityType = entityType;
 		this.buildRules = {}; // MM2Instruments[entityType].buildRules;
 		Object.assign(this.buildRules, stdBuildRules, MM2Instruments[entityType].buildRules);
-		this.hasSemisolid = (this.x > x) && this.buildRules.canHaveSemisolid; // Add semisolid if on a half tile and the entity allows it
 		this.mergedStructures = [];
-		[this.setup] = setups;
+		[this.setup] = buildSetups;
 	}
 
 	checkCollisionWith(otherStruct) { // TODO: Prevent entities from going off the top or further left than x = 27
@@ -431,9 +426,11 @@ class NoteStructure extends Structure {
 		this.changeToType(setup.structType);
 
 		// Move structure
-		let xOfs = setup.offset - this.setup.offset;
-		this.x += xOfs;
-		this.collisionBox.x += xOfs;
+		let efXOfs = setup.offset - this.setup.offset;
+		
+		this.efX += efXOfs;
+		this.updateXFromEfX();
+		this.collisionBox.x = this.x;
 		this.setup = setup;
 		this.conflictingStructures = [];
 
@@ -462,15 +459,15 @@ class NoteStructure extends Structure {
 		let availableMoves = [];
 		let conflictAmount = Infinity;
 		let isForbidden = false; // TODO: Rework
-		for (let i = 0; i < setups.length; i++) {
-			if (setups[i].offset === origSetup.offset) continue;
-			this.moveBySetup(setups[i]);
+		for (let i = 0; i < buildSetups.length; i++) {
+			if (buildSetups[i].offset === origSetup.offset) continue;
+			this.moveBySetup(buildSetups[i]);
 			isForbidden = this.isInForbiddenTile();
 			this.checkForCollisions();
 			if (!this.checkForLegality()) continue;
 			let conflicts = this.conflictingStructures;
 			conflictAmount = Math.min(conflictAmount, this.conflictingStructures.length);
-			if (!isForbidden) availableMoves.push({ setup: setups[i], structs: conflicts });
+			if (!isForbidden) availableMoves.push({ setup: buildSetups[i], structs: conflicts });
 			if (this.conflictingStructures.length === 0 && !isForbidden) {
 				return { success: true, availableMoves: [] };
 			}
@@ -516,6 +513,15 @@ class NoteStructure extends Structure {
 		if (this.hasFall) isLegal &= (this.buildRules.canFallNextToWall && this.buildRules.canFreeFall);
 		if (this.hasParachute) isLegal &= this.buildRules.canParachute;
 		return isLegal;
+	}
+
+	updateXFromEfX() {
+		this.x = Math.ceil(this.efX);
+
+		// Determine if a semisolid needs to be used
+		if (this.efX % 1 !== 0) this.hasSemisolid = true;
+		else this.hasSemisolid = false;
+		
 	}
 }
 

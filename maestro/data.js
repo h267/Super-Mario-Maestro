@@ -10,7 +10,12 @@ const MM2Tempos = [
 		name: 'Slow Autoscroll',
 		bpm: 28,
 		isCommon: false,
-		isBuildable: true
+		isBuildable: true,
+		setups: [
+			{ offset: 0, structType: 0 },
+			{ offset: -1.5, structType: 2 },
+			{ offset: -4, structType: 4 }
+		]
 	},
 	{
 		name: 'Backwards Normal Conveyor - Walking',
@@ -34,7 +39,14 @@ const MM2Tempos = [
 		name: 'Medium Autoscroll',
 		bpm: 56,
 		isCommon: true,
-		isBuildable: true
+		isBuildable: true,
+		setups: [
+			{ offset: 0, structType: 0 },
+			{ offset: -1, structType: 1 },
+			{ offset: -3, structType: 2 },
+			{ offset: -5.5, structType: 3 },
+			{ offset: -8, structType: 4 }
+		]
 	},
 	{
 		name: 'Backwards Fast Conveyor - Running',
@@ -52,7 +64,13 @@ const MM2Tempos = [
 		name: 'Walking',
 		bpm: 84,
 		isCommon: true,
-		isBuildable: true
+		isBuildable: true,
+		setups: [
+			{ offset: 0, structType: 0 },
+			{ offset: -1.5, structType: 1 },
+			{ offset: -4.5, structType: 2 },
+			{ offset: -12, structType: 4 }
+		]
 	},
 	{
 		name: 'Blaster in Cloud - Idle',
@@ -76,7 +94,15 @@ const MM2Tempos = [
 		name: 'Fast Autoscroll',
 		bpm: 112,
 		isCommon: true,
-		isBuildable: true
+		isBuildable: true,
+		setups: [
+			{ offset: 0, structType: 0 },
+			{ offset: -1.5, structType: 6 },
+			{ offset: -2, structType: 1 },
+			{ offset: -6, structType: 2 },
+			{ offset: -11, structType: 3 },
+			{ offset: -16, structType: 4 }
+		]
 	},
 	{
 		name: 'Backwards Normal Conveyor - Running',
@@ -106,7 +132,14 @@ const MM2Tempos = [
 		name: 'Fast Lava Lift',
 		bpm: 140,
 		isCommon: true,
-		isBuildable: true
+		isBuildable: true,
+		setups: [
+			{ offset: 0, structType: 0 },
+			{ offset: -2.5, structType: 1 },
+			{ offset: -6, structType: 2 },
+			{ offset: -7.5, structType: 3 },
+			{ offset: -20, structType: 4 }
+		]
 	},
 	{
 		name: 'Fast Underwater Conveyor - Walking',
@@ -130,7 +163,14 @@ const MM2Tempos = [
 		name: 'Running',
 		bpm: 168,
 		isCommon: true,
-		isBuildable: true
+		isBuildable: true,
+		setups: [
+			{ offset: 0, structType: 0 },
+			{ offset: -2, structType: 6 },
+			{ offset: -3, structType: 1 },
+			{ offset: -9, structType: 2 },
+			{ offset: -24, structType: 4 }
+		]
 	},
 	{
 		name: 'Underwater Blaster in Cloud - Swimming Holding Item',
@@ -162,6 +202,10 @@ const MM2Tempos = [
 		isCommon: false,
 		isBuildable: false
 	}
+];
+
+const defaultSetups = [
+	{ offset: 0, structType: 0, usesSemisolid: false }
 ];
 
 /**

@@ -553,6 +553,8 @@ function recommendTempo(origBPM, bpb) {
 	// console.log(bpmIDtoStr(recc));
 	// console.log(songBPM+' -> '+bpms[recc]*(4/res));
 	document.getElementById('temposelect').selectedIndex = numCommonTempos + recc;
+	buildSetups = MM2Tempos[recc].setups;
+	if (buildSetups === undefined) buildSetups = defaultSetups;
 	return MM2Tempos[recc].bpm * (4 / bpb);
 }
 
@@ -767,7 +769,10 @@ function selectTempo() {
 	let sel = document.getElementById('temposelect');
 	let selected = sel.value;
 	bpm = MM2Tempos[selected].bpm * (4 / blocksPerBeat);
+	buildSetups = MM2Tempos[selected].setups;
+	if (buildSetups === undefined) buildSetups = defaultSetups;
 	cancelPlayback();
+	softRefresh();
 }
 
 /**
