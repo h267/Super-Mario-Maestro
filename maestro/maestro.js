@@ -13,10 +13,6 @@
 // TODO: Re-enable gtag when releasing
 // TODO: Disable auto tool enable when releasing
 
-const levelWidth = 240;
-const marginWidth = 27;
-const levelHeight = 27;
-const baseOfsY = 48;
 const discordInviteLink = 'https://discord.gg/KhmXzfp';
 const tutorialLink = 'https://docs.google.com/document/d/1UG-Y-2zbdcqE7ciMgPVT3HICWEZHP002HmukCuWctxg/edit';
 const contPlayback = false; // Dev toggle for full map playback
@@ -666,7 +662,8 @@ function playBtn() {
  * Stops level playback.
  */
 function cancelPlayback() {
-	if (!isPlaying) return;
+	isPlaybackInterrupted = true;
+	if (!isPlaying || isRendering) return;
 	isAnimating = false;
 	resetPlayback();
 	stopAudio();
@@ -1498,6 +1495,7 @@ function setPlaybackWaitStatus(status) {
 		document.getElementById('stopbtn').innerHTML = 'Stop';
 		document.getElementById('stopbtn').disabled = false;
 	}
+	isRendering = status;
 }
 
 function toggleBuildRestriction() {

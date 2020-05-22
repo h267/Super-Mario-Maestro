@@ -281,9 +281,13 @@ function highlightCol(tx, style = 'rgba(0,255,0,0.5)') {
  * @param {number} x The x-coordinate of where the tile should be drawn.
  * @param {number} y The y-coordinate of where the tile should be drawn.
  * @param {number} layer The layer ID of the layer to draw the tile on.
+ * @param {boolean} isSemiTransparent Whether the tile should be drawn with less opacity.
  */
-function drawTile(image, x, y, layer = dlayer.noteLayer) {
+function drawTile(image, x, y, layer = dlayer.noteLayer, isSemiTransparent = false) {
+	if (isSemiTransparent) canvasLayers[layer].ctx.globalAlpha = 0.5;
+	else canvasLayers[layer].ctx.globalAlpha = 1.0;
 	canvasLayers[layer].ctx.drawImage(image, x, y);
+	canvasLayers[layer].ctx.globalAlpha = 1.0;
 }
 
 /**
@@ -411,7 +415,7 @@ function loadTiles() { // TODO: Put with entities or make tile data array in dat
 				getImg('tiles/sword.png'),
 				getImg('tiles/toad.png'),
 				getImg('tiles/block.png'),
-				getImg('tiles/cloud.png')
+				getImg('tiles/donut.png')
 			]
 		).then((loaded) => {
 			// console.log('All tiles loaded');

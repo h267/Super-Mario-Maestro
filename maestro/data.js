@@ -3,6 +3,11 @@
  * Data on the various scroll speeds in Mario Maker 2. Tempos are stored in their 4 block per beat equivalents.
  */
 
+const levelWidth = 240;
+const marginWidth = 27;
+const levelHeight = 27;
+const baseOfsY = 48;
+
 const numBlockSubdivisions = 2;
 
 const MM2Tempos = [
@@ -206,6 +211,29 @@ const MM2Tempos = [
 
 const defaultSetups = [
 	{ offset: 0, structType: 0, usesSemisolid: false }
+];
+
+const semisolidDelay = 3748; // This and redundant code will be removed if it turns out semisolids are not additive
+
+// NOTE: Time units per block = (60/(4 * bpm)) * 44100
+// # of Blocks = (setup time units) / (tempo time units per block)
+// Accuracy error in seconds = ( Abs(target fraction - actual fraction) * Time units per block ) / 44100
+
+const standardBuildSetups = [
+	{ structType: 0, usesSemisolid: false, timeDelay: 0 }, // Default
+	{ structType: 0, usesSemisolid: true, timeDelay: semisolidDelay }, // Default + Semisolid
+	{ structType: 6, usesSemisolid: false, timeDelay: 8599 }, // 1 Block Drop
+	{ structType: 6, usesSemisolid: true, timeDelay: 8599 + semisolidDelay }, // 1 Block Drop + Semisolid
+	{ structType: 2, usesSemisolid: false, timeDelay: 36604 }, // 1 Block Parachute
+	{ structType: 2, usesSemisolid: true, timeDelay: 36604 + semisolidDelay }, // 1 Block Parachute + Semisolid
+	{ structType: 1, usesSemisolid: false, timeDelay: 12348 }, // 2 Block Drop
+	{ structType: 1, usesSemisolid: true, timeDelay: 12348 + semisolidDelay }, // 2 Block Drop + Semisolid
+	{ structType: 3, usesSemisolid: false, timeDelay: 66372 }, // 2 Block Parachute
+	{ structType: 3, usesSemisolid: true, timeDelay: 66372 + semisolidDelay }, // 2 Block Parachute + Semisolid
+	{ structType: 5, usesSemisolid: false, timeDelay: 15876 }, // 3 Block Drop
+	{ structType: 5, usesSemisolid: true, timeDelay: 15876 + semisolidDelay }, // 3 Block Drop + Semisolid
+	{ structType: 4, usesSemisolid: false, timeDelay: 95700 }, // 3 Block Parachute
+	{ structType: 4, usesSemisolid: true, timeDelay: 95700 + semisolidDelay }, // 3 Block Parachute + Semisolid
 ];
 
 /**

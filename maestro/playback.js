@@ -1,5 +1,5 @@
 const insPlayData = [
-	{ file: 'goomba' },
+	{ file: 'goomba2' },
 	{ file: 'shellmet', baseNote: KEY_F3 },
 	{ file: '1up' },
 	{ file: 'spiketop' },
@@ -7,12 +7,12 @@ const insPlayData = [
 	{ file: 'piranha' },
 	{ file: 'bobomb' },
 	{ file: 'spiny' },
-	{ file: 'drybones', hasLongSustain: true },
+	{ file: 'drybones2', hasLongSustain: true },
 	{ file: 'shroom' },
 	{ file: 'rottenshroom' },
 	{ file: 'bark', baseNote: KEY_F3 },
 	{ file: 'mole' },
-	{ file: 'pswitch' },
+	{ file: 'pswitch2' },
 	{ file: 'meow', baseNote: KEY_F3 },
 	{ file: 'bigshroom' },
 	{ file: 'blaster' },
@@ -30,14 +30,14 @@ const insPlayData = [
 	{ file: 'hammerbro', hasLongSustain: true },
 	{ file: 'magikoopa' },
 	{ file: 'muncher' },
-	{ file: 'pow' },
+	{ file: 'pow2' },
 	{ file: 'spring' },
 	{ file: 'sidespring' },
 	{ file: 'star' },
 	{ file: 'superball' },
 	{ file: 'thwomp' },
 	{ file: 'wiggler' },
-	{ file: 'spike', volumeOffset: -2 },
+	{ file: 'spike2', volumeOffset: -2 },
 	{ file: 'spikeball' },
 	{ file: 'snowball' },
 	{ file: 'pokey' },
@@ -60,6 +60,8 @@ let samplers = [];
 let buffers = [];
 let isContinuousPlayback = false;
 let noteSchedule = new NoteSchedule();
+let isRendering = false;
+let isPlaybackInterrupted = false;
 
 let restrictPitchRange = true; // Just change 3 lines of code Hermit smh my head
 
@@ -102,6 +104,7 @@ function loadBuffers() {
  */
 async function playLvl(midi, level, bpm, blocksPerBeat, ofsX, ofsY) {
 	stopAudio();
+	isPlaybackInterrupted = false;
 	schTime = 0;
 	isContinuousPlayback = false;
 	endBound = level.width * numBlockSubdivisions;
@@ -164,6 +167,11 @@ function prerenderAndPlay(bpm = 120, bpb, maxX) {
 	setPlaybackWaitStatus(true);
 	noteSchedule.playPrerender().then(() => {
 		setPlaybackWaitStatus(false);
+		if (isPlaybackInterrupted) {
+			resetPlayback();
+			isPlaybackInterrupted = false;
+			return;
+		}
 		if (isContinuousPlayback) animateContinuousPlayback((bpm * bpb) / 3600, 0);
 		else animatePlayback((bpm * bpb) / 3600, maxX + marginWidth + 2, 0);
 	});

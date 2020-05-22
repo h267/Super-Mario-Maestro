@@ -145,7 +145,7 @@ class Level {
 		structures.forEach((struct) => { // Second pass: Check for unhandled conflicts
 			// TODO: Move structures back to an offset of 0 if possible, or any lesser offset
 			struct.checkForCollisions();
-			if (struct.conflictingStructures.length > 0) {
+			if (struct.conflictingStructures.length > 0 || !struct.checkForLegality()) {
 				this.markTile(struct.x, struct.y, 1);
 				this.conflictCount++;
 			}

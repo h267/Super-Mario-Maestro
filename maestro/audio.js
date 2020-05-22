@@ -97,6 +97,7 @@ class NoteSchedule {
 		let that = this;
 		// To monitor progress, see https://github.com/WebAudio/web-audio-api/issues/302#issuecomment-310829366
 		let buffer = await that.render();
+		if (isPlaybackInterrupted) return;
 		let source = audioCtx.createBufferSource();
 		that.playbackNode = source;
 		source.buffer = buffer;

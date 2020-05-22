@@ -247,7 +247,7 @@ class NoteStructure extends Structure {
 	}
 
 	checkCellCollision(otherStruct, doAdd) {
-		if (!this.buildRules.canBeInCell || !this.buildRules.canBeInCell)
+		if (!this.buildRules.canBeInCell || !this.buildRules.canBeInCell) return true;
 		if (this.hasSemisolid || otherStruct.hasSemisolid) return true; // TODO: Allow semisolids in cells
 		/* let tID = this.id;
             let oID = otherStruct.id;
@@ -512,6 +512,7 @@ class NoteStructure extends Structure {
 		if (this.hasSemisolid) isLegal &= this.buildRules.canHaveSemisolid;
 		if (this.hasFall) isLegal &= (this.buildRules.canFallNextToWall && this.buildRules.canFreeFall);
 		if (this.hasParachute) isLegal &= this.buildRules.canParachute;
+		isLegal &= (this.getEntityPos().y < 27);
 		return isLegal;
 	}
 
@@ -522,6 +523,13 @@ class NoteStructure extends Structure {
 		if (this.efX % 1 !== 0) this.hasSemisolid = true;
 		else this.hasSemisolid = false;
 		
+	}
+
+	getEntityPos() {
+		let ePos = { x: 0, y: 0 };
+		ePos.x = this.x + this.entityPos[0].x + this.xOfs + this.x;
+		ePos.y = this.y - this.entityPos[0].y - this.yOfs;
+		return ePos;
 	}
 }
 
@@ -860,7 +868,7 @@ function handleAllConflicts() { // TODO: Let either colliding structure move eac
 		let { struct } = structEntry;
 		let { blacklist } = structEntry;
 		struct.checkForCollisions();
-		if ((struct.conflictingStructures.length > 0 || obfuscateNotes || structEntry.forceMove || struct.isInForbiddenTile()) && struct.isNote) {
+		if ((struct.conflictingStructures.length > 0 || obfuscateNotes || structEntry.forceMove || struct.isInForbiddenTile() || !struct.checkForLegality()) && struct.isNote) {
 			let success = false;
 			let nodeCount = 0;
 			let moveQueue = [{ struct, history: [] }];

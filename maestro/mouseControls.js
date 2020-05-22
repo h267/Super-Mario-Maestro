@@ -364,7 +364,7 @@ function rulerTool() {
 }
 
 function infoTool() {
-	if (!fileLoaded) return;
+	if (!fileLoaded || !level.noteGroups[selectedTrack].isVisible) return;
 	let queryX = lastClickedLvlPos.x;
 	let queryY = lastClickedLvlPos.y;
 	let foundNote = level.noteGroups[selectedTrack].getNoteAt(queryX, queryY);
@@ -372,7 +372,7 @@ function infoTool() {
 }
 
 function addNoteTool() {
-	if (!fileLoaded) return;
+	if (!fileLoaded || !level.noteGroups[selectedTrack].isVisible) return;
 	let placeX = lastClickedLvlPos.x;
 	let placeY = lastClickedLvlPos.y;
 	let insertIndex = level.noteGroups[selectedTrack].getNoteAt(placeX, placeY).pos;
@@ -381,7 +381,7 @@ function addNoteTool() {
 }
 
 function eraseNoteTool() {
-	if (!fileLoaded) return;
+	if (!fileLoaded || !level.noteGroups[selectedTrack].isVisible) return;
 	let queryX = lastClickedLvlPos.x;
 	let queryY = lastClickedLvlPos.y;
 	let foundNote = level.noteGroups[selectedTrack].getNoteAt(queryX, queryY);
@@ -400,7 +400,7 @@ function zoomOutTool() {
 }
 
 function changeTrackTool() {
-	if (!fileLoaded) return;
+	if (!fileLoaded || !level.noteGroups[selectedTrack].isVisible) return;
 	let placeX = lastClickedLvlPos.x;
 	let placeY = lastClickedLvlPos.y;
 	let foundNote = level.noteGroups[selectedTrack].getNoteAt(placeX, placeY);
