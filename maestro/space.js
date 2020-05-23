@@ -285,6 +285,9 @@ class NoteStructure extends Structure {
 			}
 		}
 		isAcceptable = isAcceptable && this.canBeInCell && otherStruct.canBeInCell;
+		if (thisCell === null && otherCell === null) {
+			isAcceptable = isAcceptable && (this.isExtendableUpwardsTo(highestPairPoint) && otherStruct.isExtendableUpwardsTo(highestPairPoint));
+		}
 
 
 		// Conflict if there is an issue
@@ -310,7 +313,11 @@ class NoteStructure extends Structure {
 		return false;
 	}
 
-	mergeIntoStruct(otherStruct) { // FIXME: Some structures unnecessarily expanded
+	mergeIntoStruct(otherStruct) {
+		// Prevent duplicate merges
+		let foundIndex = this.mergedStructures.findIndex((struct) => struct.id === otherStruct.id);
+		if (foundIndex !== -1) return false;
+
 		// console.log(`Merge between struct ${this.id} and struct ${otherStruct.id}`);
 		let thisTop = this.collisionBox.y + this.collisionBox.h;
 		let otherTop = otherStruct.collisionBox.y + otherStruct.collisionBox.h;
@@ -329,12 +336,14 @@ class NoteStructure extends Structure {
 				return true;
 			}
 		}
+
 		this.mergedStructures.push(otherStruct);
 		otherStruct.mergedStructures.push(this);
 		return false;
 	}
 
 	unmergeFromStruct(otherStruct) {
+		// console.log(`Unmerge between struct ${this.id} and struct ${otherStruct.id}`);
 		let foundIndex = this.mergedStructures.findIndex((struct) => struct.id === otherStruct.id);
 		this.mergedStructures.splice(foundIndex, 1);
 		foundIndex = otherStruct.mergedStructures.findIndex((struct) => struct.id === this.id);
@@ -451,6 +460,7 @@ class NoteStructure extends Structure {
 		this.canBeInCell = template.canBeInCell;
 		this.hasFall = template.hasFall;
 		this.hasParachute = template.hasParachute;
+		this.type = typeNum;
 	}
 
 	tryAllSetups() { // FIXME: Structs in cells need to be checked using cell height
@@ -579,7 +589,8 @@ class Cell {
 		for (let i = this.startX; i < this.endX; i++) { // Second Pass: Trimming
 			this.locationMap[i].list.forEach((struct) => {
 				let nextStruct = this.locationMap[i + 1].tallest;
-				let trimDist = nextStruct.collisionBox.h - 1;
+				// let trimDist = nextStruct.collisionBox.h - 1;
+				let trimDist = Math.min(nextStruct.collisionBox.h, struct.collisionBox.h) - 1;
 				struct.trimSide(true, trimDist);
 				nextStruct.trimSide(false, trimDist);
 			});
@@ -603,6 +614,7 @@ class Cell {
 	clear() {
 		this.members = [];
 		this.locationMap = {};
+		this.highestPoint = 0;
 	}
 
 	removeStructure(struct) {
@@ -617,7 +629,7 @@ class Cell {
 
 		// Remove from tallest structure if it is this cell, recalculate as necessary.
 		// Also recalculate starting and ending x coords
-		if (this.locationMap[struct.originalX].tallest.id === struct.id) {
+		// if (this.locationMap[struct.originalX].tallest.id === struct.id) { // TODO: Maybe a better fix?
 			let newStartX = 240;
 			let newEndX = 0;
 			let newHighestPoint = 0;
@@ -644,7 +656,7 @@ class Cell {
 			this.startX = newStartX;
 			this.endX = newEndX;
 			this.highestPoint = newHighestPoint;
-		}
+		// }
 		struct.cell = null;
 	}
 
@@ -708,7 +720,7 @@ function getStructTemplate(n) {
 		xOfs: -1,
 		yOfs: -5,
 		collisionBox: getColBox(n),
-		canBeInCell: false,
+		canBeInCell: true,
 		hasFall: true,
 		hasParachute: false
 	};

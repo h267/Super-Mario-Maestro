@@ -3,7 +3,7 @@
 
 // FIXME: Playback breaks after clicking different tracks?
 // FIXME: Sometimes playback cannot be stopped
-// FIXME: Suboptimal collision boxes from unnecessary expansion
+// FIXME: There are a lot of possibly avoidable collisions from the cells; allow more movement
 
 // TODO: Switch to original instrument when invalid instrument is switched to (adv settings toggle)
 // TODO: Finish replacing midi tracks with Maestro tracks
