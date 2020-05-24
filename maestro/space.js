@@ -246,6 +246,7 @@ class NoteStructure extends Structure {
 		return this.collisionBox.getCollisionWith(otherStruct.collisionBox, options);
 	}
 
+	// FIXME: Cell height bug
 	checkCellCollision(otherStruct, doAdd) {
 		if (!this.buildRules.canBeInCell || !this.buildRules.canBeInCell) return true;
 		if (this.hasSemisolid || otherStruct.hasSemisolid) return true; // TODO: Allow semisolids in cells
@@ -268,6 +269,7 @@ class NoteStructure extends Structure {
 		if (isSameCell) return false;
 		if (thisCell !== null) {
 			highestPoint = Math.max(highestPairPoint, thisCell.highestPoint);
+			if (otherCell !== null) highestPoint = Math.max(highestPoint, otherCell.highestPoint);
 			for (let i = 0; i < thisCell.members.length; i++) {
 				isAcceptable = isAcceptable
 				&& thisCell.members[i].isExtendableUpwardsTo(highestPoint)
@@ -276,6 +278,7 @@ class NoteStructure extends Structure {
 		}
 		if (otherCell !== null && !isSameCell) {
 			highestPoint = Math.max(highestPairPoint, otherCell.highestPoint);
+			if (thisCell !== null) highestPoint = Math.max(highestPoint, thisCell.highestPoint);
 			if (!isSameCell) {
 				for (let i = 0; i < otherCell.members.length; i++) {
 					isAcceptable = isAcceptable
@@ -285,9 +288,8 @@ class NoteStructure extends Structure {
 			}
 		}
 		isAcceptable = isAcceptable && this.canBeInCell && otherStruct.canBeInCell;
-		if (thisCell === null && otherCell === null) {
-			isAcceptable = isAcceptable && (this.isExtendableUpwardsTo(highestPairPoint) && otherStruct.isExtendableUpwardsTo(highestPairPoint));
-		}
+		if (thisCell === null && otherCell === null) highestPoint = highestPairPoint;
+		isAcceptable = isAcceptable && (this.isExtendableUpwardsTo(highestPoint) && otherStruct.isExtendableUpwardsTo(highestPoint));
 
 
 		// Conflict if there is an issue
@@ -464,11 +466,12 @@ class NoteStructure extends Structure {
 	}
 
 	tryAllSetups() { // FIXME: Structs in cells need to be checked using cell height
+		// FIXME: Worse performance when 2 block drop cell merge is enabled
 		// Try to move a note to all available setups. Return the success, as well as all available nodes to traverse.
 		let origSetup = this.setup;
 		let availableMoves = [];
 		let conflictAmount = Infinity;
-		let isForbidden = false; // TODO: Rework
+		let isForbidden = false; // TODO: Rework forbid system
 		for (let i = 0; i < buildSetups.length; i++) {
 			if (buildSetups[i].offset === origSetup.offset) continue;
 			this.moveBySetup(buildSetups[i]);
@@ -720,7 +723,7 @@ function getStructTemplate(n) {
 		xOfs: -1,
 		yOfs: -5,
 		collisionBox: getColBox(n),
-		canBeInCell: true,
+		canBeInCell: false,
 		hasFall: true,
 		hasParachute: false
 	};
