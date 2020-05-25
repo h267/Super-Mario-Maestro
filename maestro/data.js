@@ -693,6 +693,42 @@ const MM2Instruments = [
 		isPercussion: false,
 		isBuildable: true,
 		buildRules: {}
+	},
+	{ // 46
+		id: 'acorn',
+		name: 'Super Acorn (INSTRUMENT)',
+		octave: 0,
+		isPowerup: true,
+		isPercussion: false,
+		isBuildable: true,
+		buildRules: {}
+	},
+	{ // 47
+		id: 'mechakoopa',
+		name: 'Mechakoopa (INSTRUMENT)',
+		octave: 0,
+		isPowerup: false,
+		isPercussion: false,
+		isBuildable: true,
+		buildRules: {}
+	},
+	{ // 48
+		id: 'blasta',
+		name: 'Mechakoopa (Blasta) (INSTRUMENT)',
+		octave: 0,
+		isPowerup: true,
+		isPercussion: false,
+		isBuildable: true,
+		buildRules: {}
+	},
+	{ // 49
+		id: 'zappa',
+		name: 'Mechakoopa (Zappa) (INSTRUMENT)',
+		octave: 0,
+		isPowerup: false,
+		isPercussion: false,
+		isBuildable: true,
+		buildRules: {}
 	}
 ];
 

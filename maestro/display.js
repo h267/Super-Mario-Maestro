@@ -413,7 +413,10 @@ function loadTiles() { // TODO: Put with entities or make tile data array in dat
 				getImg('tiles/pokey.png'),
 				getImg('tiles/snow-pokey.png'),
 				getImg('tiles/sword.png'),
-				getImg('tiles/toad.png'),
+				getImg('tiles/acorn.png'),
+				getImg('tiles/mechakoopa.png'),
+				getImg('tiles/mechakoopa-blasta.png'),
+				getImg('tiles/mechakoopa-zappa.png'),
 				getImg('tiles/block.png'),
 				getImg('tiles/donut.png')
 			]

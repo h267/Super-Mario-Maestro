@@ -1,5 +1,5 @@
 const insPlayData = [
-	{ file: 'goomba2' },
+	{ file: 'goomba' },
 	{ file: 'shellmet', baseNote: KEY_F3 },
 	{ file: '1up' },
 	{ file: 'spiketop' },
@@ -7,12 +7,12 @@ const insPlayData = [
 	{ file: 'piranha' },
 	{ file: 'bobomb' },
 	{ file: 'spiny' },
-	{ file: 'drybones2', hasLongSustain: true },
+	{ file: 'drybones', hasLongSustain: true },
 	{ file: 'shroom' },
 	{ file: 'rottenshroom' },
 	{ file: 'bark', baseNote: KEY_F3 },
 	{ file: 'mole' },
-	{ file: 'pswitch2' },
+	{ file: 'pswitch' },
 	{ file: 'meow', baseNote: KEY_F3 },
 	{ file: 'bigshroom' },
 	{ file: 'blaster' },
@@ -30,20 +30,23 @@ const insPlayData = [
 	{ file: 'hammerbro', hasLongSustain: true },
 	{ file: 'magikoopa' },
 	{ file: 'muncher' },
-	{ file: 'pow2' },
+	{ file: 'pow' },
 	{ file: 'spring' },
 	{ file: 'sidespring' },
 	{ file: 'star' },
 	{ file: 'superball' },
 	{ file: 'thwomp' },
 	{ file: 'wiggler' },
-	{ file: 'spike2', volumeOffset: -2 },
+	{ file: 'spike', volumeOffset: 3 },
 	{ file: 'spikeball' },
 	{ file: 'snowball' },
 	{ file: 'pokey' },
 	{ file: 'snowpokey' },
 	{ file: 'sword' },
-	{ file: 'toad' }
+	{ file: 'acorn' },
+	{ file: 'mechakoopa', hasLongSustain: true },
+	{ file: 'mechakoopa-blasta', hasLongSustain: true },
+	{ file: 'mechakoopa-zappa', hasLongSustain: true }
 ];
 const defaultInsPlayData = { file: 'goomba', baseNote: KEY_C4, volumeOffset: 0 };
 const polyphonyCap = 2;

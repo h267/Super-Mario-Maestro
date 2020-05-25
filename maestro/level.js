@@ -385,7 +385,7 @@ class PreloadedNoteGroup {
 
 function getLvlTile(n) {
 	if (n === 0) return 0;
-	if (n < 3) return n + 46;
+	if (n < 3) return n + MM2Instruments.length + 1; // Building tiles come after all entities
 	return 1;
 }
 
