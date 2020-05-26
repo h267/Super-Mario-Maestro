@@ -4,20 +4,21 @@ let lastClickedTile = null;
 let lastClickedLvlPos = null;
 
 let mouseToolId = 2;
+let prevMouseToolId = 2;
 let cursorImg;
 let currentMouseTool = null;
 let editHistory = [];
 let isMainMouseHolding = false;
 
 let showRuler = false;
-let isToolsEnabled = false;
+let isHiddenToolsEnabled = false;
 
 let secondaryTrack = 0;
 
-enableMouseTools();
-
 window.addEventListener('load', () => { // Wait for everything to load before executing
 	setupToolIcons();
+	setupToolbar();
+	// enableMouseTools();
 	refreshMouseTool();
 	isLoaded = true;
 });
@@ -27,6 +28,7 @@ window.addEventListener('load', () => { // Wait for everything to load before ex
 const mouseTools = [
 	{
 		name: 'Info',
+		isVisible: false,
 		isHoldable: false,
 		onLeftClick: () => infoTool(),
 		onRightClick: () => {},
@@ -34,6 +36,7 @@ const mouseTools = [
 	},
 	{
 		name: 'Zoom',
+		isVisible: false,
 		isHoldable: false,
 		onLeftClick: () => zoomInTool(),
 		onRightClick: () => zoomOutTool(),
@@ -41,6 +44,7 @@ const mouseTools = [
 	},
 	{
 		name: 'Ruler',
+		isVisible: true,
 		isHoldable: false,
 		onLeftClick: () => rulerTool(),
 		onRightClick: () => {},
@@ -48,6 +52,7 @@ const mouseTools = [
 	},
 	{
 		name: 'Add Note',
+		isVisible: true,
 		isHoldable: true,
 		onLeftClick: () => addNoteTool(),
 		onRightClick: () => {},
@@ -55,6 +60,7 @@ const mouseTools = [
 	},
 	{
 		name: 'Erase Note',
+		isVisible: true,
 		isHoldable: true,
 		onLeftClick: () => eraseNoteTool(),
 		onRightClick: () => {},
@@ -62,6 +68,7 @@ const mouseTools = [
 	},
 	{
 		name: 'Select Notes',
+		isVisible: false,
 		isHoldable: true,
 		onLeftClick: () => {},
 		onRightClick: () => {},
@@ -69,6 +76,7 @@ const mouseTools = [
 	},
 	{
 		name: 'Change Track',
+		isVisible: true,
 		isHoldable: true,
 		onLeftClick: () => changeTrackTool(),
 		onRightClick: () => {},
@@ -76,6 +84,7 @@ const mouseTools = [
 	},
 	{
 		name: 'Forbid Tile',
+		isVisible: false,
 		isHoldable: true,
 		onLeftClick: () => forbidTool(),
 		onRightClick: () => unforbidTool(),
@@ -84,8 +93,10 @@ const mouseTools = [
 ];
 
 function enableMouseTools() {
-	isToolsEnabled = true;
-	console.log('Mouse tools enabled. Use the scroll wheel on the canvas to change tools.');
+	isHiddenToolsEnabled = true;
+	document.getElementById('toolbar').innerHTML = '';
+	setupToolbar();
+	console.log('Hidden mouse tools enabled.');
 }
 
 function setupToolIcons() {
@@ -97,6 +108,9 @@ function setupToolIcons() {
 function refreshMouseTool() {
 	currentMouseTool = mouseTools[mouseToolId];
 	cursorImg = currentMouseTool.icon;
+	document.getElementById(`mousetool${prevMouseToolId}`).style.backgroundColor = '';
+	document.getElementById(`mousetool${mouseToolId}`).style.backgroundColor = '#7289da';
+	prevMouseToolId = mouseToolId;
 }
 
 function getMainMouseLevelPos(e) {
@@ -177,15 +191,18 @@ function handleMainMove(e) {
 }
 
 function handleMainWheel(e) {
-	if (noMouse || !isToolsEnabled) { return; } // Exit if the mouse is disabled
+	if (noMouse) { return; } // Exit if the mouse is disabled
 	let tilePos = getMainMouseTilePos(e);
 
 	let change = Math.sign(e.deltaY); // +/- 1, depending on scroll direction
-	mouseToolId += change;
+	do {
+		mouseToolId += change;
 
-	// Wrap back around if scrolled past the ends of the tool list
-	if (mouseToolId < 0) mouseToolId = mouseTools.length - 1;
-	if (mouseToolId >= mouseTools.length) mouseToolId = 0;
+		// Wrap back around if scrolled past the ends of the tool list
+		if (mouseToolId < 0) mouseToolId = mouseTools.length - 1;
+		if (mouseToolId >= mouseTools.length) mouseToolId = 0;
+
+	} while (!mouseTools[mouseToolId].isVisible && !isHiddenToolsEnabled);
 
 	switchTool(tilePos);
 
@@ -349,6 +366,26 @@ function getRealMiniOfs(e) {
 	let scrollOfs = { x: div.scrollLeft, y: div.scrollTop };
 	let offset = { x: canvasOfs.x + scrollOfs.x, y: canvasOfs.y + scrollOfs.y };
 	return offset;
+}
+
+function setupToolbar() {
+	toolIconFilenames.forEach((iconPath, i) => {
+		if (mouseTools[i].isVisible || isHiddenToolsEnabled) {
+			let newBtn = document.createElement('a');
+			let newImg = document.createElement('img');
+			newImg.setAttribute('src', `icon/${iconPath}.png`);
+			newBtn.setAttribute('id', `mousetool${i}`);
+			// newBtn.setAttribute('onclick', `() => { mouseToolId = ${i}; refreshMouseTool(); }`);
+			newBtn.setAttribute('onclick', `changeToolTo(${i})`);
+			newBtn.appendChild(newImg);
+			document.getElementById('toolbar').appendChild(newBtn);
+		}
+	});
+}
+
+function changeToolTo(id) {
+	mouseToolId = id;
+	refreshMouseTool();
 }
 
 function rulerTool() {

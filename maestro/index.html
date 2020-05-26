@@ -20,8 +20,13 @@
                </div>
           </div>
           <div style="width: 95%; margin: 0 auto">
-               <div id="displaycontainer" class="dispcontainer" style="margin-bottom: 2px;">
-                    <canvas id="canvas" width="3840" height="432"></canvas>
+               <div class="smallspacedcontainer" style="flex-wrap: nowrap;">
+                    <div class="toolbar" id="toolbar">
+                         <!-- To be populated with buttons -->
+                    </div>
+                    <div id="displaycontainer" class="dispcontainer" style="margin-bottom: 2px;">
+                         <canvas id="canvas" width="3840" height="432"></canvas>
+                    </div>
                </div>
                <div id="toolbox" style="display: none; height: 24px;">
                     <div class="smallspacedcontainer">
@@ -44,7 +49,7 @@
                               <p id="QEtext" class="displaytext">BPB Quality: -</p>
                               <p id="NCtext" class="displaytext">Spatial Conflicts: -</p>
                          </div>
-                         <button id="buildbtn" class="button buildbutton" type="button" onclick="toggleBuildMode()">Build Level (Beta)</button>
+                         <button id="buildbtn" class="button buildbutton" type="button" onclick="toggleBuildMode()">Build Mode (Beta)</button>
                          <button id="newtrkbtn" class="button" type="button" onclick="createNewTrack()">New Track</button>
                     </div>
                     <p id="tempotext" style="position: relative; left: 130px; top: 2px; font-size: 10px; height: 0px; width: max-content; margin-top: 0px; margin-bottom: 0px;">Original: -</p>

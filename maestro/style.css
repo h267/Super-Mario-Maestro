@@ -197,6 +197,29 @@ select::-moz-focus-inner{
       animation-fill-mode: both;
 }
 
+.toolbar{
+      width: 32px;
+      background-color: #164770;
+      border: 2px solid #164770;
+      border-radius: 4px;
+}
+
+.toolbar a{
+      display: block;
+      padding: 8px;
+      transition: all 0.2s ease;
+      color: #164770;
+      border-radius: 4px;
+}
+
+.toolbar a:hover {
+      background-color: #1a5586;
+}
+
+.toolbar a:active {
+      background-color: #7289da;
+}
+
 @keyframes buttonpress{
       0%{
             box-shadow: #1a5586 0px 3px;
