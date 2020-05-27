@@ -85,7 +85,7 @@ class Level {
 		// TODO: Use notegroup xShifts to draw notes offset from one another
 		// But also have it so if shifted and non-shifted notes overlap, they are both visible
 		for (i = 0; i < this.noteGroups.length; i++) {
-			if (!this.noteGroups[i].isVisible) { continue; }
+			if (!this.noteGroups[i].isVisible || (isSoloMode && i !== selectedTrack)) { continue; }
 			for (j = 0; j < this.noteGroups[i].notes.length; j++) {
 				let thisNote = this.noteGroups[i].notes[j];
 				let x = (thisNote.x + marginWidth - ofsX) * numBlockSubdivisions;
@@ -93,7 +93,7 @@ class Level {
 				if (!isVisible(x / numBlockSubdivisions, y, marginWidth, 0)) { continue; }
 
 				// Set note
-				if(!isBuildMode) this.overview.setTile(x, y, 1);
+				if (!isBuildMode) this.overview.setTile(x, y, 1);
 				this.isTrackOccupant[x][y][i] = true;
 				this.numberOfOccupants[x][y]++; // TODO: Properly update this information after conflict resolution
 
@@ -113,12 +113,12 @@ class Level {
 					// if (x > this.width) this.width = x;
 					// if((this.powerupCount > 100 || this.entityCount > 100) &&
 					// (this.limitLine === null)) this.limitLine = x + marginWidth + 1;
-					if(!isBuildMode) this.overview.setTile(x,y+1,ins+2);
+					if (!isBuildMode) this.overview.setTile(x, y + 1, ins + 2);
 					this.isTrackOccupant[x][y + 1][i] = true;
-					this.numberOfOccupants[x][y+1]++; // TODO: Also here
+					this.numberOfOccupants[x][y + 1]++; // TODO: Also here
 				}
 
-				if(isBuildMode) {
+				if (isBuildMode) {
 					let newStruct = new NoteStructure(0, x / numBlockSubdivisions, y, ins);
 					newStruct.entities[0] = ins + 2;
 				}
@@ -165,12 +165,11 @@ class Level {
 			that.drawStructure(struct);
 			// console.log(struct.id);
 			// console.log(struct);
-			
 		});
 
 		forbiddenTiles.forEach((forbiddenTile) => {
 			let markX = forbiddenTile.x + marginWidth - ofsX;
-			let markY =  forbiddenTile.y - 1 - ofsY;
+			let markY = forbiddenTile.y - 1 - ofsY;
 			this.markTile(markX, markY, 5);
 		});
 		console.log('---');

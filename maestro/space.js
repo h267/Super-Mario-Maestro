@@ -196,7 +196,7 @@ class Structure {
 		let thisX = this.x - marginWidth - ofsX;
 		let thisY = this.y + 1 + ofsY;
 		for (let j = 0; j < forbiddenTiles.length; j++) {
-			if (thisX === forbiddenTiles[j].x && thisY === forbiddenTiles[j].y){
+			if (thisX === forbiddenTiles[j].x && thisY === forbiddenTiles[j].y) {
 				return true;
 			}
 		}
@@ -246,7 +246,6 @@ class NoteStructure extends Structure {
 		return this.collisionBox.getCollisionWith(otherStruct.collisionBox, options);
 	}
 
-	// FIXME: Cell height bug
 	checkCellCollision(otherStruct, doAdd) {
 		if (!this.buildRules.canBeInCell || !this.buildRules.canBeInCell) return true;
 		if (this.hasSemisolid || otherStruct.hasSemisolid) return true; // TODO: Allow semisolids in cells
@@ -438,7 +437,7 @@ class NoteStructure extends Structure {
 
 		// Move structure
 		let efXOfs = setup.offset - this.setup.offset;
-		
+
 		this.efX += efXOfs;
 		this.updateXFromEfX();
 		this.collisionBox.x = this.x;
@@ -465,7 +464,7 @@ class NoteStructure extends Structure {
 		this.type = typeNum;
 	}
 
-	tryAllSetups() { // FIXME: Structs in cells need to be checked using cell height
+	tryAllSetups() {
 		// FIXME: Worse performance when 2 block drop cell merge is enabled
 		// Try to move a note to all available setups. Return the success, as well as all available nodes to traverse.
 		let origSetup = this.setup;
@@ -494,7 +493,7 @@ class NoteStructure extends Structure {
 
 	canMergeWith(otherStruct) {
 		if (!this.buildRules.canVerticalStack || !this.buildRules.canVerticalStack) return false;
-		
+
 		// Can't be same setup
 		if (this.setup.structType === otherStruct.setup.structType) return false;
 
@@ -535,7 +534,6 @@ class NoteStructure extends Structure {
 		// Determine if a semisolid needs to be used
 		if (this.efX % 1 !== 0) this.hasSemisolid = true;
 		else this.hasSemisolid = false;
-		
 	}
 
 	getEntityPos() {
@@ -633,32 +631,32 @@ class Cell {
 		// Remove from tallest structure if it is this cell, recalculate as necessary.
 		// Also recalculate starting and ending x coords
 		// if (this.locationMap[struct.originalX].tallest.id === struct.id) { // TODO: Maybe a better fix?
-			let newStartX = 240;
-			let newEndX = 0;
-			let newHighestPoint = 0;
-			if (origEntry.list.length === 0) {
-				delete this.locationMap[struct.originalX];
-				if (struct.originalX !== this.startX && struct.originalX !== this.endX) {
-					this.split(struct.originalX);
-				}
-			} else {
-				[origEntry.tallest] = origEntry.list;
-				origEntry.list.forEach((localStruct) => {
-					let localStructHeight = localStruct.collisionBox.y + localStruct.collisionBox.h;
-					let tallestStructHeight = origEntry.tallest.collisionBox.y + origEntry.tallest.collisionBox.h;
-					if (localStructHeight > tallestStructHeight) origEntry.tallest = localStruct;
-				});
+		let newStartX = 240;
+		let newEndX = 0;
+		let newHighestPoint = 0;
+		if (origEntry.list.length === 0) {
+			delete this.locationMap[struct.originalX];
+			if (struct.originalX !== this.startX && struct.originalX !== this.endX) {
+				this.split(struct.originalX);
 			}
-			this.members.forEach((localStruct) => {
-				if (localStruct.x < newStartX) newStartX = localStruct.x;
-				if (localStruct.x > newEndX) newEndX = localStruct.x;
-				if (localStruct.collisionBox.y + localStruct.collisionBox.h > newHighestPoint) {
-					newHighestPoint = localStruct.collisionBox.y + localStruct.collisionBox.h;
-				}
+		} else {
+			[origEntry.tallest] = origEntry.list;
+			origEntry.list.forEach((localStruct) => {
+				let localStructHeight = localStruct.collisionBox.y + localStruct.collisionBox.h;
+				let tallestStructHeight = origEntry.tallest.collisionBox.y + origEntry.tallest.collisionBox.h;
+				if (localStructHeight > tallestStructHeight) origEntry.tallest = localStruct;
 			});
-			this.startX = newStartX;
-			this.endX = newEndX;
-			this.highestPoint = newHighestPoint;
+		}
+		this.members.forEach((localStruct) => {
+			if (localStruct.x < newStartX) newStartX = localStruct.x;
+			if (localStruct.x > newEndX) newEndX = localStruct.x;
+			if (localStruct.collisionBox.y + localStruct.collisionBox.h > newHighestPoint) {
+				newHighestPoint = localStruct.collisionBox.y + localStruct.collisionBox.h;
+			}
+		});
+		this.startX = newStartX;
+		this.endX = newEndX;
+		this.highestPoint = newHighestPoint;
 		// }
 		struct.cell = null;
 	}
@@ -786,8 +784,6 @@ function getStructTemplate(n) {
 	default:
 		console.log('invalid setup');
 		return null;
-
-            // FIXME: Some of the setups connect badly (like the 3 block drop)
 	}
 }
 

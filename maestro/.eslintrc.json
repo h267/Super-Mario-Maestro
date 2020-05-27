@@ -23,13 +23,15 @@
         "no-undef": "off",
         "no-unused-vars": "off",
         "prefer-const": "off",
-        "max-len": ["error", 120],
+        //"max-len": ["error", 120],
+        "max-len": "off",
         "indent": ["error", "tab"],
         "no-alert": "off",
         "no-bitwise": "off",
         "no-case-declarations": "off",
         "no-param-reassign": ["error", { "props": false }],
-        "comma-dangle": ["error", "never"]
+        "comma-dangle": ["error", "never"],
+        "prefer-destructuring": "off"
         //"require-jsdoc": "warn",
         //"valid-jsdoc": "warn"
     }

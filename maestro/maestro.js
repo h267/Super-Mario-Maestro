@@ -3,7 +3,6 @@
 
 // FIXME: Playback breaks after clicking different tracks?
 // FIXME: Sometimes playback cannot be stopped
-// FIXME: There are a lot of possibly avoidable collisions from the cells; allow more movement
 
 // TODO: Switch to original instrument when invalid instrument is switched to (adv settings toggle)
 // TODO: Finish replacing midi tracks with Maestro tracks
@@ -65,6 +64,7 @@ let hasLoadedBuffers = false;
 let showUnbuildables = false;
 let canvasZoom = 1;
 let isBuildMode = false;
+let isSoloMode = false;
 
 // getEquivalentBlocks(1.5);
 
@@ -213,7 +213,7 @@ function updateUI(limitedUpdate, reccTempo, doBPB = true) {
 	bbar = midi.firstBbar;
 	if (!limitedUpdate) {
 		document.getElementById('trkcontainer').innerHTML = '';
-		if(doBPB) recommendBPB();
+		if (doBPB) recommendBPB();
 	}
 	if (midi.firstTempo !== 0) { songBPM = 60000000 / midi.firstTempo; }
 	for (i = 0; i < tracks.length; i++) {
@@ -1123,7 +1123,7 @@ function addTrack(track) {
 	console.log('new track');
 	midi.trks.push(track);
 	tracks.push(new MaestroTrack(track));
-	level.noteGroups.push(new PreloadedNoteGroup())
+	level.noteGroups.push(new PreloadedNoteGroup());
 }
 
 /**
@@ -1387,7 +1387,7 @@ function redrawMinimap() {
 /**
  * Updates the stored values for tile positions in the level.
  */
-function refreshBlocks() { // TODO: Somehow quantize the notes further when the user switches to wigglers without losing data
+function refreshBlocks() { // TODO: Somehow quantize the notes further when the user switches to wigglers without losing data (they cannot use semisolids)
 	let highestX = 0;
 	for (let i = 0; i < tracks.length; i++) {
 		level.clearNoteGroup(i);
@@ -1509,11 +1509,12 @@ function addNote(trkId, x, y, idx) {
 	note.pitch = y - 1 - level.noteGroups[trkId].ofsY;
 	note.time = blocksToTicks(x);
 	note.instrument = tracks[trkId].instrumentChanges[0];
-	note.originalInstrument = note.instrument;
+	note.originalInstrument = tracks[trkId].origInstrument;
 	note.x = x;
 	note.y = y - level.noteGroups[trkId].ofsY;
+	note.origNote = note;
 	let prevNote = level.noteGroups[trkId].notes[idx];
-	if (prevNote === undefined){
+	if (prevNote === undefined) {
 		isAtEnd = true;
 		prevNote = level.noteGroups[trkId].notes[idx - 1];
 	}
@@ -1523,10 +1524,12 @@ function addNote(trkId, x, y, idx) {
 	// Search for matching pitch and x position globally
 	let globalIdx;
 	if (isAtEnd) globalIdx = tracks[trkId].notes.length;
-	else if (prevNote !== undefined) globalIdx = tracks[trkId].notes.findIndex((thisNote) => {
-		let thisX = ticksToBlocks(thisNote.time);
-		return (thisNote.pitch === prevNote.pitch && thisX === prevNote.x);
-	});
+	else if (prevNote !== undefined) {
+		globalIdx = tracks[trkId].notes.findIndex((thisNote) => {
+			let thisX = ticksToBlocks(thisNote.time);
+			return (thisNote.pitch === prevNote.pitch && thisX === prevNote.x);
+		});
+	}
 	if (globalIdx === -1) globalIdx = 0;
 
 	tracks[trkId].notes.splice(globalIdx, 0, note);
@@ -1538,12 +1541,9 @@ function addNote(trkId, x, y, idx) {
 function removeNote(trkId, idx) {
 	let note = level.noteGroups[trkId].notes[idx];
 	level.noteGroups[trkId].notes.splice(idx, 1);
-	
+
 	// Search for matching pitch and x position globally
-	let globalIdx = tracks[trkId].notes.findIndex((thisNote) => {
-		let thisX = ticksToBlocks(thisNote.time);
-		return (thisNote.pitch === note.pitch && thisX === note.x);
-	});
+	let globalIdx = tracks[trkId].notes.findIndex((thisNote) => thisNote === note.origNote);
 
 	tracks[trkId].notes.splice(globalIdx, 1);
 	midi.trks[trkId].notes.splice(globalIdx, 1);
@@ -1579,5 +1579,11 @@ function createNewTrack() {
 
 	addTrack(newTrk);
 	updateUI(false, false, false);
+	softRefresh();
+}
+
+function toggleSoloMode() {
+	isSoloMode = document.getElementById('solobox').checked;
+	cancelPlayback();
 	softRefresh();
 }

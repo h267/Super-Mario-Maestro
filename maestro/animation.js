@@ -123,7 +123,7 @@ function animateContinuousPlayback(blocksPerFrame, delay) {
 			scrollDisplayTo((CONT_SCROLL_X - marginWidth) * 16 + ofs);
 			canvasLayers[dlayer.bgLayer].setXOfs(ofs);
 		// Case 3: The level is about to stop scrolling
-		} else { // FIXME: Fix the end getting cut off, causing desync when the scrubber is at the end
+		} else { // FIXME: Fix playback end behavior
 			if (!ranEndTransition) {
 				lastMovingX = tilePos - CONT_SCROLL_X + startX + 1;
 				canvasLayers[dlayer.bgLayer].setXOfs(0);

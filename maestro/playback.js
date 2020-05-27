@@ -121,7 +121,7 @@ async function playLvl(midi, level, bpm, blocksPerBeat, ofsX, ofsY) {
 		noteCount[i] = {};
 	}
 	for (i = 0; i < level.noteGroups.length; i++) {
-		if (!level.noteGroups[i].isVisible) continue;
+		if (!level.noteGroups[i].isVisible || (isSoloMode && i !== selectedTrack)) continue;
 		for (j = 0; j < level.noteGroups[i].notes.length; j++) {
 			let thisNote = level.noteGroups[i].notes[j];
 			let yPos = thisNote.pitch + level.noteGroups[i].ofsY;

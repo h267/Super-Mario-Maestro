@@ -233,7 +233,7 @@ const standardBuildSetups = [
 	{ structType: 5, usesSemisolid: false, timeDelay: 15876 }, // 3 Block Drop
 	{ structType: 5, usesSemisolid: true, timeDelay: 15876 + semisolidDelay }, // 3 Block Drop + Semisolid
 	{ structType: 4, usesSemisolid: false, timeDelay: 95700 }, // 3 Block Parachute
-	{ structType: 4, usesSemisolid: true, timeDelay: 95700 + semisolidDelay }, // 3 Block Parachute + Semisolid
+	{ structType: 4, usesSemisolid: true, timeDelay: 95700 + semisolidDelay } // 3 Block Parachute + Semisolid
 ];
 
 /**
@@ -275,7 +275,7 @@ const MM2Instruments = [
 		isPercussion: false,
 		isBuildable: false,
 		buildRules: {
-			canFallNextToWall: false,
+			canFallNextToWall: false
 		}
 	},
 	{ // 6
@@ -768,8 +768,12 @@ class MaestroTrack {
 		this.notes = [];
 		this.octaveShift = 0;
 		this.semitoneShift = 0;
+		this.origInstrument = 0;
 		this.instrumentChanges = [];
-		if (midiTrk.usedInstruments[0] !== undefined) this.instrumentChanges.push(midiTrk.usedInstruments[0]);
+		if (midiTrk.usedInstruments[0] !== undefined) {
+			this.instrumentChanges.push(midiTrk.usedInstruments[0]);
+			this.origInstrument = midiTrk.usedInstruments[0];
+		}
 		this.hasVisibleNotes = false;
 		this.numNotesOffscreen = { above: 0, below: 0 };
 		this.label = midiTrk.label;

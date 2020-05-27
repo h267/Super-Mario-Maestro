@@ -133,7 +133,7 @@ function getMainMouseTilePos(e) {
  * @param {MouseEvent} e The mouse event.
  */
 function handleMainMouseDown(e) { // TODO: Distinguish left and right click
-	if (noMouse || e.button != 0) { return; } // Exit if the mouse is disabled
+	if (noMouse || e.button !== 0) { return; } // Exit if the mouse is disabled
 	isMainMouseHolding = true;
 	processClick(e);
 }
@@ -201,7 +201,6 @@ function handleMainWheel(e) {
 		// Wrap back around if scrolled past the ends of the tool list
 		if (mouseToolId < 0) mouseToolId = mouseTools.length - 1;
 		if (mouseToolId >= mouseTools.length) mouseToolId = 0;
-
 	} while (!mouseTools[mouseToolId].isVisible && !isHiddenToolsEnabled);
 
 	switchTool(tilePos);
@@ -217,7 +216,7 @@ function switchTool(tilePos) {
 }
 
 function drawCursor(tilePos) {
-	if(!isLoaded) return;
+	if (!isLoaded) return;
 	// Draw the cursor
 	clearDisplayLayer(dlayer.mouseLayer);
 	// Lightly highlight the tile the cursor is on
@@ -411,6 +410,7 @@ function infoTool() {
 function addNoteTool() {
 	if (!fileLoaded || !level.noteGroups[selectedTrack].isVisible) return;
 	let placeX = lastClickedLvlPos.x;
+	if (placeX < 0) return;
 	let placeY = lastClickedLvlPos.y;
 	let insertIndex = level.noteGroups[selectedTrack].getNoteAt(placeX, placeY).pos;
 	addNote(selectedTrack, placeX, placeY, insertIndex);
@@ -441,10 +441,10 @@ function changeTrackTool() {
 	let placeX = lastClickedLvlPos.x;
 	let placeY = lastClickedLvlPos.y;
 	let foundNote = level.noteGroups[selectedTrack].getNoteAt(placeX, placeY);
-	if (foundNote.result !== null){
+	if (foundNote.result !== null) {
 		removeNote(selectedTrack, foundNote.pos);
 		let insertIndex = level.noteGroups[secondaryTrack].getNoteAt(placeX, placeY).pos;
-		addNote(secondaryTrack, placeX, placeY, insertIndex);
+		addNote(secondaryTrack, foundNote.result.x, placeY, insertIndex);
 	}
 }
 
@@ -453,9 +453,7 @@ function forbidTool() {
 		x: lastClickedLvlPos.x,
 		y: lastClickedLvlPos.y
 	};
-	if (forbiddenTiles.findIndex((tile) => {
-		return tile.x === forbidTile.x && tile.y === forbidTile.y;
-	}) === -1){
+	if (forbiddenTiles.findIndex((tile) => tile.x === forbidTile.x && tile.y === forbidTile.y) === -1) {
 		forbiddenTiles.push(forbidTile);
 		console.log(forbidTile);
 	}
