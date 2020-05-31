@@ -81,10 +81,10 @@ loadToolIcons().then(async (icons) => {
 
 loadBuffers().then(() => {
     hasLoadedBuffers = true;
-    document.getElementById('stopbtn').innerHTML = 'Stop';
-    document.getElementById('stopbtn').disabled = false;
-    document.getElementById('playbtn').innerHTML = 'Play';
-    document.getElementById('playbtn').disabled = false;
+    document.getElementById('stopBtn').innerHTML = 'Stop';
+    document.getElementById('stopBtn').disabled = false;
+    document.getElementById('playBtn').innerHTML = 'Play';
+    document.getElementById('playBtn').disabled = false;
 });
 
 /**
@@ -338,7 +338,7 @@ function drawLevel(redrawMini = false, noDOM = false) {
     let j;
     if (fileLoaded && !noDOM) { // Update offscreen note count (and octave shift button)
         // Enable button if recommended octave shift and actual octave shift don't match
-        document.getElementById('shiftbutton')
+        document.getElementById('shiftBtn')
             .disabled = (tracks[selectedTrack].octaveShift === getViewOctaveShift(selectedTrack));
         for (let i = 0; i < tracks.length; i++) {
             tracks[i].hasVisibleNotes = false;
@@ -728,7 +728,7 @@ function changeBPB() {
 function playBtn() {
     if (fileLoaded) {
         disableMouse();
-        document.getElementById('playbtn').disabled = true;
+        document.getElementById('playBtn').disabled = true;
         if (contPlayback) playMap(midi, level, bpm, blocksPerBeat, ofsX, ofsY);
         else playLvl(midi, level, bpm, blocksPerBeat, ofsX, ofsY);
     }
@@ -810,8 +810,8 @@ function handleOut() {
  */
 function showEverything() {
     document.getElementById('toolboxContainer').hidden = false;
-    document.getElementById('playbtn').disabled = !hasLoadedBuffers;
-    document.getElementById('stopbtn').disabled = !hasLoadedBuffers;
+    document.getElementById('playBtn').disabled = !hasLoadedBuffers;
+    document.getElementById('stopBtn').disabled = !hasLoadedBuffers;
 }
 
 /**
@@ -919,7 +919,7 @@ function selectTrack(trkID) {
     selectedTrack = trackID;
     document.getElementById('octaveshift').value = tracks[selectedTrack].octaveShift;
     document.getElementById('semitoneshift').value = tracks[selectedTrack].semitoneShift;
-    document.getElementById('shiftbutton')
+    document.getElementById('shiftBtn')
         .disabled = (tracks[selectedTrack].octaveShift === getViewOctaveShift(selectedTrack));
     if (tracks[selectedTrack].hasPercussion || usingAdvSettings) {
         document.getElementById('semishiftdiv').style.display = 'inline';
@@ -1260,7 +1260,7 @@ function disableTrack(track) { // This makes the track invisible, but doesn't ac
  * Plays a button press animation on the Discord button and opens the Discord invite in a new tab.
  */
 function handleDiscordPress() {
-    let btn = document.getElementById('discordbutton');
+    let btn = document.getElementById('discordBtn');
     btn.style.animationFillMode = 'both';
     btn.style.animation = '0.2s discordpress, 1.5s discordglow';
     btn.style.animationIterationCount = '1, infinite';
@@ -1631,13 +1631,13 @@ function tutorialBtn() {
  */
 function setPlaybackWaitStatus(status) {
     if (status) {
-        document.getElementById('playbtn').innerHTML = '. . .';
-        document.getElementById('stopbtn').innerHTML = '. . .';
-        document.getElementById('stopbtn').disabled = true;
+        document.getElementById('playBtn').innerHTML = '. . .';
+        document.getElementById('stopBtn').innerHTML = '. . .';
+        document.getElementById('stopBtn').disabled = true;
     } else {
-        document.getElementById('playbtn').innerHTML = 'Play';
-        document.getElementById('stopbtn').innerHTML = 'Stop';
-        document.getElementById('stopbtn').disabled = false;
+        document.getElementById('playBtn').innerHTML = 'Play';
+        document.getElementById('stopBtn').innerHTML = 'Stop';
+        document.getElementById('stopBtn').disabled = false;
     }
     isRendering = status;
 }

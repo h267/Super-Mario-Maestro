@@ -34,15 +34,15 @@
     </div>
 
     <div id="startingContainer" class="smallspacedcontainer">
-        <button class="button" onclick="loadExample()">Load Example</button>
-        <button class="button" onclick="tutorialBtn()">Tutorial by Loup&Snoop</button>
+        <button onclick="loadExample()">Load Example</button>
+        <button onclick="tutorialBtn()">Tutorial by Loup&Snoop</button>
     </div>
 
     <div id="toolboxContainer" hidden>
         <div class="smallspacedcontainer">
             <div>
-                <button id="playbtn" class="button" type="button" onclick="playBtn()" style="margin-right: 4px;" disabled>. . .</button>
-                <button id="stopbtn" class="button" type="button" onclick="cancelPlayback()" disabled>. . .</button>
+                <button id="playBtn" type="button" onclick="playBtn()" disabled>. . .</button>
+                <button id="stopBtn" type="button" onclick="cancelPlayback()" disabled>. . .</button>
             </div>
             <select id="temposelect" class="dropdown" onchange="selectTempo()">
                 <optgroup id="comtempos" label="Common Tempos">
@@ -59,8 +59,8 @@
                 <p id="QEtext" class="displaytext">BPB Quality: -</p>
                 <p id="NCtext" class="displaytext">Spatial Conflicts: -</p>
             </div>
-            <button id="buildbtn" class="button buildbutton" type="button" onclick="toggleBuildMode()">Build Mode (Beta)</button>
-            <button id="newtrkbtn" class="button" type="button" onclick="createNewTrack()">New Track</button>
+            <button id="buildbtn" class="btn-green" type="button" onclick="toggleBuildMode()">Build Mode (Beta)</button>
+            <button id="newtrkbtn" type="button" onclick="createNewTrack()">New Track</button>
         </div>
         <p id="tempotext" style="position: relative; left: 130px; top: 2px; font-size: 10px; height: 0px; width: max-content; margin-top: 0px; margin-bottom: 0px;">Original: -</p>
         <p id="fstxt" style='margin-bottom:0px;'>File Scrubber</p>
@@ -80,7 +80,7 @@
                 <label for="bpbpicker" id="labrs">Blocks per Beat</label>
                 <input id="bpbpicker" type="number" name="bpbpicker" value="0" min="1" max="8" oninput="pickBPB()" style="width:50px;" min="1" max="16" disabled>
             </div>
-            <!--<button id="bpbrecommend" class="button" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button>-->
+            <!--<button id="bpbrecommend" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button>-->
         </div>
         <div style="display: flex;">
             <div id="lefttools">
@@ -105,11 +105,11 @@
                 <div class="spacedcontainer">
                     <p class="displaytext" id="NASText" style="padding-right: 12px;">Notes above screen: 0</p>
                     <p class="displaytext" id="NBSText">Notes below screen: 0</p>
-                    <button id="shiftbutton" class="button" onclick="shiftTrackIntoView()">Shift into View</button>
+                    <button id="shiftBtn" onclick="shiftTrackIntoView()">Shift into View</button>
                 </div>
                 <div class="spacedcontainer">
-                    <button class="button" onclick="setSecondaryTrack()">Set as transfer track</button>
-                    <button class="button" onclick="triggerTrackDelete()">Delete track</button>
+                    <button id="setAsTransferTrackBtn" onclick="setSecondaryTrack()">Set as transfer track</button>
+                    <button id="deleteTrackBtn" onclick="triggerTrackDelete()">Delete track</button>
                 </div>
                 <div id="instrumentcontainer">
                     <!-- To be populated with track instrument changes -->
@@ -138,7 +138,7 @@
 </div>
 <div id="discordLinkContainer">
     <p>made by h267</p>
-    <button id="discordbutton" class="discordbutton" onClick="handleDiscordPress();"></button>
+    <button id="discordBtn" onClick="handleDiscordPress();"></button>
 </div>
 
 

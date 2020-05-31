@@ -203,7 +203,7 @@ function stopAudio() {
  */
 function resetPlayback() {
     enableMouse();
-    document.getElementById('playbtn').disabled = false;
+    document.getElementById('playBtn').disabled = false;
     clearDisplayLayer(dlayer.mouseLayer);
     scrollDisplayTo(0);
     refreshCanvas();
