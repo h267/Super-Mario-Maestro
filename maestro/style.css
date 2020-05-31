@@ -1,311 +1,311 @@
 /* Thanks Loup&Snoop (for the colors) */
 
-body{
-      background-color: #086a9a;
+body {
+    background-color: #086a9a;
 }
 
-.logo{
-      height:35px;
-      margin-bottom: 5px;
+.logo {
+    height: 35px;
+    margin-bottom: 5px;
 }
 
-.dispcontainer{
-      overflow: auto;
-      border: 3px solid #164770;
-      border-radius: 3px;
-      margin-bottom: 4px;
+.dispcontainer {
+    overflow: auto;
+    border: 3px solid #164770;
+    border-radius: 3px;
+    margin-bottom: 4px;
 }
 
-input#fileinput{
-	color: white;
-	background-color: #164770;
-	border: 3px solid #164770;
-	border-radius: 5px;
-      font-weight: bold;
-      padding-right: 5px;
+input#fileinput {
+    color: white;
+    background-color: #164770;
+    border: 3px solid #164770;
+    border-radius: 5px;
+    font-weight: bold;
+    padding-right: 5px;
 }
 
-.button{
-      outline: none;
-      background-color: white;
-      border: 3px solid #e4e4e4;
-      border-radius: 5px;
-      font-weight: bold;
-      height: 30px;
-      padding-left: 12px;
-      padding-right: 12px;
-      transition: transform 80ms, box-shadow 80ms;
-      box-shadow: #1a5586 0px 4px;
+.button {
+    outline: none;
+    background-color: white;
+    border: 3px solid #e4e4e4;
+    border-radius: 5px;
+    font-weight: bold;
+    height: 30px;
+    padding-left: 12px;
+    padding-right: 12px;
+    transition: transform 80ms, box-shadow 80ms;
+    box-shadow: #1a5586 0px 4px;
 }
 
 button::-moz-focus-inner {
-      border: 0;
+    border: 0;
 }
 
-.button:enabled:hover{
-      box-shadow: #1a5586 0px 3px;
-      transform: translateY(1px);
+.button:enabled:hover {
+    box-shadow: #1a5586 0px 3px;
+    transform: translateY(1px);
 }
 
-.button:enabled:active{
-      box-shadow: #1a5586 0px 0px;
-      transform: translateY(4px);
+.button:enabled:active {
+    box-shadow: #1a5586 0px 0px;
+    transform: translateY(4px);
 }
 
-.button:disabled{
-      box-shadow: #1a5586 0px 0px;
-      transform: translateY(4px);
+.button:disabled {
+    box-shadow: #1a5586 0px 0px;
+    transform: translateY(4px);
 }
 
-.buildbutton{
-      background-color: lime;
-      border: 3px solid limegreen;
+.buildbutton {
+    background-color: lime;
+    border: 3px solid limegreen;
 }
 
-.dropdown{
-      background: white url(icon/mm-dropdown-arrow.png) 99% 50% no-repeat;
-      border: 3px solid white;
-      border-radius: 5px;
-      font-weight: bold;
-      color: #3a3a3a;
-      height: 30px;
-      padding-left: 12px;
-      padding-right: 30px;
-      -webkit-appearance: none;
-      -moz-appearance: none;
+.dropdown {
+    background: white url(icon/mm-dropdown-arrow.png) 99% 50% no-repeat;
+    border: 3px solid white;
+    border-radius: 5px;
+    font-weight: bold;
+    color: #3a3a3a;
+    height: 30px;
+    padding-left: 12px;
+    padding-right: 30px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
-.dropdown:hover{
-      animation-name: dropdownhover;
-      animation-duration: 100ms;
-      animation-timing-function: ease-in;
-      animation-fill-mode: both;
+.dropdown:hover {
+    animation-name: dropdownhover;
+    animation-duration: 100ms;
+    animation-timing-function: ease-in;
+    animation-fill-mode: both;
 }
 
-.dropdown:active{
-      background: #eee url(icon/mm-dropdown-arrow-clicked.png) 99% 50% no-repeat;;
+.dropdown:active {
+    background: #eee url(icon/mm-dropdown-arrow-clicked.png) 99% 50% no-repeat;;
 }
 
-p, label{
-      font-size: 12px;
-      font-family: Arial, Helvetica, sans-serif;
-      color: white;
+p, label {
+    font-size: 12px;
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
 }
 
-a{
-      font-size: 12px;
-      font-family: Arial, Helvetica, sans-serif;
-      color: rgb(130, 255, 213);
+a {
+    font-size: 12px;
+    font-family: Arial, Helvetica, sans-serif;
+    color: rgb(130, 255, 213);
 }
 
-.displaytext{
-      font-size: 12px;
-      font-weight: bold;
+.displaytext {
+    font-size: 12px;
+    font-weight: bold;
 }
 
-.controlcontainer{
-      background-color: #164770;
-	border: 3px solid #164770;
-      border-radius: 5px;
-      width: max-content;
+.controlcontainer {
+    background-color: #164770;
+    border: 3px solid #164770;
+    border-radius: 5px;
+    width: max-content;
 }
 
-.spacedcontainer{
-      display: flex;
-      align-items: center;
-      margin-bottom: 4px;
+.spacedcontainer {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
 }
 
-.spacedcontainer > *{
-      margin-left: 8px;
-      margin-right: 8px;
+.spacedcontainer > * {
+    margin-left: 8px;
+    margin-right: 8px;
 }
 
-.smallspacedcontainer{
-      display: flex;
-      align-items: center;
-      margin-bottom: 4px;
+.smallspacedcontainer {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
 }
 
-.smallspacedcontainer > *{
-      margin-left: 4px;
-      margin-right: 4px;
+.smallspacedcontainer > * {
+    margin-left: 4px;
+    margin-right: 4px;
 }
 
-input{
-      outline: none;
+input {
+    outline: none;
 }
 
-input::-moz-focus-inner{
-      border: 0;
+input::-moz-focus-inner {
+    border: 0;
 }
 
-input[type="radio"]:checked+div,input[type="radio"]:checked+div+label{
-      background-color: blue;
+input[type="radio"]:checked + div, input[type="radio"]:checked + div + label {
+    background-color: blue;
 }
 
-input[type="radio"]{
-      display: none;
+input[type="radio"] {
+    display: none;
 }
 
-select{
-      outline: none;
+select {
+    outline: none;
 }
 
-select::-moz-focus-inner{
-      border: 0;
+select::-moz-focus-inner {
+    border: 0;
 }
 
-.tracklistitem{ 
-      transition: background-color 150ms, border 150ms;
+.tracklistitem {
+    transition: background-color 150ms, border 150ms;
 }
 
-.tracklabel{
-      transition: color 150ms;
+.tracklabel {
+    transition: color 150ms;
 }
 
-.displaytextrow > td{
-      padding-left: 8px;
-      padding-right: 8px;
+.displaytextrow > td {
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
-.discordbutton{
-      outline: none;
-      background-color: #7289da;
-      border: 3px solid #7289da;
-      background-image: url(icon/discord.png);
-      background-size: 100px;
-      border-radius: 12px;
-      height: 40px;
-      width: 105px;
-      padding-left: 12px;
-      padding-right: 12px;
-      box-shadow: #1a5586 0px 8px;
-      animation-name: discordglow,discordout;
-      animation-timing-function: ease-in-out,ease-out;
-      animation-direction: alternate;
-      animation-duration: 1.5s,0.2s;
-      animation-iteration-count: infinite, 1;
-      animation-fill-mode: both;
+.discordbutton {
+    outline: none;
+    background-color: #7289da;
+    border: 3px solid #7289da;
+    background-image: url(icon/discord.png);
+    background-size: 100px;
+    border-radius: 12px;
+    height: 40px;
+    width: 105px;
+    padding-left: 12px;
+    padding-right: 12px;
+    box-shadow: #1a5586 0px 8px;
+    animation-name: discordglow, discordout;
+    animation-timing-function: ease-in-out, ease-out;
+    animation-direction: alternate;
+    animation-duration: 1.5s, 0.2s;
+    animation-iteration-count: infinite, 1;
+    animation-fill-mode: both;
 }
 
-.discordbutton:hover{
-      animation-name: discordhover, discordglow;
-      animation-duration: 0.5s, 1.5s;
-      animation-timing-function: ease-in-out;
-      animation-iteration-count: 1, infinite;
-      animation-fill-mode: both;
+.discordbutton:hover {
+    animation-name: discordhover, discordglow;
+    animation-duration: 0.5s, 1.5s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: 1, infinite;
+    animation-fill-mode: both;
 }
 
-.toolbar{
-      width: 32px;
-      background-color: #164770;
-      border: 2px solid #164770;
-      border-radius: 4px;
+.toolbar {
+    width: 32px;
+    background-color: #164770;
+    border: 2px solid #164770;
+    border-radius: 4px;
 }
 
-.toolbar a{
-      display: block;
-      padding: 8px;
-      transition: all 0.2s ease;
-      color: #164770;
-      border-radius: 4px;
+.toolbar a {
+    display: block;
+    padding: 8px;
+    transition: all 0.2s ease;
+    color: #164770;
+    border-radius: 4px;
 }
 
 .toolbar a:hover {
-      background-color: #1a5586;
+    background-color: #1a5586;
 }
 
 .toolbar a:active {
-      background-color: #7289da;
+    background-color: #7289da;
 }
 
-@keyframes buttonpress{
-      0%{
-            box-shadow: #1a5586 0px 3px;
-            transform: translateY(1px);
-      }
-      100%{
-            box-shadow: #1a5586 0px 0px;
-            transform: translateY(4px);
-      }
+@keyframes buttonpress {
+    0% {
+        box-shadow: #1a5586 0px 3px;
+        transform: translateY(1px);
+    }
+    100% {
+        box-shadow: #1a5586 0px 0px;
+        transform: translateY(4px);
+    }
 }
 
-@keyframes dropdownhover{
-      0%{
-            background: white url(icon/mm-dropdown-arrow.png) 99% 50% no-repeat;
-            border: 3px solid white;
-      }
-      100%{
-            background: #eee url(icon/mm-dropdown-arrow.png) 99% 50% no-repeat;
-            border: 3px solid #eee;
-      }
+@keyframes dropdownhover {
+    0% {
+        background: white url(icon/mm-dropdown-arrow.png) 99% 50% no-repeat;
+        border: 3px solid white;
+    }
+    100% {
+        background: #eee url(icon/mm-dropdown-arrow.png) 99% 50% no-repeat;
+        border: 3px solid #eee;
+    }
 }
 
-@keyframes discordglow{
-      0%{
-            border-color: #7289da;
-            background-color: #7289da;
-      }
-      100%{
-            border-color: #689dff;
-            background-color: #689dff;
-      }
+@keyframes discordglow {
+    0% {
+        border-color: #7289da;
+        background-color: #7289da;
+    }
+    100% {
+        border-color: #689dff;
+        background-color: #689dff;
+    }
 }
 
-@keyframes discordhover{
-      0%{
-            box-shadow: #1a5586 0px 8px;
-            transform: translateY(0px);
-      }
-      25%{
-            box-shadow: #1a5586 0px 14px;
-            transform: translateY(-6px);
-      }
-      50%{
-            box-shadow: #1a5586 0px 11px;
-            transform: translateY(-3px);
-      }
-      75%{
-            box-shadow: #1a5586 0px 12px;
-            transform: translateY(-4px);
-      }
-      100%{
-            box-shadow: #1a5586 0px 12px;
-            transform: translateY(-4px);
-      }
+@keyframes discordhover {
+    0% {
+        box-shadow: #1a5586 0px 8px;
+        transform: translateY(0px);
+    }
+    25% {
+        box-shadow: #1a5586 0px 14px;
+        transform: translateY(-6px);
+    }
+    50% {
+        box-shadow: #1a5586 0px 11px;
+        transform: translateY(-3px);
+    }
+    75% {
+        box-shadow: #1a5586 0px 12px;
+        transform: translateY(-4px);
+    }
+    100% {
+        box-shadow: #1a5586 0px 12px;
+        transform: translateY(-4px);
+    }
 }
 
-@keyframes discordout{
-      0%{
-            box-shadow: #1a5586 0px 12px;
-            transform: translateY(-4px);  
-      }
-      100%{
-            box-shadow: #1a5586 0px 8px;
-            transform: translateY(0px);  
-      }
+@keyframes discordout {
+    0% {
+        box-shadow: #1a5586 0px 12px;
+        transform: translateY(-4px);
+    }
+    100% {
+        box-shadow: #1a5586 0px 8px;
+        transform: translateY(0px);
+    }
 }
 
-@keyframes discordpress{
-      0%{
-            box-shadow: #1a5586 0px 12px;
-            transform: translateY(-4px);       
-      }
-      100%{
-            box-shadow: #1a5586 0px 0px;
-            transform: translateY(8px);      
-      }
+@keyframes discordpress {
+    0% {
+        box-shadow: #1a5586 0px 12px;
+        transform: translateY(-4px);
+    }
+    100% {
+        box-shadow: #1a5586 0px 0px;
+        transform: translateY(8px);
+    }
 }
 
-@keyframes discorddisappear{
-      0%{
-            box-shadow: #1a5586 0px 0px;
-            transform: translateY(8px) rotateX(0deg);
-            opacity: 100%;
-      }
-      100%{
-            opacity: 0%;
-            transform: translateY(8px) rotateX(90deg);
-      }
+@keyframes discorddisappear {
+    0% {
+        box-shadow: #1a5586 0px 0px;
+        transform: translateY(8px) rotateX(0deg);
+        opacity: 100%;
+    }
+    100% {
+        opacity: 0%;
+        transform: translateY(8px) rotateX(90deg);
+    }
 }
