@@ -139,7 +139,7 @@ function loadData(bytes) { // Load file from the file input element
         tracks.push(new MaestroTrack(midiTrk));
     });
     console.log(tracks);
-    document.getElementById('advbox').checked = false;
+    document.getElementById('advanceSettings').checked = false;
     resetOffsets();
     if (fileLoaded) {
         miniClear();
@@ -209,7 +209,7 @@ function loadData(bytes) { // Load file from the file input element
     document.getElementById('verticalShift').disabled = false;
     document.getElementById('blockPerBeat').disabled = false;
     document.getElementById('tempotext').innerHTML = `Original: ${Math.round(songBPM)} bpm`;
-    document.getElementById('advbox').checked = usingAdvSettings;
+    document.getElementById('advanceSettings').checked = usingAdvSettings;
 }
 
 /**
@@ -1298,7 +1298,7 @@ function scrollDisplayTo(pixelsOfs) {
  * Toggles advanced settings, refreshing the UI accordingly.
  */
 function toggleAdvancedMode() {
-    usingAdvSettings = document.getElementById('advbox').checked;
+    usingAdvSettings = document.getElementById('advanceSettings').checked;
     if (tracks[selectedTrack].hasPercussion || usingAdvSettings) {
         document.getElementById('semitonesContainer').hidden = false;
     } else {
@@ -1643,7 +1643,7 @@ function setPlaybackWaitStatus(status) {
 }
 
 function toggleBuildRestriction() {
-    showUnbuildables = document.getElementById('buildbox').checked;
+    showUnbuildables = document.getElementById('unsupportedEntities').checked;
     updateInstrumentContainer();
 }
 

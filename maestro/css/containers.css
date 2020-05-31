@@ -109,6 +109,10 @@
 #soloBoxContainer {
 }
 
+#footerContainer {
+    display: flex;
+}
+
 /*Main container (end)*/
 
 

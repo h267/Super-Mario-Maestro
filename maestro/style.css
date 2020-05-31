@@ -117,6 +117,12 @@
     right: 4px;
 }
 
+#unsupportedEntities, #advanceSettings {
+    position: relative;
+    bottom: 3px;
+    right: 4px;
+}
+
 
 @keyframes buttonpress {
     0% {

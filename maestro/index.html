@@ -124,16 +124,15 @@
                 </div>
             </div>
         </div>
-        <div style="display: flex;">
+        <div id="footerContainer">
             <div>
-                <input id="buildbox" type="checkbox" onchange="toggleBuildRestriction()">
-                <label for="buildbox" style="position: relative; bottom: 3px; right: 4px;">Allow Unsupported Entities</label>
+                <label for="unsupportedEntities">Allow Unsupported Entities</label>
+                <input id="unsupportedEntities" type="checkbox" name="unsupportedEntities" onchange="toggleBuildRestriction()">
             </div>
             <div>
-                <input id="advbox" type="checkbox" onchange="toggleAdvancedMode()">
-                <label for="advbox" style="position: relative; bottom: 3px; right: 4px;">Advanced Settings</label>
+                <label for="advanceSettings">Advanced Settings</label>
+                <input id="advanceSettings" type="checkbox" name="advanceSettings" onchange="toggleAdvancedMode()">
             </div>
-
         </div>
     </div>
 </div>
