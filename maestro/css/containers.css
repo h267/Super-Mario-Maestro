@@ -34,14 +34,20 @@
 #startingContainer {
 }
 
-#startingContainer p {
+#fileText {
     float: left;
     margin-top: 17px;
 }
 
-#startingContainer input {
+#fileInput {
+    color: white;
+    background-color: #164770;
+    border: 3px solid #164770;
+    border-radius: 5px;
+    font-weight: bold;
+    padding-right: 5px;
     margin-top: 5px;
-    margin-left: 5px
+    margin-left: 5px;
 }
 
 #toolbar {

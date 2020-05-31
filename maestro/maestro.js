@@ -91,13 +91,13 @@ loadBuffers().then(() => {
  * Loads a MIDI file from the file input.
  */
 function loadFileFromInput() {
-    let fname = document.getElementById('fileinput').files[0].name;
+    let fname = document.getElementById('fileInput').files[0].name;
     if (fname.substring(fname.length - 8, fname.length).toLowerCase() === '.mp3.mid') { // Detect MP3 MIDIs
         document.getElementById('noisecontrol').style.display = '';
     } else {
         document.getElementById('noisecontrol').style.display = 'none';
     }
-    reader.readAsArrayBuffer(document.getElementById('fileinput').files[0]);
+    reader.readAsArrayBuffer(document.getElementById('fileInput').files[0]);
     reader.onload = () => loadData(new Uint8Array(reader.result));
 }
 
@@ -105,7 +105,7 @@ function loadFileFromInput() {
  * Loads the example MIDI file.
  */
 function loadExample() {
-    document.getElementById('fileinput').value = '';
+    document.getElementById('fileInput').value = '';
     let request = new XMLHttpRequest();
     request.open('GET', './example.mid', true);
     request.responseType = 'arraybuffer';

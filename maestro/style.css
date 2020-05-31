@@ -4,15 +4,6 @@ body {
     background-color: #086a9a;
 }
 
-input#fileinput {
-    color: white;
-    background-color: #164770;
-    border: 3px solid #164770;
-    border-radius: 5px;
-    font-weight: bold;
-    padding-right: 5px;
-}
-
 .dropdown {
     background: white url(icon/mm-dropdown-arrow.png) 99% 50% no-repeat;
     border: 3px solid white;
