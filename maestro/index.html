@@ -1,145 +1,157 @@
-<html>
-     <head><!-- Global site tag (gtag.js) - Google Analytics -->
-          <script async src="https://www.googletagmanager.com/gtag/js?id=UA-152821049-1"></script>
-          <script>
-               /*window.dataLayer = window.dataLayer || [];
-               function gtag(){dataLayer.push(arguments);}
-               gtag('js', new Date());
-               gtag('config', 'UA-152821049-1');*/
-          </script>
-          <title>Super Mario Maestro</title>
-          <link rel="stylesheet" href="style.css">
-          <meta charset="utf-8"/>
-          <link rel="shortcut icon" href="favicon.ico">
-     </head>
-     <body>
-          <div style="width:100%">
-               <div style="display: table;margin: 0 auto;">
-                    <img src="icon/logo.png" alt="Maestro Logo" class="logo"></img>
-                    <p style="float:right; position: relative; left: 5px; top: 7px;">v1.4.0</p>
-               </div>
-          </div>
-          <div style="width: 95%; margin: 0 auto">
-               <div class="smallspacedcontainer" style="flex-wrap: nowrap;">
-                    <div class="toolbar" id="toolbar">
-                         <!-- To be populated with buttons -->
-                    </div>
-                    <div id="displaycontainer" class="dispcontainer" style="margin-bottom: 2px;">
-                         <canvas id="canvas" width="3840" height="432"></canvas>
-                    </div>
-               </div>
-               <div id="toolbox" style="display: none; height: 24px;">
-                    <div class="smallspacedcontainer">
-                         <div>
-                              <button id="playbtn" class="button" type="button" onclick="playBtn()" style="margin-right: 4px;" disabled>. . .</button>
-                              <button id="stopbtn" class="button" type="button" onclick="cancelPlayback()" disabled>. . .</button>
-                         </div>
-                         <select id="temposelect" class="dropdown" onchange="selectTempo()">
-                              <optgroup id="comtempos" label="Common Tempos">
+<html lang="en">
+<head>
+    <title>Super Mario Maestro</title>
+    <meta charset="utf-8"/>
+    <link rel="shortcut icon" href="favicon.ico">
 
-                              </optgroup>
-                              <optgroup id="alltempos" label="All Tempos">
+    <link rel="stylesheet" href="css/generalStyle.css">
+    <link rel="stylesheet" href="css/containers.css">
+    <link rel="stylesheet" href="css/buttons.css">
+    <link rel="stylesheet" href="style.css">
 
-                              </optgroup>
-                              <!-- To be populated with tempo options -->
-                         </select>
-                         <div class="controlcontainer spacedcontainer" style="height: 24px; margin-bottom: 0px">
-                              <p id="ELtext" class="displaytext">Entities in Area: 0</p>
-                              <p id="PLtext" class="displaytext">Powerups in Area: 0</p>
-                              <p id="QEtext" class="displaytext">BPB Quality: -</p>
-                              <p id="NCtext" class="displaytext">Spatial Conflicts: -</p>
-                         </div>
-                         <button id="buildbtn" class="button buildbutton" type="button" onclick="toggleBuildMode()">Build Mode (Beta)</button>
-                         <button id="newtrkbtn" class="button" type="button" onclick="createNewTrack()">New Track</button>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-152821049-1"></script>
+    <script>
+        /*window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-152821049-1');*/
+    </script>
+</head>
+<body>
+<div id="logoContainer">
+    <div>
+        <img src="icon/logo.png" alt="Maestro Logo">
+        <p>v1.4.0</p>
+    </div>
+</div>
+<div id="mainContainer">
+    <div id="subMainContainer" class="smallspacedcontainer">
+        <div id="toolbarContainer">
+            <!-- To be populated with buttons -->
+        </div>
+        <div id="displayContainer" class="dispcontainer">
+            <canvas id="canvas" width="3840" height="432"></canvas>
+        </div>
+    </div>
+
+    <div id="startingContainer" class="smallspacedcontainer">
+        <button onclick="loadExample()">Load Example</button>
+        <button onclick="tutorialBtn()">Tutorial by Loup&Snoop</button>
+        <p id="fileText" class="displayText">MIDI File:</p>
+        <input id="fileInput" type="file" onchange="loadFileFromInput()">
+    </div>
+
+    <div id="toolboxContainer" hidden>
+        <div class="smallspacedcontainer">
+            <div>
+                <button id="playBtn" type="button" onclick="playBtn()" disabled>. . .</button>
+                <button id="stopBtn" type="button" onclick="cancelPlayback()" disabled>. . .</button>
+            </div>
+            <select id="tempoSelect" class="dropdown" onchange="selectTempo()">
+                <optgroup id="comtempos" label="Common Tempos">
+
+                </optgroup>
+                <optgroup id="alltempos" label="All Tempos">
+
+                </optgroup>
+                <!-- To be populated with tempo options -->
+            </select>
+            <div id="informationContainer" class="controlcontainer spacedcontainer">
+                <p id="ELtext" class="displayText">Entities in Area: 0</p>
+                <p id="PLtext" class="displayText">Powerups in Area: 0</p>
+                <p id="QEtext" class="displayText">BPB Quality: -</p>
+                <p id="NCtext" class="displayText">Spatial Conflicts: -</p>
+            </div>
+            <button id="buildBtn" class="btn-green" type="button" onclick="toggleBuildMode()">Build Mode (Beta)</button>
+            <button id="newTrackBtn" type="button" onclick="createNewTrack()">New Track</button>
+        </div>
+        <p id="tempotext">Original: -</p>
+        <p id="fstxt">File Scrubber</p>
+        <div id="minimapcontainer" class="dispcontainer">
+            <canvas id="minimap" width="100px" height="64"></canvas>
+        </div>
+        <div id="optionContainer" class="controlcontainer spacedcontainer">
+            <div>
+                <label id="verticalShiftLabel" for="verticalShift">Vertical Shift</label>
+                <input id="verticalShift" type="number" name="verticalShift" value="0" onchange="nudgeY()" min="-48" max="54" disabled>
+            </div>
+            <div id="noisecontrol" hidden>
+                <label id="noiseThresholdLabel" for="noiseThreshold">Noise Threshold</label>
+                <input id="noiseThreshold" type="range" min="0" max="127" value="0" onchange="changeNoiseThreshold()">
+            </div>
+            <div>
+                <label id="blockPerBeatLabel" for="blockPerBeat">Blocks per Beat</label>
+                <input id="blockPerBeat" type="number" name="blockPerBeat" value="0" min="1" max="16" oninput="pickBPB()" disabled>
+            </div>
+            <!--<button id="bpbrecommend" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button>-->
+        </div>
+        <div id="toolsContainer">
+            <div id="leftToolsContainer">
+                <div id="trackedItemsContainer" class="controlcontainer">
+                    <!-- To be populated with track checkboxes -->
+                </div>
+            </div>
+            <div id="rightToolsContainer" class="controlcontainer">
+                <p id="trackSettingParagraph">Track Settings:</p>
+                <div class="spacedcontainer">
+                    <label for="trackName">Track Name:</label>
+                    <input id="trackName" type="text" name="trackName" onchange="triggerTrackLabelChange()">
+                </div>
+                <div class="spacedcontainer">
+                    <label for="octaveShift">Octave Shift</label>
+                    <input id="octaveShift" type="number" name="octaveShift" min="-10" max="10" value="0" onchange="shiftTrackOctave()">
+                    <div id="semitonesContainer" hidden>
+                        <label for="semitones">Semitones</label>
+                        <input id="semitones" type="number" name="semitones" min="-11" max="11" value="0" style="" onchange="shiftTrackOctave()">
                     </div>
-                    <p id="tempotext" style="position: relative; left: 130px; top: 2px; font-size: 10px; height: 0px; width: max-content; margin-top: 0px; margin-bottom: 0px;">Original: -</p>
-                    <p id="fstxt" style='margin-bottom:0px;'>File Scrubber</p>
-                    <div id="minimapcontainer" class="dispcontainer" style="margin-bottom: 4px; background-color: #195180;">
-                         <canvas id="minimap" width="100px" height="64"></canvas>
-                    </div>
-                    <div class="controlcontainer spacedcontainer">
-                         <div>
-                              <label for="yofspicker" id="labys">Vertical Shift</label>
-                              <input id="yofspicker" type="number" name="yofspicker" value="0" onchange="nudgeY()" style="width:50px;" min="-48" max="54" disabled>
-                         </div>
-                         <div id="noisecontrol" style="display: none;">
-                              <label for="noiseslider" id="nslabl">Noise Threshold</label>
-                              <input id="noiseslider" type="range" min="0" max="127" value="0" onchange="changeNoiseThreshold()" style='position: relative; top: 5px;'>
-                         </div>
-                         <div>
-                              <label for="bpbpicker" id="labrs">Blocks per Beat</label>
-                              <input id="bpbpicker" type="number" name="bpbpicker" value="0" min = "1" max = "8" oninput="pickBPB()" style="width:50px;" min="1" max="16" disabled>
-                         </div>
-                         <!--<button id="bpbrecommend" class="button" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button>-->
-                    </div>
-                    <div style="display: flex;">
-                         <div id="lefttools">
-                              <div class="controlcontainer" id="trkcontainer" style="border:3px solid #164770; width:220px; height: 160px; overflow-y: auto; margin-right: 4px;">
-                                   <!-- To be populated with track checkboxes -->
-                              </div>
-                         </div>
-                         <div id="righttools" class="controlcontainer" style="width: 700px;">
-                              <p style='font-size: 15px; margin-top: 4px; margin-bottom: 8px; font-weight: bold;'>Track Settings:</p>
-                              <div class="spacedcontainer">
-                                   <label for="tracknameinput">Track Name:</label>
-                                   <input type="text" id="tracknameinput" onchange="triggerTrackLabelChange()"></input>
-                              </div>
-                              <label for="octaveshift">Octave Shift</label>
-                              <input id="octaveshift" type="number" min="-10" max="10" value="0" style="width: 50px;" onchange="shiftTrackOctave()">
-                              <div id="semishiftdiv" style="display: inline;">
-                                   <label for="semitoneshift">Semitones</label>
-                                   <input id="semitoneshift" type="number" min="-11" max="11" value="0" style="width: 50px;" onchange="shiftTrackOctave()">
-                              </div>
-                              <div class="spacedcontainer">
-                                   <p class="displaytext" id="NASText" style="padding-right: 12px;">Notes above screen: 0</p>
-                                   <p class="displaytext" id="NBSText">Notes below screen: 0</p>
-                                   <button id="shiftbutton" class="button" onclick="shiftTrackIntoView()">Shift into View</button>
-                              </div>
-                              <div class="spacedcontainer">
-                                   <button class="button" onclick="setSecondaryTrack()">Set as transfer track</button>
-                                   <button class="button" onclick="triggerTrackDelete()">Delete track</button>
-                              </div>
-                              <div id="instrumentcontainer">
-                                   <!-- To be populated with track instrument changes -->
-                              </div>
-                              <input id="solobox" type="checkbox" onchange="toggleSoloMode()"></input>
-                              <label for="solobox" style="position: relative; bottom: 3px; right: 4px;">Solo View</label>
-                         </div>
-                    </div>
-                    <div style="display: flex;">
-                         <div>
-                              <input id="buildbox" type="checkbox" onchange="toggleBuildRestriction()"></input>
-                              <label for="buildbox" style="position: relative; bottom: 3px; right: 4px;">Allow Unsupported Entities</label>
-                         </div>
-                         <div>
-                              <input id="advbox" type="checkbox" onchange="toggleAdvancedMode()"></input>
-                              <label for="advbox" style="position: relative; bottom: 3px; right: 4px;">Advanced Settings</label>
-                         </div>
-                         
-                    </div>
-               </div>
-               <p id="filetext" class="displaytext" style="float:left; margin-top: 17px;">MIDI File:</p>
-               <input id ="fileinput" type="file" onchange="loadFileFromInput()" style="margin-top:5px; margin-left:5px"></input>
-               <div style="position: absolute; bottom: 1em; right: 1em;">
-                    <p style="text-align: center; font-style: italic; margin-bottom: 4px;">made by h267</p>
-                    <button id="discordbutton" class="discordbutton" onClick="handleDiscordPress();"></button>
-               </div>
-               <div class="smallspacedcontainer" style="display: inline;">
-                    <button class="button" onclick="loadExample()">Load Example</button>
-                    <button class="button" onclick="tutorialBtn()">Tutorial by Loup&Snoop</button>
-               </div>
-          </div>
-          
-          <script src="data.js"></script>
-          <script src="display.js"></script> 
-          <script src="space.js"></script>
-          <script src="level.js"></script> 
-          <script src="midi.js"></script>
-          <script src="audio.js"></script>
-          <script src="playback.js"></script> 
-          <script src="maestro.js"></script> 
-          <script src="mouseControls.js"></script>
-          <script src="animation.js"></script>
-     </body>
+                </div>
+                <div class="spacedcontainer">
+                    <p id="noteAboveScreenText" class="displayText">Notes above screen: 0</p>
+                    <p id="noteBelowScreenText" class="displayText">Notes below screen: 0</p>
+                    <button id="shiftBtn" onclick="shiftTrackIntoView()">Shift into View</button>
+                </div>
+                <div class="spacedcontainer">
+                    <button id="setAsTransferTrackBtn" onclick="setSecondaryTrack()">Set as transfer track</button>
+                    <button id="deleteTrackBtn" onclick="triggerTrackDelete()">Delete track</button>
+                </div>
+                <div id="instrumentContainer" class="spacedcontainer">
+                    <!-- To be populated with track instrument changes -->
+                </div>
+                <div id="soloBoxContainer" class="spacedcontainer"><!--TODO use a toggle switch instead https://www.w3schools.com/howto/howto_css_switch.asp-->
+                    <label for="soloBox">Solo View</label>
+                    <input id="soloBox" type="checkbox" name="soloBox" onchange="toggleSoloMode()">
+                </div>
+            </div>
+        </div>
+        <div id="footerContainer">
+            <div>
+                <label for="unsupportedEntities">Allow Unsupported Entities</label>
+                <input id="unsupportedEntities" type="checkbox" name="unsupportedEntities" onchange="toggleBuildRestriction()">
+            </div>
+            <div>
+                <label for="advanceSettings">Advanced Settings</label>
+                <input id="advanceSettings" type="checkbox" name="advanceSettings" onchange="toggleAdvancedMode()">
+            </div>
+        </div>
+    </div>
+</div>
+<div id="discordLinkContainer">
+    <p>made by h267</p>
+    <button id="discordBtn" onClick="handleDiscordPress();"></button>
+</div>
+
+
+<script src="data.js"></script>
+<script src="display.js"></script>
+<script src="space.js"></script>
+<script src="level.js"></script>
+<script src="midi.js"></script>
+<script src="audio.js"></script>
+<script src="playback.js"></script>
+<script src="maestro.js"></script>
+<script src="mouseControls.js"></script>
+<script src="animation.js"></script>
+</body>
 </html>
 

@@ -1,0 +1,56 @@
+#playBtn {
+    margin-right: 4px;
+}
+
+#stopBtn {
+}
+
+#shiftBtn {
+}
+
+#setAsTransferTrackBtn {
+}
+
+#deleteTrackBtn {
+}
+
+#buildBtn {
+}
+
+#newTrackBtn {
+}
+
+
+#discordBtn {
+    outline: none;
+    background-color: #7289da;
+    border: 3px solid #7289da;
+    background-image: url("../icon/discord.png");
+    background-size: 100px;
+    border-radius: 12px;
+    height: 40px;
+    width: 105px;
+    padding-left: 12px;
+    padding-right: 12px;
+    box-shadow: #1a5586 0 8px;
+    animation-name: discordglow, discordout;
+    animation-timing-function: ease-in-out, ease-out;
+    animation-direction: alternate;
+    animation-duration: 1.5s, 0.2s;
+    animation-iteration-count: infinite, 1;
+    animation-fill-mode: both;
+}
+
+#discordBtn:hover {
+    animation-name: discordhover, discordglow;
+    animation-duration: 0.5s, 1.5s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: 1, infinite;
+    animation-fill-mode: both;
+}
+
+
+.btn-green {
+    background-color: lime;
+    border: 3px solid limegreen;
+}
