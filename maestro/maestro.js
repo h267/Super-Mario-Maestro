@@ -809,7 +809,7 @@ function handleOut() {
  * Displays the main tools.
  */
 function showEverything() {
-    document.getElementById('toolbox').style = '';
+    document.getElementById('toolboxContainer').hidden = false;
     document.getElementById('playbtn').disabled = !hasLoadedBuffers;
     document.getElementById('stopbtn').disabled = !hasLoadedBuffers;
 }

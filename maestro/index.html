@@ -32,7 +32,13 @@
             <canvas id="canvas" width="3840" height="432"></canvas>
         </div>
     </div>
-    <div id="toolbox" style="display: none; height: 24px;">
+
+    <div id="startingContainer" class="smallspacedcontainer">
+        <button class="button" onclick="loadExample()">Load Example</button>
+        <button class="button" onclick="tutorialBtn()">Tutorial by Loup&Snoop</button>
+    </div>
+
+    <div id="toolboxContainer" hidden>
         <div class="smallspacedcontainer">
             <div>
                 <button id="playbtn" class="button" type="button" onclick="playBtn()" style="margin-right: 4px;" disabled>. . .</button>
@@ -78,7 +84,8 @@
         </div>
         <div style="display: flex;">
             <div id="lefttools">
-                <div class="controlcontainer" id="trkcontainer" style="border:3px solid #164770; width:220px; height: 160px; overflow-y: auto; margin-right: 4px;">
+                <div class="controlcontainer" id="trkcontainer"
+                     style="border:3px solid #164770; width:220px; height: 160px; overflow-y: auto; margin-right: 4px;">
                     <!-- To be populated with track checkboxes -->
                 </div>
             </div>
@@ -89,7 +96,8 @@
                     <input type="text" id="tracknameinput" onchange="triggerTrackLabelChange()">
                 </div>
                 <label for="octaveshift">Octave Shift</label>
-                <input id="octaveshift" type="number" min="-10" max="10" value="0" style="width: 50px;" onchange="shiftTrackOctave()">
+                <input id="octaveshift" type="number" min="-10" max="10" value="0" style="width: 50px;"
+                       onchange="shiftTrackOctave()">
                 <div id="semishiftdiv" style="display: inline;">
                     <label for="semitoneshift">Semitones</label>
                     <input id="semitoneshift" type="number" min="-11" max="11" value="0" style="width: 50px;" onchange="shiftTrackOctave()">
@@ -122,17 +130,17 @@
 
         </div>
     </div>
-    <p id="filetext" class="displaytext" style="float:left; margin-top: 17px;">MIDI File:</p>
-    <input id="fileinput" type="file" onchange="loadFileFromInput()" style="margin-top:5px; margin-left:5px">
-    <div id="discordLinkContainer">
-        <p>made by h267</p>
-        <button id="discordbutton" class="discordbutton" onClick="handleDiscordPress();"></button>
-    </div>
-    <div id="startingContainer" class="smallspacedcontainer">
-        <button class="button" onclick="loadExample()">Load Example</button>
-        <button class="button" onclick="tutorialBtn()">Tutorial by Loup&Snoop</button>
+
+    <div id="fileLoaderContainer">
+        <p id="filetext" class="displaytext">MIDI File:</p>
+        <input id="fileinput" type="file" onchange="loadFileFromInput()">
     </div>
 </div>
+<div id="discordLinkContainer">
+    <p>made by h267</p>
+    <button id="discordbutton" class="discordbutton" onClick="handleDiscordPress();"></button>
+</div>
+
 
 <script src="data.js"></script>
 <script src="display.js"></script>

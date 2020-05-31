@@ -1,31 +1,3 @@
-#mainContainer {
-    width: 95%;
-    margin: 0 auto;
-}
-
-#startingContainer {
-}
-
-#toolbarContainer {
-    flex-wrap: nowrap;
-}
-
-#informationContainer {
-    height: 24px;
-    margin-bottom: 0;
-}
-
-#displaycontainer {
-    margin-bottom: 2px;
-}
-
-#minimapcontainer {
-    margin-bottom: 4px;
-    background-color: #195180;
-}
-
-
-
 #logoContainer {
     width: 100%;
 }
@@ -48,6 +20,60 @@
 }
 
 
+/*Main container (start)*/
+
+#mainContainer {
+    width: 95%;
+    margin: 0 auto;
+}
+
+#toolbarContainer {
+    flex-wrap: nowrap;
+}
+
+#startingContainer {
+}
+
+#toolbar {
+}
+
+#displaycontainer {
+    margin-bottom: 2px;
+}
+
+
+#toolboxContainer {
+    height: 24px;
+}
+
+#informationContainer {
+    height: 24px;
+    margin-bottom: 0;
+}
+
+#minimapcontainer {
+    margin-bottom: 4px;
+    background-color: #195180;
+}
+
+
+#fileLoaderContainer {
+
+}
+
+#fileLoaderContainer p {
+    float: left;
+    margin-top: 17px;
+}
+
+#fileLoaderContainer input {
+    margin-top: 5px;
+    margin-left: 5px
+}
+
+/*Main container (end)*/
+
+
 #discordLinkContainer {
     position: absolute;
     bottom: 1em;
@@ -60,6 +86,8 @@
     margin-bottom: 4px;
 }
 
+
+/*CSS by class*/
 
 .dispcontainer {
     overflow: auto;
