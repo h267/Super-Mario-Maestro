@@ -23,12 +23,12 @@
         <p>v1.4.0</p>
     </div>
 </div>
-<div style="width: 95%; margin: 0 auto">
-    <div class="smallspacedcontainer" style="flex-wrap: nowrap;">
-        <div class="toolbar" id="toolbar">
+<div id="mainContainer">
+    <div id="toolbarContainer" class="smallspacedcontainer">
+        <div id="toolbar" class="toolbar">
             <!-- To be populated with buttons -->
         </div>
-        <div id="displaycontainer" class="dispcontainer" style="margin-bottom: 2px;">
+        <div id="displaycontainer" class="dispcontainer">
             <canvas id="canvas" width="3840" height="432"></canvas>
         </div>
     </div>
@@ -47,7 +47,7 @@
                 </optgroup>
                 <!-- To be populated with tempo options -->
             </select>
-            <div class="controlcontainer spacedcontainer" style="height: 24px; margin-bottom: 0px">
+            <div id="informationContainer" class="controlcontainer spacedcontainer">
                 <p id="ELtext" class="displaytext">Entities in Area: 0</p>
                 <p id="PLtext" class="displaytext">Powerups in Area: 0</p>
                 <p id="QEtext" class="displaytext">BPB Quality: -</p>
@@ -58,7 +58,7 @@
         </div>
         <p id="tempotext" style="position: relative; left: 130px; top: 2px; font-size: 10px; height: 0px; width: max-content; margin-top: 0px; margin-bottom: 0px;">Original: -</p>
         <p id="fstxt" style='margin-bottom:0px;'>File Scrubber</p>
-        <div id="minimapcontainer" class="dispcontainer" style="margin-bottom: 4px; background-color: #195180;">
+        <div id="minimapcontainer" class="dispcontainer">
             <canvas id="minimap" width="100px" height="64"></canvas>
         </div>
         <div class="controlcontainer spacedcontainer">
@@ -128,7 +128,7 @@
         <p style="text-align: center; font-style: italic; margin-bottom: 4px;">made by h267</p>
         <button id="discordbutton" class="discordbutton" onClick="handleDiscordPress();"></button>
     </div>
-    <div class="smallspacedcontainer" style="display: inline;">
+    <div id="startingContainer" class="smallspacedcontainer">
         <button class="button" onclick="loadExample()">Load Example</button>
         <button class="button" onclick="tutorialBtn()">Tutorial by Loup&Snoop</button>
     </div>

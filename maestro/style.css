@@ -4,13 +4,6 @@ body {
     background-color: #086a9a;
 }
 
-.dispcontainer {
-    overflow: auto;
-    border: 3px solid #164770;
-    border-radius: 3px;
-    margin-bottom: 4px;
-}
-
 input#fileinput {
     color: white;
     background-color: #164770;
@@ -96,35 +89,6 @@ a {
 .displaytext {
     font-size: 12px;
     font-weight: bold;
-}
-
-.controlcontainer {
-    background-color: #164770;
-    border: 3px solid #164770;
-    border-radius: 5px;
-    width: max-content;
-}
-
-.spacedcontainer {
-    display: flex;
-    align-items: center;
-    margin-bottom: 4px;
-}
-
-.spacedcontainer > * {
-    margin-left: 8px;
-    margin-right: 8px;
-}
-
-.smallspacedcontainer {
-    display: flex;
-    align-items: center;
-    margin-bottom: 4px;
-}
-
-.smallspacedcontainer > * {
-    margin-left: 4px;
-    margin-right: 4px;
 }
 
 input {
