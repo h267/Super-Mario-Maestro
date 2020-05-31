@@ -34,6 +34,16 @@
 #startingContainer {
 }
 
+#startingContainer p {
+    float: left;
+    margin-top: 17px;
+}
+
+#startingContainer input {
+    margin-top: 5px;
+    margin-left: 5px
+}
+
 #toolbar {
 }
 
@@ -54,21 +64,6 @@
 #minimapcontainer {
     margin-bottom: 4px;
     background-color: #195180;
-}
-
-
-#fileLoaderContainer {
-
-}
-
-#fileLoaderContainer p {
-    float: left;
-    margin-top: 17px;
-}
-
-#fileLoaderContainer input {
-    margin-top: 5px;
-    margin-left: 5px
 }
 
 /*Main container (end)*/
