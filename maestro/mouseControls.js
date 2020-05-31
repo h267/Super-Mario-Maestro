@@ -113,7 +113,7 @@ Object.freeze(MouseActions);
 
 function enableMouseTools() {
     isHiddenToolsEnabled = true;
-    document.getElementById('toolbar').innerHTML = '';
+    document.getElementById('toolbarContainer').innerHTML = '';
     setupToolbar();
     console.log('Hidden mouse tools enabled.');
 }
@@ -140,7 +140,7 @@ function getMainMouseLevelPos(e) {
 
 function getMainMouseTilePos(e) {
     let canvasOfs = getOffset(e);
-    let div = document.getElementById('displaycontainer');
+    let div = document.getElementById('displayContainer');
     let scrollOfs = {x: div.scrollLeft, y: div.scrollTop};
     let offset = {x: (canvasOfs.x + scrollOfs.x) / canvasZoom, y: (canvasOfs.y + scrollOfs.y) / canvasZoom};
     let tilePos = {x: Math.floor(offset.x / 16), y: (27 - Math.floor(offset.y / 16))};
@@ -406,7 +406,7 @@ function setupToolbar() {
             // newBtn.setAttribute('onclick', `() => { mouseToolId = ${i}; refreshMouseTool(); }`);
             newBtn.setAttribute('onclick', `changeToolTo(${i})`);
             newBtn.appendChild(newImg);
-            document.getElementById('toolbar').appendChild(newBtn);
+            document.getElementById('toolbarContainer').appendChild(newBtn);
         }
     });
 }

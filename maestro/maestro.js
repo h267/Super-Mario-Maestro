@@ -1282,8 +1282,8 @@ function handleDiscordPress() {
  * @param {number} pixels The amount to displace the scrollbar by, in pixels.
  */
 function scrollDisplayBy(pixels) {
-    let current = document.getElementById('displaycontainer').scrollLeft;
-    document.getElementById('displaycontainer').scrollLeft = current + pixels;
+    let current = document.getElementById('displayContainer').scrollLeft;
+    document.getElementById('displayContainer').scrollLeft = current + pixels;
 }
 
 /**
@@ -1291,7 +1291,7 @@ function scrollDisplayBy(pixels) {
  * @param {number} pixelsOfs The displacement of the scrollbar, in pixels.
  */
 function scrollDisplayTo(pixelsOfs) {
-    document.getElementById('displaycontainer').scrollLeft = pixelsOfs;
+    document.getElementById('displayContainer').scrollLeft = pixelsOfs;
 }
 
 /**

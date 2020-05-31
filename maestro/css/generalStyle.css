@@ -25,27 +25,22 @@ button:enabled:hover {
     transform: translateY(1px);
 }
 
-button:enabled:active {
-    box-shadow: #1a5586 0 0;
-    transform: translateY(4px);
-}
-
-button:disabled {
+button:enabled:active, button:disabled {
     box-shadow: #1a5586 0 0;
     transform: translateY(4px);
 }
 
 
-p, label {
+p, label, a {
     font-size: 12px;
     font-family: Arial, Helvetica, sans-serif;
+}
+
+p, label {
     color: white;
 }
 
-
 a {
-    font-size: 12px;
-    font-family: Arial, Helvetica, sans-serif;
     color: rgb(130, 255, 213);
 }
 

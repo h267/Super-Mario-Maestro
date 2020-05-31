@@ -27,34 +27,40 @@
     margin: 0 auto;
 }
 
-#toolbarContainer {
+
+#subMainContainer {
     flex-wrap: nowrap;
 }
 
-#startingContainer {
-}
-
-#fileText {
-    float: left;
-    margin-top: 17px;
-}
-
-#fileInput {
-    color: white;
+#toolbarContainer {
+    width: 32px;
     background-color: #164770;
-    border: 3px solid #164770;
-    border-radius: 5px;
-    font-weight: bold;
-    padding-right: 5px;
-    margin-top: 5px;
-    margin-left: 5px;
+    border: 2px solid #164770;
+    border-radius: 4px;
 }
 
-#toolbar {
+#toolbarContainer a {
+    display: block;
+    padding: 8px;
+    transition: all 0.2s ease;
+    color: #164770;
+    border-radius: 4px;
 }
 
-#displaycontainer {
+#toolbarContainer a:hover {
+    background-color: #1a5586;
+}
+
+#toolbarContainer a:active {
+    background-color: #7289da;
+}
+
+#displayContainer {
     margin-bottom: 2px;
+}
+
+
+#startingContainer {
 }
 
 
