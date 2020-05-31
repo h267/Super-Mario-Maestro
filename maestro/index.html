@@ -4,7 +4,6 @@
     <meta charset="utf-8"/>
     <link rel="shortcut icon" href="favicon.ico">
 
-    <link rel="stylesheet" href="css/logo.css">
     <link rel="stylesheet" href="css/containers.css">
     <link rel="stylesheet" href="style.css">
 
@@ -18,7 +17,7 @@
     </script>
 </head>
 <body>
-<div id="logo">
+<div id="logoContainer">
     <div>
         <img src="icon/logo.png" alt="Maestro Logo">
         <p>v1.4.0</p>
@@ -125,8 +124,8 @@
     </div>
     <p id="filetext" class="displaytext" style="float:left; margin-top: 17px;">MIDI File:</p>
     <input id="fileinput" type="file" onchange="loadFileFromInput()" style="margin-top:5px; margin-left:5px">
-    <div style="position: absolute; bottom: 1em; right: 1em;">
-        <p style="text-align: center; font-style: italic; margin-bottom: 4px;">made by h267</p>
+    <div id="discordLinkContainer">
+        <p>made by h267</p>
         <button id="discordbutton" class="discordbutton" onClick="handleDiscordPress();"></button>
     </div>
     <div id="startingContainer" class="smallspacedcontainer">

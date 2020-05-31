@@ -25,6 +25,42 @@
 }
 
 
+
+#logoContainer {
+    width: 100%;
+}
+
+#logoContainer div {
+    display: table;
+    margin: 0 auto;
+}
+
+#logoContainer img {
+    height: 35px;
+    margin-bottom: 5px;
+}
+
+#logoContainer p {
+    float: right;
+    position: relative;
+    left: 5px;
+    top: 7px;
+}
+
+
+#discordLinkContainer {
+    position: absolute;
+    bottom: 1em;
+    right: 1em;
+}
+
+#discordLinkContainer p {
+    text-align: center;
+    font-style: italic;
+    margin-bottom: 4px;
+}
+
+
 .dispcontainer {
     overflow: auto;
     border: 3px solid #164770;
