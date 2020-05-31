@@ -1,36 +1,3 @@
-button {
-    outline: none;
-    background-color: white;
-    border: 3px solid #e4e4e4;
-    border-radius: 5px;
-    font-weight: bold;
-    height: 30px;
-    padding-left: 12px;
-    padding-right: 12px;
-    transition: transform 80ms, box-shadow 80ms;
-    box-shadow: #1a5586 0 4px;
-}
-
-button::-moz-focus-inner {
-    border: 0;
-}
-
-button:enabled:hover {
-    box-shadow: #1a5586 0 3px;
-    transform: translateY(1px);
-}
-
-button:enabled:active {
-    box-shadow: #1a5586 0 0;
-    transform: translateY(4px);
-}
-
-button:disabled {
-    box-shadow: #1a5586 0 0;
-    transform: translateY(4px);
-}
-
-
 #playBtn {
     margin-right: 4px;
 }

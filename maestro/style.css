@@ -1,8 +1,5 @@
 /* Thanks Loup&Snoop (for the colors) */
 
-body {
-    background-color: #086a9a;
-}
 
 .dropdown {
     background: white url(icon/mm-dropdown-arrow.png) 99% 50% no-repeat;
@@ -28,45 +25,9 @@ body {
     background: #eee url(icon/mm-dropdown-arrow-clicked.png) 99% 50% no-repeat;;
 }
 
-p, label {
-    font-size: 12px;
-    font-family: Arial, Helvetica, sans-serif;
-    color: white;
-}
-
-a {
-    font-size: 12px;
-    font-family: Arial, Helvetica, sans-serif;
-    color: rgb(130, 255, 213);
-}
-
 .displaytext {
     font-size: 12px;
     font-weight: bold;
-}
-
-input {
-    outline: none;
-}
-
-input::-moz-focus-inner {
-    border: 0;
-}
-
-input[type="radio"]:checked + div, input[type="radio"]:checked + div + label {
-    background-color: blue;
-}
-
-input[type="radio"] {
-    display: none;
-}
-
-select {
-    outline: none;
-}
-
-select::-moz-focus-inner {
-    border: 0;
 }
 
 .tracklistitem {
