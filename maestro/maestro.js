@@ -146,7 +146,7 @@ function loadData(bytes) { // Load file from the file input element
         drawScrubber(ofsX, ofsY + 27, canvas.width / 16 - 27, canvas.height / 16);
         refreshMini();
     }
-    document.getElementById('trkcontainer').innerHTML = '';
+    document.getElementById('trackedItemsContainer').innerHTML = '';
     // document.getElementById('trkselect').innerHTML = '';
     selectedTrack = 0;
     let i;
@@ -157,8 +157,8 @@ function loadData(bytes) { // Load file from the file input element
             tracks[i].instrumentChanges[j] = getMM2Instrument(midi.trks[i].usedInstruments[j]) - 2;
         }
     }
-    document.getElementById('octaveshift').value = 0;
-    document.getElementById('semitoneshift').value = 0;
+    document.getElementById('octaveShift').value = 0;
+    document.getElementById('semitones').value = 0;
     blocksPerBeat = midi.blocksPerBeat;
     reccBPB = blocksPerBeat;
     lastBPB = blocksPerBeat;
@@ -222,7 +222,7 @@ function updateUI(limitedUpdate, reccTempo, doBPB = true) {
     let haveTempo = false; // TODO: Get rid of this when adding dynamic tempo
     bbar = midi.firstBbar;
     if (!limitedUpdate) {
-        document.getElementById('trkcontainer').innerHTML = '';
+        document.getElementById('trackedItemsContainer').innerHTML = '';
         if (doBPB) recommendBPB();
     }
     if (midi.firstTempo !== 0) {
@@ -266,9 +266,9 @@ function updateUI(limitedUpdate, reccTempo, doBPB = true) {
             labl.setAttribute('class', 'tracklabel');
             div.appendChild(labl);
 
-            document.getElementById('trkcontainer').appendChild(div);
+            document.getElementById('trackedItemsContainer').appendChild(div);
             /* if(midi.hasNotes[i]){
-                        document.getElementById('trkcontainer').appendChild(document.createElement('br'));
+                        document.getElementById('trackedItemsContainer').appendChild(document.createElement('br'));
                   } */
 
             // Add a new track option
@@ -886,8 +886,8 @@ function changeNoiseThreshold() {
  */
 function shiftTrackOctave() {
     cancelPlayback();
-    tracks[selectedTrack].octaveShift = parseInt(document.getElementById('octaveshift').value, 10);
-    tracks[selectedTrack].semitoneShift = parseInt(document.getElementById('semitoneshift').value, 10);
+    tracks[selectedTrack].octaveShift = parseInt(document.getElementById('octaveShift').value, 10);
+    tracks[selectedTrack].semitoneShift = parseInt(document.getElementById('semitones').value, 10);
     level.noteGroups[selectedTrack].ofsY = tracks[selectedTrack].octaveShift * 12 + tracks[selectedTrack].semitoneShift;
     calculateNoteRange();
     adjustZoom();
@@ -917,14 +917,14 @@ function selectTrack(trkID) {
         return;
     }
     selectedTrack = trackID;
-    document.getElementById('octaveshift').value = tracks[selectedTrack].octaveShift;
-    document.getElementById('semitoneshift').value = tracks[selectedTrack].semitoneShift;
+    document.getElementById('octaveShift').value = tracks[selectedTrack].octaveShift;
+    document.getElementById('semitones').value = tracks[selectedTrack].semitoneShift;
     document.getElementById('shiftBtn')
         .disabled = (tracks[selectedTrack].octaveShift === getViewOctaveShift(selectedTrack));
     if (tracks[selectedTrack].hasPercussion || usingAdvSettings) {
-        document.getElementById('semishiftdiv').style.display = 'inline';
+        document.getElementById('semitonesContainer').hidden = false;
     } else {
-        document.getElementById('semishiftdiv').style.display = 'none';
+        document.getElementById('semitonesContainer').hidden = true;
     }
     for (let i = 0; i < tracks.length; i++) {
         let trkdiv = document.getElementById(`item${i}`);
@@ -946,8 +946,8 @@ function selectTrack(trkID) {
             }
         }
     }
-    document.getElementById('tracknameinput').value = '';
-    document.getElementById('tracknameinput').placeholder = tracks[selectedTrack].label;
+    document.getElementById('trackName').value = '';
+    document.getElementById('trackName').placeholder = tracks[selectedTrack].label;
     // if(!isNewFile){refreshOutlines();}
     softRefresh(false);
     updateInstrumentContainer();
@@ -977,16 +977,16 @@ function changeInstrument(trk, ins, newIns) {
  */
 function updateInstrumentContainer() { // TODO: Refactor grouping code
     /* if (tracks[selectedTrack].hasPercussion) { // TODO: Remove; add MIDI percussion names, selection category
-        document.getElementById('instrumentcontainer').style.display = 'none';
+        document.getElementById('instrumentContainer').hidden = true;
         return;
     } */
 
     // TODO: Show only percussion on percussion tracks unless in advanced mode
     // Don't show percussion on non-percussion unless in advanced mode
 
-    document.getElementById('instrumentcontainer').style.display = '';
+    document.getElementById('instrumentContainer').hidden = false;
 
-    let container = document.getElementById('instrumentcontainer');
+    let container = document.getElementById('instrumentContainer');
     container.innerHTML = '';
     let targetOctave = -tracks[selectedTrack].octaveShift;
     let i;
@@ -1101,8 +1101,8 @@ function triggerInstrChange(selectedInstrument) {
  * ratio of out-of-bounds notes to total notes in the selected track.
  */
 function updateOutOfBoundsNoteCounts() {
-    let nasText = document.getElementById('NASText');
-    let nbsText = document.getElementById('NBSText');
+    let nasText = document.getElementById('noteAboveScreenText');
+    let nbsText = document.getElementById('noteBelowScreenText');
     let denom = tracks[selectedTrack].notes.length;
     let nasPercent = Math.round((tracks[selectedTrack].numNotesOffscreen.above * 100) / denom);
     nasText.innerHTML = `Notes above screen: ${nasPercent}%`;
@@ -1300,11 +1300,11 @@ function scrollDisplayTo(pixelsOfs) {
 function toggleAdvancedMode() {
     usingAdvSettings = document.getElementById('advbox').checked;
     if (tracks[selectedTrack].hasPercussion || usingAdvSettings) {
-        document.getElementById('semishiftdiv').style.display = 'inline';
+        document.getElementById('semitonesContainer').hidden = false;
     } else {
         // Reset semitone shifts on tracks where it can only be changed with Advanced Settings
-        document.getElementById('semitoneshift').value = 0;
-        document.getElementById('semishiftdiv').style.display = 'none';
+        document.getElementById('semitones').value = 0;
+        document.getElementById('semitonesContainer').hidden = true;
         let i;
         for (i = 0; i < tracks.length; i++) {
             if (!tracks[i].hasPercussion) {
@@ -1400,7 +1400,7 @@ function shiftTrackIntoView() {
     let shift = getViewOctaveShift(selectedTrack);
     tracks[selectedTrack].octaveShift = shift;
     tracks[selectedTrack].semitoneShift = 0;
-    document.getElementById('octaveshift').value = shift;
+    document.getElementById('octaveShift').value = shift;
     level.noteGroups[selectedTrack].ofsY = tracks[selectedTrack].octaveShift * 12 + tracks[selectedTrack].semitoneShift;
     calculateNoteRange();
     adjustZoom();
@@ -1727,13 +1727,13 @@ function createNewTrack() {
 }
 
 function toggleSoloMode() {
-    isSoloMode = document.getElementById('solobox').checked;
+    isSoloMode = document.getElementById('soloBox').checked;
     cancelPlayback();
     softRefresh();
 }
 
 function triggerTrackLabelChange() {
-    let newName = document.getElementById('tracknameinput').value;
+    let newName = document.getElementById('trackName').value;
     updateTrackLabel(selectedTrack, newName);
 }
 
@@ -1742,7 +1742,7 @@ function updateTrackLabel(trkId, newLabel) {
     let lastTrk = selectedTrack;
     updateUI(false, false, false);
     selectTrack(lastTrk);
-    // document.getElementById('tracknameinput').placeholder = tracks[selectedTrack].label;
+    // document.getElementById('trackName').placeholder = tracks[selectedTrack].label;
 }
 
 function triggerTrackDelete() {

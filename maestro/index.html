@@ -86,40 +86,42 @@
             </div>
             <!--<button id="bpbrecommend" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button>-->
         </div>
-        <div style="display: flex;">
-            <div id="lefttools">
-                <div class="controlcontainer" id="trkcontainer"
-                     style="border:3px solid #164770; width:220px; height: 160px; overflow-y: auto; margin-right: 4px;">
+        <div id="toolsContainer">
+            <div id="leftToolsContainer">
+                <div id="trackedItemsContainer" class="controlcontainer">
                     <!-- To be populated with track checkboxes -->
                 </div>
             </div>
-            <div id="righttools" class="controlcontainer" style="width: 700px;">
-                <p style='font-size: 15px; margin-top: 4px; margin-bottom: 8px; font-weight: bold;'>Track Settings:</p>
+            <div id="rightToolsContainer" class="controlcontainer">
+                <p id="trackSettingParagraph">Track Settings:</p>
                 <div class="spacedcontainer">
-                    <label for="tracknameinput">Track Name:</label>
-                    <input type="text" id="tracknameinput" onchange="triggerTrackLabelChange()">
-                </div>
-                <label for="octaveshift">Octave Shift</label>
-                <input id="octaveshift" type="number" min="-10" max="10" value="0" style="width: 50px;"
-                       onchange="shiftTrackOctave()">
-                <div id="semishiftdiv" style="display: inline;">
-                    <label for="semitoneshift">Semitones</label>
-                    <input id="semitoneshift" type="number" min="-11" max="11" value="0" style="width: 50px;" onchange="shiftTrackOctave()">
+                    <label for="trackName">Track Name:</label>
+                    <input id="trackName" type="text" name="trackName" onchange="triggerTrackLabelChange()">
                 </div>
                 <div class="spacedcontainer">
-                    <p class="displayText" id="NASText" style="padding-right: 12px;">Notes above screen: 0</p>
-                    <p class="displayText" id="NBSText">Notes below screen: 0</p>
+                    <label for="octaveShift">Octave Shift</label>
+                    <input id="octaveShift" type="number" name="octaveShift" min="-10" max="10" value="0" onchange="shiftTrackOctave()">
+                    <div id="semitonesContainer" hidden>
+                        <label for="semitones">Semitones</label>
+                        <input id="semitones" type="number" name="semitones" min="-11" max="11" value="0" style="" onchange="shiftTrackOctave()">
+                    </div>
+                </div>
+                <div class="spacedcontainer">
+                    <p id="noteAboveScreenText" class="displayText">Notes above screen: 0</p>
+                    <p id="noteBelowScreenText" class="displayText">Notes below screen: 0</p>
                     <button id="shiftBtn" onclick="shiftTrackIntoView()">Shift into View</button>
                 </div>
                 <div class="spacedcontainer">
                     <button id="setAsTransferTrackBtn" onclick="setSecondaryTrack()">Set as transfer track</button>
                     <button id="deleteTrackBtn" onclick="triggerTrackDelete()">Delete track</button>
                 </div>
-                <div id="instrumentcontainer">
+                <div id="instrumentContainer" class="spacedcontainer">
                     <!-- To be populated with track instrument changes -->
                 </div>
-                <input id="solobox" type="checkbox" onchange="toggleSoloMode()">
-                <label for="solobox" style="position: relative; bottom: 3px; right: 4px;">Solo View</label>
+                <div id="soloBoxContainer" class="spacedcontainer"><!--TODO use a toggle switch instead https://www.w3schools.com/howto/howto_css_switch.asp-->
+                    <label for="soloBox">Solo View</label>
+                    <input id="soloBox" type="checkbox" name="soloBox" onchange="toggleSoloMode()">
+                </div>
             </div>
         </div>
         <div style="display: flex;">

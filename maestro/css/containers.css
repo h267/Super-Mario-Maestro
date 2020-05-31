@@ -78,6 +78,37 @@
     background-color: #195180;
 }
 
+#optionContainer {
+}
+
+#toolsContainer {
+    display: flex;
+}
+
+#leftToolsContainer {
+}
+
+#trackedItemsContainer {
+    border: 3px solid #164770;
+    width: 220px;
+    height: 160px;
+    overflow-y: auto;
+    margin-right: 4px;
+}
+
+#rightToolsContainer {
+    width: 700px;
+}
+
+#semitonesContainer {
+}
+
+#instrumentContainer {
+}
+
+#soloBoxContainer {
+}
+
 /*Main container (end)*/
 
 
