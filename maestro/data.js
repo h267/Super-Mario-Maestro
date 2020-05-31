@@ -8,180 +8,47 @@ const marginWidth = 27;
 const levelHeight = 27;
 const baseOfsY = 48;
 
-const numBlockSubdivisions = 2;
+const numBlockSubdivisions = 1;
+
+const soundSubframesPerSecond = 200;
+const setupErrorToleranceSeconds = 0.035;
 
 const MM2Tempos = [
 	{
 		name: 'Slow Autoscroll',
 		bpm: 28,
 		isCommon: false,
-		isBuildable: true,
-		setups: [
-			{ offset: 0, structType: 0 },
-			{ offset: -1.5, structType: 2 },
-			{ offset: -4, structType: 4 }
-		]
-	},
-	{
-		name: 'Backwards Normal Conveyor - Walking',
-		bpm: 28,
-		isCommon: false,
-		isBuildable: false
-	},
-	{
-		name: 'Underwater - Walking',
-		bpm: 32,
-		isCommon: false,
-		isBuildable: false
-	},
-	{
-		name: 'Normal Conveyor - Idle',
-		bpm: 56,
-		isCommon: false,
-		isBuildable: false
+		isBuildable: true
 	},
 	{
 		name: 'Medium Autoscroll',
 		bpm: 56,
 		isCommon: true,
-		isBuildable: true,
-		setups: [
-			{ offset: 0, structType: 0 },
-			{ offset: -1, structType: 1 },
-			{ offset: -3, structType: 2 },
-			{ offset: -5.5, structType: 3 },
-			{ offset: -8, structType: 4 }
-		]
-	},
-	{
-		name: 'Backwards Fast Conveyor - Running',
-		bpm: 56,
-		isCommon: false,
-		isBuildable: false
-	},
-	{
-		name: 'Swimming',
-		bpm: 64,
-		isCommon: false,
-		isBuildable: false
+		isBuildable: true
 	},
 	{
 		name: 'Walking',
 		bpm: 84,
 		isCommon: true,
-		isBuildable: true,
-		setups: [
-			{ offset: 0, structType: 0 },
-			{ offset: -1.5, structType: 1 },
-			{ offset: -4.5, structType: 2 },
-			{ offset: -12, structType: 4 }
-		]
-	},
-	{
-		name: 'Blaster in Cloud - Idle',
-		bpm: 84,
-		isCommon: false,
-		isBuildable: false
-	},
-	{
-		name: 'Normal Underwater Conveyor - Walking',
-		bpm: 88,
-		isCommon: false,
-		isBuildable: false
-	},
-	{
-		name: 'Swimming Holding Item',
-		bpm: 101,
-		isCommon: false,
-		isBuildable: false
+		isBuildable: true
 	},
 	{
 		name: 'Fast Autoscroll',
 		bpm: 112,
 		isCommon: true,
-		isBuildable: true,
-		setups: [
-			{ offset: 0, structType: 0 },
-			{ offset: -1.5, structType: 6 },
-			{ offset: -2, structType: 1 },
-			{ offset: -6, structType: 2 },
-			{ offset: -11, structType: 3 },
-			{ offset: -16, structType: 4 }
-		]
-	},
-	{
-		name: 'Backwards Normal Conveyor - Running',
-		bpm: 112,
-		isCommon: false,
-		isBuildable: false
-	},
-	{
-		name: 'Fast Conveyor - Idle',
-		bpm: 112,
-		isCommon: false,
-		isBuildable: false
-	},
-	{
-		name: 'Underwater Blaster in Cloud - Walking',
-		bpm: 116,
-		isCommon: false,
-		isBuildable: false
-	},
-	{
-		name: 'Normal Conveyor - Walking',
-		bpm: 140,
-		isCommon: false,
-		isBuildable: false
+		isBuildable: true
 	},
 	{
 		name: 'Fast Lava Lift',
 		bpm: 140,
 		isCommon: true,
-		isBuildable: true,
-		setups: [
-			{ offset: 0, structType: 0 },
-			{ offset: -2.5, structType: 1 },
-			{ offset: -6, structType: 2 },
-			{ offset: -7.5, structType: 3 },
-			{ offset: -20, structType: 4 }
-		]
-	},
-	{
-		name: 'Fast Underwater Conveyor - Walking',
-		bpm: 144,
-		isCommon: false,
-		isBuildable: false
-	},
-	{
-		name: 'Underwater Blaster in Cloud - Swimming',
-		bpm: 148,
-		isCommon: false,
-		isBuildable: false
-	},
-	{
-		name: 'Blaster in Cloud - Walking',
-		bpm: 166,
-		isCommon: false,
-		isBuildable: false
+		isBuildable: true
 	},
 	{
 		name: 'Running',
 		bpm: 168,
 		isCommon: true,
-		isBuildable: true,
-		setups: [
-			{ offset: 0, structType: 0 },
-			{ offset: -2, structType: 6 },
-			{ offset: -3, structType: 1 },
-			{ offset: -9, structType: 2 },
-			{ offset: -24, structType: 4 }
-		]
-	},
-	{
-		name: 'Underwater Blaster in Cloud - Swimming Holding Item',
-		bpm: 186,
-		isCommon: false,
-		isBuildable: false
+		isBuildable: true
 	},
 	{
 		name: 'Fast Conveyor - Walking',
@@ -213,28 +80,56 @@ const defaultSetups = [
 	{ offset: 0, structType: 0, usesSemisolid: false }
 ];
 
-const semisolidDelay = 3748; // This and redundant code will be removed if it turns out semisolids are not additive
+const semisolidDelay = -17; // This and redundant code will be removed if it turns out semisolids are not additive
 
-// NOTE: Time units per block = (60/(4 * bpm)) * 44100
+// NOTE: Time units per block = (60/(4 * bpm)) * 200
 // # of Blocks = (setup time units) / (tempo time units per block)
-// Accuracy error in seconds = ( Abs(target fraction - actual fraction) * Time units per block ) / 44100
+// Accuracy error in seconds = ( Abs(target fraction - actual fraction) * Time units per block ) / 200
 
 const standardBuildSetups = [
 	{ structType: 0, usesSemisolid: false, timeDelay: 0 }, // Default
 	{ structType: 0, usesSemisolid: true, timeDelay: semisolidDelay }, // Default + Semisolid
-	{ structType: 6, usesSemisolid: false, timeDelay: 8599 }, // 1 Block Drop
-	{ structType: 6, usesSemisolid: true, timeDelay: 8599 + semisolidDelay }, // 1 Block Drop + Semisolid
-	{ structType: 2, usesSemisolid: false, timeDelay: 36604 }, // 1 Block Parachute
-	{ structType: 2, usesSemisolid: true, timeDelay: 36604 + semisolidDelay }, // 1 Block Parachute + Semisolid
-	{ structType: 1, usesSemisolid: false, timeDelay: 12348 }, // 2 Block Drop
-	{ structType: 1, usesSemisolid: true, timeDelay: 12348 + semisolidDelay }, // 2 Block Drop + Semisolid
-	{ structType: 3, usesSemisolid: false, timeDelay: 66372 }, // 2 Block Parachute
-	{ structType: 3, usesSemisolid: true, timeDelay: 66372 + semisolidDelay }, // 2 Block Parachute + Semisolid
-	{ structType: 5, usesSemisolid: false, timeDelay: 15876 }, // 3 Block Drop
-	{ structType: 5, usesSemisolid: true, timeDelay: 15876 + semisolidDelay }, // 3 Block Drop + Semisolid
-	{ structType: 4, usesSemisolid: false, timeDelay: 95700 }, // 3 Block Parachute
-	{ structType: 4, usesSemisolid: true, timeDelay: 95700 + semisolidDelay } // 3 Block Parachute + Semisolid
+	{ structType: 6, usesSemisolid: false, timeDelay: 39 }, // 1 Block Drop
+	{ structType: 6, usesSemisolid: true, timeDelay: 39 + semisolidDelay }, // 1 Block Drop + Semisolid
+	{ structType: 2, usesSemisolid: false, timeDelay: 166 }, // 1 Block Parachute
+	{ structType: 2, usesSemisolid: true, timeDelay: 166 + semisolidDelay }, // 1 Block Parachute + Semisolid
+	{ structType: 1, usesSemisolid: false, timeDelay: 56 }, // 2 Block Drop
+	{ structType: 1, usesSemisolid: true, timeDelay: 56 + semisolidDelay }, // 2 Block Drop + Semisolid
+	{ structType: 3, usesSemisolid: false, timeDelay: 301 }, // 2 Block Parachute
+	{ structType: 3, usesSemisolid: true, timeDelay: 301 + semisolidDelay }, // 2 Block Parachute + Semisolid
+	{ structType: 5, usesSemisolid: false, timeDelay: 72 }, // 3 Block Drop
+	{ structType: 5, usesSemisolid: true, timeDelay: 72 + semisolidDelay }, // 3 Block Drop + Semisolid
+	{ structType: 4, usesSemisolid: false, timeDelay: 434 }, // 3 Block Parachute
+	{ structType: 4, usesSemisolid: true, timeDelay: 434 + semisolidDelay } // 3 Block Parachute + Semisolid
 ];
+
+let numSetupsFound = 0;
+let dispString = '';
+MM2Tempos.forEach((thisTempo) => {
+	let timePerBlock = (60 / (4 * thisTempo.bpm)) * 200;
+	// console.log(`${thisTempo.name}\n\n`);
+	standardBuildSetups.forEach((setup) => {
+		let setupBlocks = setup.timeDelay / timePerBlock;
+		let frac = setupBlocks - Math.round(setupBlocks);
+		let secondsError = (Math.abs(frac) * timePerBlock) / soundSubframesPerSecond;
+		if (secondsError < setupErrorToleranceSeconds && setup.structType !== 0 && Math.round(setupBlocks) > 0) {
+			/* console.log(`\nsetup: ${setup.structType}, semisolid: ${setup.usesSemisolid}`);
+			console.log(`approx. ${Math.round(setupBlocks)} blocks`);
+			console.log(`${setupBlocks} blocks`);
+			console.log(`${secondsError} seconds of error`);
+			numSetupsFound++; */
+			if (thisTempo.setups === undefined) thisTempo.setups = [];
+			thisTempo.setups.push({
+				structType: setup.structType,
+				usesSemisolid: setup.usesSemisolid,
+				offset: -Math.round(setupBlocks)
+			});
+		}
+	});
+});
+Object.freeze(MM2Tempos);
+// console.log(dispString);
+// console.log(`${numSetupsFound} setups found`);
 
 /**
  * Data on the entities in Maestro.
@@ -771,8 +666,8 @@ class MaestroTrack {
 		this.origInstrument = 0;
 		this.instrumentChanges = [];
 		if (midiTrk.usedInstruments[0] !== undefined) {
-			this.instrumentChanges.push(midiTrk.usedInstruments[0]);
-			this.origInstrument = midiTrk.usedInstruments[0];
+			this.instrumentChanges.push(getMM2Instrument(midiTrk.usedInstruments[0]) - 2);
+			this.origInstrument = getMM2Instrument(midiTrk.usedInstruments[0]) - 2;
 		}
 		this.hasVisibleNotes = false;
 		this.numNotesOffscreen = { above: 0, below: 0 };

@@ -65,6 +65,7 @@ let showUnbuildables = false;
 let canvasZoom = 1;
 let isBuildMode = false;
 let isSoloMode = false;
+let undoStack = [];
 
 // getEquivalentBlocks(1.5);
 
@@ -192,6 +193,7 @@ function loadData(bytes) { // Load file from the file input element
 		if (midi.trks[i].highestNote === null || midi.trks[i].highestNote === null) { continue; }
 		let thisRange = Math.max(Math.abs(64 - midi.trks[i].lowestNote), Math.abs(64 - midi.trks[i].highestNote));
 		if (thisRange > noteRange) { noteRange = thisRange; }
+		tracks[i].isHidden = false;
 	}
 	refreshBlocks();
 	updateUI(false, true);
@@ -241,7 +243,7 @@ function updateUI(limitedUpdate, reccTempo, doBPB = true) {
 			rad.style = 'display:none';
 			// rad.setAttribute('onclick','selectTrack(this.value);');
 			let labl = document.createElement('label');
-			if (tracks[i].notes.length === 0 && !tracks[i].isFromUser) { // Hide empty tracks
+			if ((tracks[i].notes.length === 0 && !tracks[i].isFromUser) || tracks[i].isHidden) { // Hide empty or hidden tracks
 				chkbox.style.display = 'none';
 				labl.style.display = 'none';
 			}
@@ -858,6 +860,8 @@ function selectTrack(trkID) {
 			}
 		}
 	}
+	document.getElementById('tracknameinput').value = '';
+	document.getElementById('tracknameinput').placeholder = tracks[selectedTrack].label;
 	// if(!isNewFile){refreshOutlines();}
 	softRefresh(false);
 	updateInstrumentContainer();
@@ -1586,4 +1590,45 @@ function toggleSoloMode() {
 	isSoloMode = document.getElementById('solobox').checked;
 	cancelPlayback();
 	softRefresh();
+}
+
+function triggerTrackLabelChange() {
+	let newName = document.getElementById('tracknameinput').value;
+	updateTrackLabel(selectedTrack, newName);
+}
+
+function updateTrackLabel(trkId, newLabel) {
+	tracks[trkId].label = newLabel;
+	let lastTrk = selectedTrack;
+	updateUI(false, false, false);
+	selectTrack(lastTrk);
+	// document.getElementById('tracknameinput').placeholder = tracks[selectedTrack].label;
+}
+
+function triggerTrackDelete() {
+	deleteTrack(selectedTrack);
+}
+
+function deleteTrack(trkId) { // TODO: Prevent last remaining track from being deleted
+	tracks[trkId].isHidden = true;
+	level.noteGroups[trkId].isVisible = false;
+	updateUI(false, false, false);
+	softRefresh();
+}
+
+function getTempoBuildSetups(tempoId) { // TODO: Implement this upon tempo change, remove half block semisolids
+	let timePerBlock = (60 / (4 * thisTempo.bpm)) * soundSubframesPerSecond;
+	console.log(`\n\n${thisTempo.name}`);
+	/* standardBuildSetups.forEach((setup) => {
+		let setupBlocks = setup.timeDelay / timePerBlock;
+		let frac = setupBlocks - Math.round(setupBlocks);
+		let secondsError = (Math.abs(frac) * timePerBlock) / soundSubframesPerSecond;
+		if (secondsError < setupErrorToleranceSeconds && setup.structType !== 0 && Math.round(setupBlocks) > 0) {
+			console.log(`\nsetup: ${setup.structType}, semisolid: ${setup.usesSemisolid}`);
+			console.log(`approx. ${Math.round(setupBlocks)} blocks`);
+			console.log(`${setupBlocks} blocks`);
+			console.log(`${secondsError} seconds of error`);
+			numSetupsFound++;
+		}
+	}); */
 }

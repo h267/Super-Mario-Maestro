@@ -435,6 +435,9 @@ class NoteStructure extends Structure {
 		// Change structure type to the appropriate setup
 		this.changeToType(setup.structType);
 
+		// Change semisolid status to that of the setup
+		this.hasSemisolid = setup.usesSemisolid;
+
 		// Move structure
 		let efXOfs = setup.offset - this.setup.offset;
 
@@ -528,12 +531,13 @@ class NoteStructure extends Structure {
 		return isLegal;
 	}
 
-	updateXFromEfX() {
-		this.x = Math.ceil(this.efX);
+	updateXFromEfX() { // TODO: New system for this in the future
+		// this.x = Math.ceil(this.efX);
+		this.x = Math.round(this.efX);
 
 		// Determine if a semisolid needs to be used
-		if (this.efX % 1 !== 0) this.hasSemisolid = true;
-		else this.hasSemisolid = false;
+		// if (this.efX % 1 !== 0) this.hasSemisolid = true;
+		// else this.hasSemisolid = false;
 	}
 
 	getEntityPos() {

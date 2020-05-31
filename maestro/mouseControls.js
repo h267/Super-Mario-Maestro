@@ -92,6 +92,9 @@ const mouseTools = [
 	}
 ];
 
+const MouseActions = []; // TODO: Fill out
+Object.freeze(MouseActions);
+
 function enableMouseTools() {
 	isHiddenToolsEnabled = true;
 	document.getElementById('toolbar').innerHTML = '';

@@ -78,8 +78,12 @@
                                    <!-- To be populated with track checkboxes -->
                               </div>
                          </div>
-                         <div id="righttools" class="controlcontainer" style="width: 700px; height: 160px;">
+                         <div id="righttools" class="controlcontainer" style="width: 700px;">
                               <p style='font-size: 15px; margin-top: 4px; margin-bottom: 8px; font-weight: bold;'>Track Settings:</p>
+                              <div class="spacedcontainer">
+                                   <label for="tracknameinput">Track Name:</label>
+                                   <input type="text" id="tracknameinput" onchange="triggerTrackLabelChange()"></input>
+                              </div>
                               <label for="octaveshift">Octave Shift</label>
                               <input id="octaveshift" type="number" min="-10" max="10" value="0" style="width: 50px;" onchange="shiftTrackOctave()">
                               <div id="semishiftdiv" style="display: inline;">
@@ -90,7 +94,10 @@
                                    <p class="displaytext" id="NASText" style="padding-right: 12px;">Notes above screen: 0</p>
                                    <p class="displaytext" id="NBSText">Notes below screen: 0</p>
                                    <button id="shiftbutton" class="button" onclick="shiftTrackIntoView()">Shift into View</button>
+                              </div>
+                              <div class="spacedcontainer">
                                    <button class="button" onclick="setSecondaryTrack()">Set as transfer track</button>
+                                   <button class="button" onclick="triggerTrackDelete()">Delete track</button>
                               </div>
                               <div id="instrumentcontainer">
                                    <!-- To be populated with track instrument changes -->
