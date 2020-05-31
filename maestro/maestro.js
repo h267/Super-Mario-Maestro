@@ -93,9 +93,9 @@ loadBuffers().then(() => {
 function loadFileFromInput() {
     let fname = document.getElementById('fileInput').files[0].name;
     if (fname.substring(fname.length - 8, fname.length).toLowerCase() === '.mp3.mid') { // Detect MP3 MIDIs
-        document.getElementById('noisecontrol').style.display = '';
+        document.getElementById('noisecontrol').hidden = false;
     } else {
-        document.getElementById('noisecontrol').style.display = 'none';
+        document.getElementById('noisecontrol').hidden = true;
     }
     reader.readAsArrayBuffer(document.getElementById('fileInput').files[0]);
     reader.onload = () => loadData(new Uint8Array(reader.result));
@@ -162,7 +162,7 @@ function loadData(bytes) { // Load file from the file input element
     blocksPerBeat = midi.blocksPerBeat;
     reccBPB = blocksPerBeat;
     lastBPB = blocksPerBeat;
-    document.getElementById('bpbpicker').value = blocksPerBeat;
+    document.getElementById('blockPerBeat').value = blocksPerBeat;
     acceptableBPBs = generateAcceptableBPBs();
     isNewFile = true;
     fileLoaded = true;
@@ -206,8 +206,8 @@ function loadData(bytes) { // Load file from the file input element
     refreshBlocks();
     updateUI(false, true);
     isNewFile = false;
-    document.getElementById('yofspicker').disabled = false;
-    document.getElementById('bpbpicker').disabled = false;
+    document.getElementById('verticalShift').disabled = false;
+    document.getElementById('blockPerBeat').disabled = false;
     document.getElementById('tempotext').innerHTML = `Original: ${Math.round(songBPM)} bpm`;
     document.getElementById('advbox').checked = usingAdvSettings;
 }
@@ -554,7 +554,7 @@ function moveOffsetTo(ox, oy) { // Offsets are given as percentages of the level
 function nudgeY() {
     enableMouse();
     cancelPlayback();
-    let relativeOfs = parseInt(document.getElementById('yofspicker').value, 10) * -1;
+    let relativeOfs = parseInt(document.getElementById('verticalShift').value, 10) * -1;
     // console.log(relativeOfs+48);
     moveOffsetTo(null, (relativeOfs + baseOfsY) / 127);
 }
@@ -565,7 +565,7 @@ function nudgeY() {
 function resetOffsets() {
     ofsX = 0;
     ofsY = baseOfsY;
-    document.getElementById('yofspicker').value = 0;
+    document.getElementById('verticalShift').value = 0;
 }
 
 /**
@@ -586,7 +586,7 @@ function recommendTempo(origBPM, bpb) {
     }
     // console.log(bpmIDtoStr(recc));
     // console.log(songBPM+' -> '+bpms[recc]*(4/res));
-    document.getElementById('temposelect').selectedIndex = numCommonTempos + recc;
+    document.getElementById('tempoSelect').selectedIndex = numCommonTempos + recc;
     buildSetups = MM2Tempos[recc].setups;
     if (buildSetups === undefined) buildSetups = defaultSetups;
     return MM2Tempos[recc].bpm * (4 / bpb);
@@ -669,7 +669,7 @@ function getMM2Instrument(instrument) {
  * Reads the blocks per beat number picker, and snaps to the closest value if an invalid input is given.
  */
 function pickBPB() {
-    let val = document.getElementById('bpbpicker').value;
+    let val = document.getElementById('blockPerBeat').value;
     val = Math.floor(val);
     if (val === 69) {
         alert('stop');
@@ -684,7 +684,7 @@ function pickBPB() {
     if (!usingAdvSettings) {
         filterBPB();
     }
-    document.getElementById('bpbpicker').value = blocksPerBeat;
+    document.getElementById('blockPerBeat').value = blocksPerBeat;
     lastBPB = blocksPerBeat;
     mapWidth = Math.ceil(ticksToBlocks(midi.duration));
     changeBPB();
@@ -695,7 +695,7 @@ function pickBPB() {
  */
 function changeToRecommendedBPB() {
     blocksPerBeat = recmdBlocksPerBeat;
-    document.getElementById('bpbpicker').value = blocksPerBeat;
+    document.getElementById('blockPerBeat').value = blocksPerBeat;
     changeBPB();
 }
 
@@ -847,7 +847,7 @@ function refreshTempos() {
  * Reads the value of the tempo dropdown and updates the tempo accordingly.
  */
 function selectTempo() {
-    let sel = document.getElementById('temposelect');
+    let sel = document.getElementById('tempoSelect');
     let selected = sel.value;
     bpm = MM2Tempos[selected].bpm * (4 / blocksPerBeat);
     buildSetups = MM2Tempos[selected].setups;
@@ -876,7 +876,7 @@ function hardRefresh(reccTempo, limitUpdate = true) { // Refresh changes to the 
  * Reads the value of the noise slider and refreshes the level.
  */
 function changeNoiseThreshold() {
-    noiseThreshold = document.getElementById('noiseslider').value;
+    noiseThreshold = document.getElementById('noiseThreshold').value;
     refreshBlocks();
     hardRefresh(false);
 }
@@ -1316,7 +1316,7 @@ function toggleAdvancedMode() {
     }
     if (!usingAdvSettings) {
         blocksPerBeat = reccBPB;
-        document.getElementById('bpbpicker').value = blocksPerBeat;
+        document.getElementById('blockPerBeat').value = blocksPerBeat;
         lastBPB = blocksPerBeat;
         changeBPB();
     }

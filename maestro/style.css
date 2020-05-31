@@ -8,8 +8,8 @@
     font-weight: bold;
     color: #3a3a3a;
     height: 30px;
-    padding-left: 12px;
-    padding-right: 30px;
+
+    appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
 }
@@ -22,10 +22,10 @@
 }
 
 .dropdown:active {
-    background: #eee url(icon/mm-dropdown-arrow-clicked.png) 99% 50% no-repeat;;
+    background: #eee url(icon/mm-dropdown-arrow-clicked.png) 99% 50% no-repeat;
 }
 
-.displaytext {
+.displayText {
     font-size: 12px;
     font-weight: bold;
 }
@@ -36,11 +36,6 @@
 
 .tracklabel {
     transition: color 150ms;
-}
-
-.displaytextrow > td {
-    padding-left: 8px;
-    padding-right: 8px;
 }
 
 
@@ -58,6 +53,40 @@
     padding-right: 5px;
     margin-top: 5px;
     margin-left: 5px;
+}
+
+#tempotext {
+    position: relative;
+    left: 130px;
+    top: 2px;
+    font-size: 10px;
+    height: 0;
+    width: max-content;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+#fstxt {
+    margin-bottom: 0;
+}
+
+#tempoSelect {
+
+    padding-left: 12px;
+    padding-right: 30px;
+}
+
+#verticalShift {
+    width: 50px;
+}
+
+#noiseThreshold {
+    position: relative;
+    top: 5px;
+}
+
+#blockPerBeat {
+    width: 50px;
 }
 
 

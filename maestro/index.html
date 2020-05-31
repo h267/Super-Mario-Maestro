@@ -38,7 +38,7 @@
     <div id="startingContainer" class="smallspacedcontainer">
         <button onclick="loadExample()">Load Example</button>
         <button onclick="tutorialBtn()">Tutorial by Loup&Snoop</button>
-        <p id="fileText" class="displaytext">MIDI File:</p>
+        <p id="fileText" class="displayText">MIDI File:</p>
         <input id="fileInput" type="file" onchange="loadFileFromInput()">
     </div>
 
@@ -48,7 +48,7 @@
                 <button id="playBtn" type="button" onclick="playBtn()" disabled>. . .</button>
                 <button id="stopBtn" type="button" onclick="cancelPlayback()" disabled>. . .</button>
             </div>
-            <select id="temposelect" class="dropdown" onchange="selectTempo()">
+            <select id="tempoSelect" class="dropdown" onchange="selectTempo()">
                 <optgroup id="comtempos" label="Common Tempos">
 
                 </optgroup>
@@ -58,31 +58,31 @@
                 <!-- To be populated with tempo options -->
             </select>
             <div id="informationContainer" class="controlcontainer spacedcontainer">
-                <p id="ELtext" class="displaytext">Entities in Area: 0</p>
-                <p id="PLtext" class="displaytext">Powerups in Area: 0</p>
-                <p id="QEtext" class="displaytext">BPB Quality: -</p>
-                <p id="NCtext" class="displaytext">Spatial Conflicts: -</p>
+                <p id="ELtext" class="displayText">Entities in Area: 0</p>
+                <p id="PLtext" class="displayText">Powerups in Area: 0</p>
+                <p id="QEtext" class="displayText">BPB Quality: -</p>
+                <p id="NCtext" class="displayText">Spatial Conflicts: -</p>
             </div>
-            <button id="buildbtn" class="btn-green" type="button" onclick="toggleBuildMode()">Build Mode (Beta)</button>
-            <button id="newtrkbtn" type="button" onclick="createNewTrack()">New Track</button>
+            <button id="buildBtn" class="btn-green" type="button" onclick="toggleBuildMode()">Build Mode (Beta)</button>
+            <button id="newTrackBtn" type="button" onclick="createNewTrack()">New Track</button>
         </div>
-        <p id="tempotext" style="position: relative; left: 130px; top: 2px; font-size: 10px; height: 0px; width: max-content; margin-top: 0px; margin-bottom: 0px;">Original: -</p>
-        <p id="fstxt" style='margin-bottom:0px;'>File Scrubber</p>
+        <p id="tempotext">Original: -</p>
+        <p id="fstxt">File Scrubber</p>
         <div id="minimapcontainer" class="dispcontainer">
             <canvas id="minimap" width="100px" height="64"></canvas>
         </div>
-        <div class="controlcontainer spacedcontainer">
+        <div id="optionContainer" class="controlcontainer spacedcontainer">
             <div>
-                <label for="yofspicker" id="labys">Vertical Shift</label>
-                <input id="yofspicker" type="number" name="yofspicker" value="0" onchange="nudgeY()" style="width:50px;" min="-48" max="54" disabled>
+                <label id="verticalShiftLabel" for="verticalShift">Vertical Shift</label>
+                <input id="verticalShift" type="number" name="verticalShift" value="0" onchange="nudgeY()" min="-48" max="54" disabled>
             </div>
-            <div id="noisecontrol" style="display: none;">
-                <label for="noiseslider" id="nslabl">Noise Threshold</label>
-                <input id="noiseslider" type="range" min="0" max="127" value="0" onchange="changeNoiseThreshold()" style='position: relative; top: 5px;'>
+            <div id="noisecontrol" hidden>
+                <label id="noiseThresholdLabel" for="noiseThreshold">Noise Threshold</label>
+                <input id="noiseThreshold" type="range" min="0" max="127" value="0" onchange="changeNoiseThreshold()">
             </div>
             <div>
-                <label for="bpbpicker" id="labrs">Blocks per Beat</label>
-                <input id="bpbpicker" type="number" name="bpbpicker" value="0" min="1" max="8" oninput="pickBPB()" style="width:50px;" min="1" max="16" disabled>
+                <label id="blockPerBeatLabel" for="blockPerBeat">Blocks per Beat</label>
+                <input id="blockPerBeat" type="number" name="blockPerBeat" value="0" min="1" max="16" oninput="pickBPB()" disabled>
             </div>
             <!--<button id="bpbrecommend" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button>-->
         </div>
@@ -107,8 +107,8 @@
                     <input id="semitoneshift" type="number" min="-11" max="11" value="0" style="width: 50px;" onchange="shiftTrackOctave()">
                 </div>
                 <div class="spacedcontainer">
-                    <p class="displaytext" id="NASText" style="padding-right: 12px;">Notes above screen: 0</p>
-                    <p class="displaytext" id="NBSText">Notes below screen: 0</p>
+                    <p class="displayText" id="NASText" style="padding-right: 12px;">Notes above screen: 0</p>
+                    <p class="displayText" id="NBSText">Notes below screen: 0</p>
                     <button id="shiftBtn" onclick="shiftTrackIntoView()">Shift into View</button>
                 </div>
                 <div class="spacedcontainer">
