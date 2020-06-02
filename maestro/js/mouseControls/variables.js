@@ -16,126 +16,126 @@ let isHiddenToolsEnabled = false;
 let secondaryTrack = 0;
 
 window.addEventListener('load', () => { // Wait for everything to load before executing
-    setupToolIcons();
-    setupToolbar();
-    // enableMouseTools();
-    refreshMouseTool();
-    isLoaded = true;
+	setupToolIcons();
+	setupToolbar();
+	// enableMouseTools();
+	refreshMouseTool();
+	isLoaded = true;
 });
 
 // TODO: Functionality
 
 const mouseTools = [
-    {
-        name: 'Info',
-        isVisible: false,
-        isHoldable: false,
-        onLeftClick: () => infoTool(),
-        onRightClick: () => {
-        },
-        close: () => {
-        }
-    },
-    {
-        name: 'Zoom',
-        isVisible: false,
-        isHoldable: false,
-        onLeftClick: () => zoomInTool(),
-        onRightClick: () => zoomOutTool(),
-        close: () => {
-        }
-    },
-    {
-        name: 'Ruler',
-        isVisible: true,
-        isHoldable: false,
-        onLeftClick: () => rulerTool(),
-        onRightClick: () => {
-        },
-        close: () => {
-            showRuler = false;
-        }
-    },
-    {
-        name: 'Add Note',
-        isVisible: true,
-        isHoldable: true,
-        onLeftClick: () => addNoteTool(),
-        onRightClick: () => {
-        },
-        close: () => {
-        }
-    },
-    {
-        name: 'Erase Note',
-        isVisible: true,
-        isHoldable: true,
-        onLeftClick: () => eraseNoteTool(),
-        onRightClick: () => {
-        },
-        close: () => {
-        }
-    },
-    {
-        name: 'Select Notes',
-        isVisible: false,
-        isHoldable: true,
-        onLeftClick: () => {
-        },
-        onRightClick: () => {
-        },
-        close: () => {
-        }
-    },
-    {
-        name: 'Change Track',
-        isVisible: true,
-        isHoldable: true,
-        onLeftClick: () => changeTrackTool(),
-        onRightClick: () => {
-        },
-        close: () => {
-        }
-    },
-    {
-        name: 'Forbid Tile',
-        isVisible: false,
-        isHoldable: true,
-        onLeftClick: () => forbidTool(),
-        onRightClick: () => unforbidTool(),
-        close: () => {
-        }
-    }
+	{
+		name: 'Info',
+		isVisible: false,
+		isHoldable: false,
+		onLeftClick: () => infoTool(),
+		onRightClick: () => {
+		},
+		close: () => {
+		}
+	},
+	{
+		name: 'Zoom',
+		isVisible: false,
+		isHoldable: false,
+		onLeftClick: () => zoomInTool(),
+		onRightClick: () => zoomOutTool(),
+		close: () => {
+		}
+	},
+	{
+		name: 'Ruler',
+		isVisible: true,
+		isHoldable: false,
+		onLeftClick: () => rulerTool(),
+		onRightClick: () => {
+		},
+		close: () => {
+			showRuler = false;
+		}
+	},
+	{
+		name: 'Add Note',
+		isVisible: true,
+		isHoldable: true,
+		onLeftClick: () => addNoteTool(),
+		onRightClick: () => {
+		},
+		close: () => {
+		}
+	},
+	{
+		name: 'Erase Note',
+		isVisible: true,
+		isHoldable: true,
+		onLeftClick: () => eraseNoteTool(),
+		onRightClick: () => {
+		},
+		close: () => {
+		}
+	},
+	{
+		name: 'Select Notes',
+		isVisible: false,
+		isHoldable: true,
+		onLeftClick: () => {
+		},
+		onRightClick: () => {
+		},
+		close: () => {
+		}
+	},
+	{
+		name: 'Change Track',
+		isVisible: true,
+		isHoldable: true,
+		onLeftClick: () => changeTrackTool(),
+		onRightClick: () => {
+		},
+		close: () => {
+		}
+	},
+	{
+		name: 'Forbid Tile',
+		isVisible: false,
+		isHoldable: true,
+		onLeftClick: () => forbidTool(),
+		onRightClick: () => unforbidTool(),
+		close: () => {
+		}
+	}
 ];
 
 const MouseActions = []; // TODO: Fill out
 Object.freeze(MouseActions);
 
 minimap.onmousedown = (e) => {
-    handleMiniMouseDown(e);
+	handleMiniMouseDown(e);
 };
 minimap.onmousemove = (e) => {
-    handleMiniMouseMove(e);
+	handleMiniMouseMove(e);
 };
 minimap.onmouseup = (e) => {
-    handleMiniMouseUp(e);
+	handleMiniMouseUp(e);
 };
 minimap.onmouseout = (e) => {
-    handleMiniMouseOut(e);
+	handleMiniMouseOut(e);
 };
 
 canvas.onmousemove = (e) => {
-    handleMainMove(e);
+	handleMainMove(e);
 };
 canvas.onmousedown = (e) => {
-    handleMainMouseDown(e);
+	handleMainMouseDown(e);
 };
 canvas.onmouseup = (e) => {
-    handleMainMouseUp(e);
+	handleMainMouseUp(e);
 };
 canvas.oncontextmenu = (e) => {
-    handleMainRightClick(e);
+	handleMainRightClick(e);
 };
 canvas.onwheel = (e) => {
-    handleMainWheel(e);
+	handleMainWheel(e);
 };

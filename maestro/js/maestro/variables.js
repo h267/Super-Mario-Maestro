@@ -39,7 +39,7 @@ let songBPM = 120;
 let fileLoaded = false;
 let blocksPerBeat = 4;
 let recmdBlocksPerBeat = 4;
-let currentHighlight = {x: -1, y: -1};
+let currentHighlight = { x: -1, y: -1 };
 let prevHighlighted = false;
 let minimapData = null;
 let displayData = null;
@@ -57,7 +57,7 @@ let reccBPB;
 let lastBPB;
 let outlineLayers;
 let numRecommendedInstruments = 0;
-let entityOverflowStatus = {entity: false, powerup: false};
+let entityOverflowStatus = { entity: false, powerup: false };
 let noteRange = 0;
 let defaultZoom = 1;
 let hasLoadedBuffers = false;
@@ -72,17 +72,17 @@ let undoStack = [];
 // Load graphics and draw the initial state of the level
 document.getElementById('canvas').addEventListener('mouseout', handleOut, false);
 loadToolIcons().then(async (icons) => {
-    toolIcons = icons;
-    tiles = await loadTiles();
-    bgs = await loadBGs();
-    marioSprites = await loadMario();
-    drawLevel(false, true);
+	toolIcons = icons;
+	tiles = await loadTiles();
+	bgs = await loadBGs();
+	marioSprites = await loadMario();
+	drawLevel(false, true);
 });
 
 loadBuffers().then(() => {
-    hasLoadedBuffers = true;
-    document.getElementById('stopBtn').innerHTML = 'Stop';
-    document.getElementById('stopBtn').disabled = false;
-    document.getElementById('playBtn').innerHTML = 'Play';
-    document.getElementById('playBtn').disabled = false;
+	hasLoadedBuffers = true;
+	document.getElementById('stopBtn').innerHTML = 'Stop';
+	document.getElementById('stopBtn').disabled = false;
+	document.getElementById('playBtn').innerHTML = 'Play';
+	document.getElementById('playBtn').disabled = false;
 });

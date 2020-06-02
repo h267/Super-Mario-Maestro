@@ -4,20 +4,20 @@
  * @returns {Promise<AudioBuffer>} A Promise containing the loaded audio data as an AudioBuffer object.
  */
 function loadSample(url) {
-    return new Promise(((resolve, reject) => {
-        let request = new XMLHttpRequest();
-        request.open('GET', url, true);
-        request.responseType = 'arraybuffer';
+	return new Promise(((resolve, reject) => {
+		let request = new XMLHttpRequest();
+		request.open('GET', url, true);
+		request.responseType = 'arraybuffer';
 
-        request.onload = () => {
-            audioCtx.decodeAudioData(request.response, (buffer) => {
-                resolve(buffer);
-            }, () => {
-                console.error(`Failed to decode ${url}.`);
-            });
-        };
-        request.send();
-    }));
+		request.onload = () => {
+			audioCtx.decodeAudioData(request.response, (buffer) => {
+				resolve(buffer);
+			}, () => {
+				console.error(`Failed to decode ${url}.`);
+			});
+		};
+		request.send();
+	}));
 }
 
 /**
@@ -29,20 +29,20 @@ function loadSample(url) {
  * @returns {AudioBufferSourceNode} The AudioBufferSourceNode that controls this note's playback.
  */
 function playBuffer(buffer, time = 0, duration, ctx = audioCtx) {
-    let curTime = 0; // audioCtx.currentTime;
-    let source = ctx.createBufferSource();
-    source.buffer = buffer;
-    let gainNode = ctx.createGain();
-    gainNode.gain.setValueAtTime(MASTER_VOLUME, 0); // Prevent Firefox bug
-    // if(!isNaN(duration)) gainNode.gain.setTargetAtTime(0, curTime + time + duration, 0.4);
-    // gainNode.gain.setValueAtTime(0, curTime + time + 0.1);
+	let curTime = 0; // audioCtx.currentTime;
+	let source = ctx.createBufferSource();
+	source.buffer = buffer;
+	let gainNode = ctx.createGain();
+	gainNode.gain.setValueAtTime(MASTER_VOLUME, 0); // Prevent Firefox bug
+	// if(!isNaN(duration)) gainNode.gain.setTargetAtTime(0, curTime + time + duration, 0.4);
+	// gainNode.gain.setValueAtTime(0, curTime + time + 0.1);
 
-    source.connect(gainNode);
-    gainNode.connect(ctx.destination);
+	source.connect(gainNode);
+	gainNode.connect(ctx.destination);
 
-    if (Number.isNaN(duration) || duration === 0) source.start(curTime + time);
-    else source.start(curTime + time, 0);
-    return source;
+	if (Number.isNaN(duration) || duration === 0) source.start(curTime + time);
+	else source.start(curTime + time, 0);
+	return source;
 }
 
 /**
@@ -51,7 +51,7 @@ function playBuffer(buffer, time = 0, duration, ctx = audioCtx) {
  * @returns {number} The equivalent frequency of the note.
  */
 function midiNoteToFreq(note) {
-    return (2 ** ((note - KEY_A4) / 12)) * 440;
+	return (2 ** ((note - KEY_A4) / 12)) * 440;
 }
 
 /**
@@ -61,20 +61,20 @@ function midiNoteToFreq(note) {
  * @returns {AudioBuffer} An AudioBuffer of the input buffer being played at the speed.
  */
 async function renderBufferAtPlaybackRate(buffer, rate) {
-    let newDuration = buffer.duration / rate;
-    let offlineCtx = (new OfflineAudioContext(1, Math.ceil(newDuration * SAMPLE_RATE), SAMPLE_RATE)
+	let newDuration = buffer.duration / rate;
+	let offlineCtx = (new OfflineAudioContext(1, Math.ceil(newDuration * SAMPLE_RATE), SAMPLE_RATE)
         // Hopefully fixes iOS playback
         // eslint-disable-next-line new-cap
         || new window.webkitOfflineAudioContext(1, Math.ceil(newDuration * SAMPLE_RATE), SAMPLE_RATE));
 
-    let source = offlineCtx.createBufferSource();
-    source.buffer = buffer;
-    source.playbackRate.value = rate;
-    source.connect(offlineCtx.destination);
-    source.start();
+	let source = offlineCtx.createBufferSource();
+	source.buffer = buffer;
+	source.playbackRate.value = rate;
+	source.connect(offlineCtx.destination);
+	source.start();
 
-    let renderedBuffer = await offlineCtx.startRendering();
-    return renderedBuffer;
+	let renderedBuffer = await offlineCtx.startRendering();
+	return renderedBuffer;
 }
 
 /**
@@ -83,13 +83,13 @@ async function renderBufferAtPlaybackRate(buffer, rate) {
  * @param {boolean} hasLongSustain If the note should be played longer than usual.
  */
 function applyReleaseEnvelope(bufferData, hasLongSustain) {
-    let multiplier;
-    let releasePos;
-    /* if(hasLongSustain) releasePos = LONG_RELEASE_POS;
+	let multiplier;
+	let releasePos;
+	/* if(hasLongSustain) releasePos = LONG_RELEASE_POS;
       else */
-    releasePos = RELEASE_POS;
-    for (let i = releasePos; i < bufferData.length; i++) {
-        multiplier = 1.0 - ((i - releasePos) / RELEASE_DURATION);
-        bufferData[i] *= Math.max(multiplier, 0);
-    }
+	releasePos = RELEASE_POS;
+	for (let i = releasePos; i < bufferData.length; i++) {
+		multiplier = 1.0 - ((i - releasePos) / RELEASE_DURATION);
+		bufferData[i] *= Math.max(multiplier, 0);
+	}
 }

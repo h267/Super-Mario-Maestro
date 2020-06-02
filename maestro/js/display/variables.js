@@ -16,11 +16,11 @@ let minimapZoomX = 1; // Unused
  * A set of DrawLayers for the main display.
  */
 const dlayer = {
-    bgLayer: 0,
-    noteLayer: 3,
-    overlayLayer: 4,
-    outlineLayer: 5,
-    mouseLayer: 6
+	bgLayer: 0,
+	noteLayer: 3,
+	overlayLayer: 4,
+	outlineLayer: 5,
+	mouseLayer: 6
 };
 const canvasWidth = 3840;
 const canvasHeight = 432;
