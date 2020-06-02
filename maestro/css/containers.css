@@ -1,0 +1,164 @@
+#logoContainer {
+    width: 100%;
+}
+
+#logoContainer div {
+    display: table;
+    margin: 0 auto;
+}
+
+#logoContainer img {
+    height: 35px;
+    margin-bottom: 5px;
+}
+
+#logoContainer p {
+    float: right;
+    position: relative;
+    left: 5px;
+    top: 7px;
+}
+
+
+/*Main container (start)*/
+
+#mainContainer {
+    width: 95%;
+    margin: 0 auto;
+}
+
+
+#subMainContainer {
+    flex-wrap: nowrap;
+}
+
+#toolbarContainer {
+    width: 32px;
+    background-color: #164770;
+    border: 2px solid #164770;
+    border-radius: 4px;
+}
+
+#toolbarContainer a {
+    display: block;
+    padding: 8px;
+    transition: all 0.2s ease;
+    color: #164770;
+    border-radius: 4px;
+}
+
+#toolbarContainer a:hover {
+    background-color: #1a5586;
+}
+
+#toolbarContainer a:active {
+    background-color: #7289da;
+}
+
+#displayContainer {
+    margin-bottom: 2px;
+}
+
+
+#startingContainer {
+}
+
+
+#toolboxContainer {
+    height: 24px;
+}
+
+#informationContainer {
+    height: 24px;
+    margin-bottom: 0;
+}
+
+#minimapcontainer {
+    margin-bottom: 4px;
+    background-color: #195180;
+}
+
+#optionContainer {
+}
+
+#toolsContainer {
+    display: flex;
+}
+
+#leftToolsContainer {
+}
+
+#trackedItemsContainer {
+    border: 3px solid #164770;
+    width: 220px;
+    height: 160px;
+    overflow-y: auto;
+    margin-right: 4px;
+}
+
+#rightToolsContainer {
+    width: 700px;
+}
+
+#semitonesContainer {
+}
+
+#instrumentContainer {
+}
+
+#soloBoxContainer {
+}
+
+#footerContainer {
+    display: flex;
+}
+
+/*Main container (end)*/
+
+
+#discordLinkContainer {
+    position: absolute;
+    bottom: 1em;
+    right: 1em;
+}
+
+#discordLinkContainer p {
+    text-align: center;
+    font-style: italic;
+    margin-bottom: 4px;
+}
+
+
+/*CSS by class*/
+
+.dispcontainer {
+    overflow: auto;
+    border: 3px solid #164770;
+    border-radius: 3px;
+    margin-bottom: 4px;
+}
+
+.controlcontainer {
+    background-color: #164770;
+    border: 3px solid #164770;
+    border-radius: 5px;
+    width: max-content;
+}
+
+.smallspacedcontainer, .spacedcontainer {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.spacedcontainer > * {
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+.smallspacedcontainer > * {
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+
