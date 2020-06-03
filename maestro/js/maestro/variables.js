@@ -65,7 +65,7 @@ let showUnbuildables = false;
 let canvasZoom = 1;
 let isBuildMode = false;
 let isSoloMode = false;
-let undoStack = [];
+let undoManager = new UndoManager();
 
 // getEquivalentBlocks(1.5);
 

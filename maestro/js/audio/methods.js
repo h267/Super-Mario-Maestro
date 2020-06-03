@@ -62,10 +62,7 @@ function midiNoteToFreq(note) {
  */
 async function renderBufferAtPlaybackRate(buffer, rate) {
 	let newDuration = buffer.duration / rate;
-	let offlineCtx = (new OfflineAudioContext(1, Math.ceil(newDuration * SAMPLE_RATE), SAMPLE_RATE)
-        // Hopefully fixes iOS playback
-        // eslint-disable-next-line new-cap
-        || new window.webkitOfflineAudioContext(1, Math.ceil(newDuration * SAMPLE_RATE), SAMPLE_RATE));
+	let offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, Math.ceil(newDuration * SAMPLE_RATE), SAMPLE_RATE);
 
 	let source = offlineCtx.createBufferSource();
 	source.buffer = buffer;

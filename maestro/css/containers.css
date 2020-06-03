@@ -15,7 +15,7 @@
 #logoContainer p {
     float: right;
     position: relative;
-    left: 5px;
+    right: 16px;
     top: 7px;
 }
 
@@ -65,7 +65,6 @@
 
 
 #toolboxContainer {
-    height: 24px;
 }
 
 #informationContainer {

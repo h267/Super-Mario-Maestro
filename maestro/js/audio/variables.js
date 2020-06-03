@@ -15,4 +15,4 @@ const LOAD_DELAY = 0.5;
 
 const LOAD_SIZE = 0.5;
 
-let audioCtx = new (window.AudioContext || window.webkitAudioContext)(); // jshint ignore:line
+let audioCtx = new (window.AudioContext || window.webkitAudioContext)();

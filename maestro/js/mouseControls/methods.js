@@ -328,18 +328,14 @@ function addNoteTool() {
 	let placeX = lastClickedLvlPos.x;
 	if (placeX < 0) return;
 	let placeY = lastClickedLvlPos.y;
-	let insertIndex = level.noteGroups[selectedTrack].getNoteAt(placeX, placeY).pos;
-	addNote(selectedTrack, placeX, placeY, insertIndex);
-	// console.log(`Add note at ${placeX}, ${placeY}`);
+	addNote(selectedTrack, blocksToTicks(placeX), blocksToPitch(selectedTrack, placeY));
 }
 
 function eraseNoteTool() {
 	if (!fileLoaded || !level.noteGroups[selectedTrack].isVisible) return;
 	let queryX = lastClickedLvlPos.x;
 	let queryY = lastClickedLvlPos.y;
-	let foundNote = level.noteGroups[selectedTrack].getNoteAt(queryX, queryY);
-	// console.log(foundNote);
-	if (foundNote.result !== null) removeNote(selectedTrack, foundNote.pos);
+	removeNote(selectedTrack, blocksToTicks(queryX), blocksToPitch(selectedTrack, queryY));
 }
 
 function zoomInTool() {
@@ -356,12 +352,10 @@ function changeTrackTool() {
 	if (!fileLoaded || !level.noteGroups[selectedTrack].isVisible) return;
 	let placeX = lastClickedLvlPos.x;
 	let placeY = lastClickedLvlPos.y;
-	let foundNote = level.noteGroups[selectedTrack].getNoteAt(placeX, placeY);
-	if (foundNote.result !== null) {
-		removeNote(selectedTrack, foundNote.pos);
-		let insertIndex = level.noteGroups[secondaryTrack].getNoteAt(placeX, placeY).pos;
-		addNote(secondaryTrack, foundNote.result.x, placeY, insertIndex);
-	}
+	let searchTicks = ticksToBlocks(Math.round(blocksToTicks(placeX)));
+	if (!findNote(selectedTrack, blocksToTicks(searchTicks), blocksToPitch(selectedTrack, placeY)).success) return;
+	removeNote(selectedTrack, blocksToTicks(placeX), blocksToPitch(selectedTrack, placeY));
+	addNote(secondaryTrack, blocksToTicks(placeX), blocksToPitch(secondaryTrack, placeY));
 }
 
 function forbidTool() {

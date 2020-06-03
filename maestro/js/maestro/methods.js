@@ -258,7 +258,7 @@ function drawLevel(redrawMini = false, noDOM = false) {
 			for (j = 0; j < tracks[i].notes.length; j++) {
 				let note = tracks[i].notes[j];
 				let x = Math.round(ticksToBlocks(note.time));
-				let y = note.pitch + 1 + level.noteGroups[i].ofsY;
+				let y = pitchToBlocks(i, note.pitch);
 				// Omit the notes on the very top row for now
 				if (y <= ofsY) {
 					tracks[i].numNotesOffscreen.below++;
@@ -1424,7 +1424,7 @@ function redrawMinimap() {
 			let note = tracks[index].notes[j];
 			if (note.volume < noiseThreshold) continue;
 			let x = Math.round(ticksToBlocks(note.time));
-			let y = note.pitch + level.noteGroups[index].ofsY;
+			let y = pitchToBlocks(index, note.pitch);
 			if (index === selectedTrack) miniPlot(x, y, 'mediumaquamarine');
 			else miniPlot(x, y);
 		}
@@ -1498,6 +1498,14 @@ function blocksToTicks(blocks) {
 	return (blocks / blocksPerBeat) * midi.timing;
 }
 
+function pitchToBlocks(trkId, pitch) {
+	return pitch + 1 + level.noteGroups[trkId].ofsY;
+}
+
+function blocksToPitch(trkId, blocks) {
+	return blocks - level.noteGroups[trkId].ofsY - 1;
+}
+
 function roundBlocks(numBlocks) {
 	let numUnits = Math.round(numBlocks * numBlockSubdivisions);
 	return numUnits / numBlockSubdivisions;
@@ -1558,52 +1566,68 @@ function toggleBuildRestriction() {
 	updateInstrumentContainer();
 }
 
-function addNote(trkId, x, y, idx) {
+function addNote(trkId, time, pitch) { // TODO: Log events
 	let note = new MaestroNote();
-	let isAtEnd = false;
-	note.pitch = y - 1 - level.noteGroups[trkId].ofsY;
-	note.time = blocksToTicks(x);
+	note.pitch = pitch;
+	note.time = time;
 	note.instrument = tracks[trkId].instrumentChanges[0];
 	note.originalInstrument = tracks[trkId].origInstrument;
-	note.x = x;
-	note.y = y - level.noteGroups[trkId].ofsY;
+	note.x = ticksToBlocks(time);
+	note.y = pitchToBlocks(trkId, pitch);
 	note.origNote = note;
-	let prevNote = level.noteGroups[trkId].notes[idx];
-	if (prevNote === undefined) {
-		isAtEnd = true;
-		prevNote = level.noteGroups[trkId].notes[idx - 1];
-	}
-
-	level.noteGroups[trkId].notes.splice(idx, 0, note);
 
 	// Search for matching pitch and x position globally
-	let globalIdx;
-	if (isAtEnd) globalIdx = tracks[trkId].notes.length;
-	else if (prevNote !== undefined) {
-		globalIdx = tracks[trkId].notes.findIndex((thisNote) => {
-			let thisX = ticksToBlocks(thisNote.time);
-			return (thisNote.pitch === prevNote.pitch && thisX === prevNote.x);
-		});
-	}
-	if (globalIdx === -1) globalIdx = 0;
+	let globalIdx = findNote(trkId, time, pitch).idx;
 
 	tracks[trkId].notes.splice(globalIdx, 0, note);
 	midi.trks[trkId].notes.splice(globalIdx, 0, note);
 
+	refreshBlocks();
 	softRefresh();
 }
 
-function removeNote(trkId, idx) {
-	let note = level.noteGroups[trkId].notes[idx];
-	level.noteGroups[trkId].notes.splice(idx, 1);
-
+function removeNote(trkId, time, pitch) {
 	// Search for matching pitch and x position globally
-	let globalIdx = tracks[trkId].notes.findIndex((thisNote) => thisNote === note.origNote);
+	let noteSearch = findNote(trkId, time, pitch);
+	if (!noteSearch.success) return;
+	let globalIdx = noteSearch.idx;
 
 	tracks[trkId].notes.splice(globalIdx, 1);
 	midi.trks[trkId].notes.splice(globalIdx, 1);
 
+	refreshBlocks();
 	softRefresh();
+}
+
+function findNote(track, time, pitch, doRound = true) { // TODO: Prevent time precision loss
+	let targetX = Math.round(ticksToBlocks(time));
+	for (let i = 0; i < tracks[track].notes.length; i++) {
+		let thisNote = tracks[track].notes[i];
+		let thisX = Math.round(ticksToBlocks(thisNote.time));
+		if (thisX === targetX && thisNote.pitch === pitch) return { success: true, idx: i };
+		if (thisX > targetX) return { success: false, idx: i };
+	}
+	return { success: false, idx: tracks[track].notes.length };
+
+	// TODO: Fix this binary search implementation
+	/* let leftBound = 0;
+	let rightBound = tracks[track].notes.length;
+	let index;
+	let isFound = false;
+	let targetX = Math.round(ticksToBlocks(time));
+	while (!isFound && Math.abs(leftBound - rightBound) > 1) {
+		index = Math.floor((leftBound + rightBound) / 2);
+		let thisNote = tracks[track].notes[index];
+		let thisX = Math.round(ticksToBlocks(thisNote.time));
+		if (thisX === targetX && thisNote.pitch === pitch) isFound = true;
+		else if (thisX < targetX) leftBound = index;
+		else rightBound = index;
+		console.log(index - 1);
+	}
+	index--;
+	console.log('out', isFound);
+	if (isFound) return { success: true, idx: index };
+	return { success: false, idx: index }; */
 }
 
 function toggleBuildMode() {
@@ -1682,4 +1706,20 @@ function getTempoBuildSetups(tempoId) { // TODO: Implement this upon tempo chang
             numSetupsFound++;
         }
     }); */
+}
+
+function binarySearch(arr, value, valueFunc) {
+	let leftBound = 0;
+	let rightBound = arr.length;
+	let index;
+	let isFound = false;
+	while (!isFound) {
+		index = Math.floor((leftBound + rightBound) / 2);
+		let thisVal = valueFunc(arr[index]);
+		if (thisVal === value) isFound = true;
+		else if (thisVal < value) leftBound = index;
+		else rightBound = index;
+	}
+	if (isFound) return index;
+	return -1;
 }

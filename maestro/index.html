@@ -35,13 +35,6 @@
         </div>
     </div>
 
-    <div id="startingContainer" class="smallspacedcontainer">
-        <button onclick="loadExample()">Load Example</button>
-        <button onclick="tutorialBtn()">Tutorial by Loup&Snoop</button>
-        <p id="fileText" class="displayText">MIDI File:</p>
-        <input id="fileInput" type="file" onchange="loadFileFromInput()">
-    </div>
-
     <div id="toolboxContainer" hidden>
         <div class="smallspacedcontainer">
             <div>
@@ -103,7 +96,7 @@
                     <input id="octaveShift" type="number" name="octaveShift" min="-10" max="10" value="0" onchange="shiftTrackOctave()">
                     <div id="semitonesContainer" hidden>
                         <label for="semitones">Semitones</label>
-                        <input id="semitones" type="number" name="semitones" min="-11" max="11" value="0" style="" onchange="shiftTrackOctave()">
+                        <input id="semitones" type="number" name="semitones" min="-11" max="11" value="0" onchange="shiftTrackOctave()">
                     </div>
                 </div>
                 <div class="spacedcontainer">
@@ -129,13 +122,22 @@
                 <label for="unsupportedEntities">Allow Unsupported Entities</label>
                 <input id="unsupportedEntities" type="checkbox" name="unsupportedEntities" onchange="toggleBuildRestriction()">
             </div>
+
             <div>
                 <label for="advanceSettings">Advanced Settings</label>
                 <input id="advanceSettings" type="checkbox" name="advanceSettings" onchange="toggleAdvancedMode()">
             </div>
         </div>
     </div>
+
+    <div id="startingContainer" class="smallspacedcontainer">
+        <p id="fileText" class="displayText">MIDI File:</p>
+        <input id="fileInput" type="file" onchange="loadFileFromInput()">
+        <button onclick="loadExample()">Load Example</button>
+        <button onclick="tutorialBtn()">Tutorial by Loup&Snoop</button>
+    </div>    
 </div>
+
 <div id="discordLinkContainer">
     <p>made by h267</p>
     <button id="discordBtn" onClick="handleDiscordPress();"></button>
@@ -187,6 +189,8 @@
         <script src="js/playback/methods.js" defer></script>
     </div>
     <div id="maestroScripts">
+        <script src="js/maestro/UndoManager.js" defer></script>
+        <script src="js/maestro/EditEvent.js" defer></script>
         <script src="js/maestro/methods.js" defer></script>
         <script src="js/maestro/variables.js" defer></script>
     </div>
