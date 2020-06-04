@@ -78,6 +78,7 @@ function loadData(bytes) { // Load file from the file input element
 	isNewFile = true;
 	fileLoaded = true;
 	noteRange = 0;
+	undoManager.clear();
 	mapWidth = Math.ceil(ticksToBlocks(midi.duration));
 	level.noteGroups = [];
 	outlineLayers = new Array(midi.trks.length);
@@ -116,6 +117,7 @@ function loadData(bytes) { // Load file from the file input element
 	}
 	refreshBlocks();
 	updateUI(false, true);
+	togglePercussion();
 	isNewFile = false;
 	document.getElementById('verticalShift').disabled = false;
 	document.getElementById('blockPerBeat').disabled = false;
@@ -1153,7 +1155,6 @@ function sepInsFromTrk(trk) { // Create new // TODO: Use MaestroTracks instead
  * @param {MIDItrack} track The MIDItrack object of the track to add to the level.
  */
 function addTrack(track) {
-	console.log('new track');
 	midi.trks.push(track);
 	tracks.push(new MaestroTrack(track));
 	level.noteGroups.push(new PreloadedNoteGroup());
@@ -1231,6 +1232,19 @@ function toggleAdvancedMode() {
 		lastBPB = blocksPerBeat;
 		changeBPB();
 	}
+}
+
+function togglePercussion() {
+	let isEnabled = document.getElementById('showPercussion').checked;
+	for (let i = 0; i < tracks.length; i++) {
+		const thisTrk = tracks[i];
+		if (thisTrk.hasPercussion) {
+			tracks[i].isHidden = !isEnabled;
+			level.noteGroups[i].isVisible = isEnabled;
+		}
+	}
+	updateUI(false, false, false);
+	softRefresh();
 }
 
 /**
@@ -1582,6 +1596,9 @@ function addNote(trkId, time, pitch) { // TODO: Log events
 	tracks[trkId].notes.splice(globalIdx, 0, note);
 	midi.trks[trkId].notes.splice(globalIdx, 0, note);
 
+	let event = new EditEvent(trkId, 0, { note, idx: globalIdx });
+	undoManager.addEvent(event);
+
 	refreshBlocks();
 	softRefresh();
 }
@@ -1595,6 +1612,9 @@ function removeNote(trkId, time, pitch) {
 	tracks[trkId].notes.splice(globalIdx, 1);
 	midi.trks[trkId].notes.splice(globalIdx, 1);
 
+	let event = new EditEvent(trkId, 1, { note: noteSearch.obj, idx: globalIdx });
+	undoManager.addEvent(event);
+
 	refreshBlocks();
 	softRefresh();
 }
@@ -1604,10 +1624,10 @@ function findNote(track, time, pitch, doRound = true) { // TODO: Prevent time pr
 	for (let i = 0; i < tracks[track].notes.length; i++) {
 		let thisNote = tracks[track].notes[i];
 		let thisX = Math.round(ticksToBlocks(thisNote.time));
-		if (thisX === targetX && thisNote.pitch === pitch) return { success: true, idx: i };
-		if (thisX > targetX) return { success: false, idx: i };
+		if (thisX === targetX && thisNote.pitch === pitch) return { success: true, idx: i, obj: thisNote };
+		if (thisX > targetX) return { success: false, idx: i, obj: null };
 	}
-	return { success: false, idx: tracks[track].notes.length };
+	return { success: false, idx: tracks[track].notes.length, obj: null };
 
 	// TODO: Fix this binary search implementation
 	/* let leftBound = 0;

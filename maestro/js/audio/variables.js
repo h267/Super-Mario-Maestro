@@ -15,4 +15,7 @@ const LOAD_DELAY = 0.5;
 
 const LOAD_SIZE = 0.5;
 
-let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
+window.OfflineAudioContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+
+let audioCtx = new window.AudioContext();

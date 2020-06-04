@@ -27,8 +27,13 @@
 </div>
 <div id="mainContainer">
     <div id="subMainContainer" class="smallspacedcontainer">
-        <div id="toolbarContainer">
-            <!-- To be populated with buttons -->
+        <div id="outsideToolbarContainer">
+            <div id="toolbarContainer">
+                <!-- To be populated with buttons -->
+            </div>
+            <button id="undoBtn" onclick="undoManager.undo()">
+                <img id="undoImg" src="icon/undo.png"></img>
+            </button>
         </div>
         <div id="displayContainer" class="dispcontainer">
             <canvas id="canvas" width="3840" height="432"></canvas>
@@ -117,7 +122,7 @@
                 </div>
             </div>
         </div>
-        <div id="footerContainer">
+        <div id="bottomCheckboxContainer" class="smallspacedcontainer">
             <div>
                 <label for="unsupportedEntities">Allow Unsupported Entities</label>
                 <input id="unsupportedEntities" type="checkbox" name="unsupportedEntities" onchange="toggleBuildRestriction()">
@@ -126,6 +131,11 @@
             <div>
                 <label for="advanceSettings">Advanced Settings</label>
                 <input id="advanceSettings" type="checkbox" name="advanceSettings" onchange="toggleAdvancedMode()">
+            </div>
+
+            <div>
+                <label for="showPercussion">Show Percussion</label>
+                <input id="showPercussion" type="checkbox" name="showPercussion" onchange="togglePercussion()">
             </div>
         </div>
     </div>

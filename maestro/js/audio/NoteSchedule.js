@@ -91,7 +91,7 @@ class NoteSchedule {
      * @returns {Promise<AudioBuffer>} A Promise holding the rendered audio buffer.
      */
 	async render() {
-		let offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, Math.ceil((this.ticksToSeconds(this.schedule[this.schedule.length - 1].ticks) + 2) * SAMPLE_RATE), SAMPLE_RATE);
+		let offlineCtx = new window.OfflineAudioContext(1, Math.ceil((this.ticksToSeconds(this.schedule[this.schedule.length - 1].ticks) + 2) * SAMPLE_RATE), SAMPLE_RATE);
 		this.renderingCtx = offlineCtx;
 		let that = this;
 

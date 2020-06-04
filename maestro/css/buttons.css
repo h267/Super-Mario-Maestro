@@ -20,6 +20,18 @@
 #newTrackBtn {
 }
 
+#undoBtn {
+    margin-left: 3px;
+    margin-top: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#undoImg {
+    width: 16px;
+    height: 16px;
+}
+
 
 #discordBtn {
     outline: none;
