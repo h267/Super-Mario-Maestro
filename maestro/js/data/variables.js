@@ -13,6 +13,8 @@ const numBlockSubdivisions = 1;
 const soundSubframesPerSecond = 200;
 const setupErrorToleranceSeconds = 0.035;
 
+const showSetupLogs = true;
+
 const MM2Tempos = [
 	{
 		name: 'Slow Autoscroll',
@@ -107,17 +109,19 @@ let numSetupsFound = 0;
 let dispString = '';
 MM2Tempos.forEach((thisTempo) => {
 	let timePerBlock = (60 / (4 * thisTempo.bpm)) * 200;
-	// console.log(`${thisTempo.name}\n\n`);
+	if (showSetupLogs) console.log(`${thisTempo.name}\n\n`);
 	standardBuildSetups.forEach((setup) => {
 		let setupBlocks = setup.timeDelay / timePerBlock;
 		let frac = setupBlocks - Math.round(setupBlocks);
 		let secondsError = (Math.abs(frac) * timePerBlock) / soundSubframesPerSecond;
-		if (secondsError < setupErrorToleranceSeconds && setup.structType !== 0 && Math.round(setupBlocks) > 0) {
-			/* console.log(`\nsetup: ${setup.structType}, semisolid: ${setup.usesSemisolid}`);
-            console.log(`approx. ${Math.round(setupBlocks)} blocks`);
-            console.log(`${setupBlocks} blocks`);
-            console.log(`${secondsError} seconds of error`);
-            numSetupsFound++; */
+		if (secondsError < setupErrorToleranceSeconds) {
+			if (showSetupLogs) {
+				console.log(`\nsetup: ${setup.structType}, semisolid: ${setup.usesSemisolid}`);
+				console.log(`approx. ${Math.round(setupBlocks)} blocks`);
+				console.log(`${setupBlocks} blocks`);
+				console.log(`${secondsError} seconds of error`);
+				numSetupsFound++;
+			}
 			if (thisTempo.setups === undefined) thisTempo.setups = [];
 			thisTempo.setups.push({
 				structType: setup.structType,
@@ -128,8 +132,6 @@ MM2Tempos.forEach((thisTempo) => {
 	});
 });
 Object.freeze(MM2Tempos);
-// console.log(dispString);
-// console.log(`${numSetupsFound} setups found`);
 
 /**
  * Data on the entities in Maestro.

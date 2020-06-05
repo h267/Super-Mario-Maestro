@@ -40,6 +40,7 @@ class Structure {
 
 	putInChunk() {
 		this.chunkIndex = Math.floor(this.x / blocksPerChunk);
+		if (this.chunkIndex < 0) this.chunkIndex = 0;
 		if (this.chunkIndex > 29) this.chunkIndex = 29;
 		chunks[this.chunkIndex].push(this);
 	}

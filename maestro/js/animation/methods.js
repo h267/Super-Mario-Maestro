@@ -7,7 +7,7 @@
 function animatePlayback(blocksPerFrame, maxX, delay) {
 	playbackAnim = new Animation(((anim) => {
 		canvasLayers[dlayer.mouseLayer].clear();
-		let xPos = Math.floor((marginWidth + (blocksPerFrame * anim.frameCount)) * 16);
+		let xPos = Math.floor(((marginWidth + drawOffsetX) + (blocksPerFrame * anim.frameCount)) * 16);
 		if (xPos / 16 > maxX) {
 			if (isAnimating) {
 				setTimeout(() => stopAudio(), 2000);
@@ -17,7 +17,7 @@ function animatePlayback(blocksPerFrame, maxX, delay) {
 			return;
 		}
 		canvasLayers[dlayer.mouseLayer].drawLine(xPos, 0, xPos, levelHeight * 16);
-		scrollDisplayTo(xPos - (marginWidth * 16));
+		scrollDisplayTo(xPos - ((marginWidth + drawOffsetX) * 16));
 		let spriteNum = 0;
 		// Adjust the animation speed based on the scroll speed
 		let period = Math.round((BASE_WALK_SPEED / blocksPerFrame) * BASE_WALK_PERIOD);

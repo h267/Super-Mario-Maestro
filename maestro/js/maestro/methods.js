@@ -119,8 +119,6 @@ function loadData(bytes) { // Load file from the file input element
 	updateUI(false, true);
 	togglePercussion();
 	isNewFile = false;
-	document.getElementById('verticalShift').disabled = false;
-	document.getElementById('blockPerBeat').disabled = false;
 	document.getElementById('tempotext').innerHTML = `Original: ${Math.round(songBPM)} bpm`;
 	document.getElementById('advanceSettings').checked = usingAdvSettings;
 }
@@ -322,7 +320,7 @@ function drawLevel(redrawMini = false, noDOM = false) {
 			let bgTile = level.checkBgTile(i, j);
 			let fgTile = level.checkFgTile(i, j);
 			let drawY = 27 - j - 1;
-			let drawX = i / numBlockSubdivisions;
+			let drawX = (i / numBlockSubdivisions) + drawOffsetX;
 
 			if (bgTile !== null) drawTile(tiles[bgTile], drawX * 16, drawY * 16);
 			if (tile !== null) {
@@ -1651,8 +1649,15 @@ function findNote(track, time, pitch, doRound = true) { // TODO: Prevent time pr
 }
 
 function toggleBuildMode() {
-	isBuildMode = !isBuildMode;
+	setIsBuildMode(!isBuildMode);
 	softRefresh(false, true);
+}
+
+function setIsBuildMode(isEnabled) {
+	isBuildMode = isEnabled;
+	drawOffsetX = 0;
+	if (isEnabled) disableMouse();
+	else enableMouse();
 }
 
 function setSecondaryTrack() {
@@ -1711,23 +1716,6 @@ function deleteTrack(trkId) { // TODO: Prevent last remaining track from being d
 	softRefresh();
 }
 
-function getTempoBuildSetups(tempoId) { // TODO: Implement this upon tempo change, remove half block semisolids
-	let timePerBlock = (60 / (4 * thisTempo.bpm)) * soundSubframesPerSecond;
-	console.log(`\n\n${thisTempo.name}`);
-	/* standardBuildSetups.forEach((setup) => {
-        let setupBlocks = setup.timeDelay / timePerBlock;
-        let frac = setupBlocks - Math.round(setupBlocks);
-        let secondsError = (Math.abs(frac) * timePerBlock) / soundSubframesPerSecond;
-        if (secondsError < setupErrorToleranceSeconds && setup.structType !== 0 && Math.round(setupBlocks) > 0) {
-            console.log(`\nsetup: ${setup.structType}, semisolid: ${setup.usesSemisolid}`);
-            console.log(`approx. ${Math.round(setupBlocks)} blocks`);
-            console.log(`${setupBlocks} blocks`);
-            console.log(`${secondsError} seconds of error`);
-            numSetupsFound++;
-        }
-    }); */
-}
-
 function binarySearch(arr, value, valueFunc) {
 	let leftBound = 0;
 	let rightBound = arr.length;
@@ -1742,4 +1730,17 @@ function binarySearch(arr, value, valueFunc) {
 	}
 	if (isFound) return index;
 	return -1;
+}
+
+function setToolbarVisibility(visible) {
+	let toolbar = document.getElementById('outsideToolbarContainer');
+	if (visible) toolbar.style.visibility = 'visible';
+	else toolbar.style.visibility = 'hidden';
+}
+
+function setPushback() {
+	let pickerVal = document.getElementById('pushbackLimit').value;
+	pickerVal = Math.max(pickerVal, 0);
+	levelPushBackLimit = pickerVal;
+	hardRefresh(false, true);
 }

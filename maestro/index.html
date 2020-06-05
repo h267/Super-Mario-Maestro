@@ -72,7 +72,7 @@
         <div id="optionContainer" class="controlcontainer spacedcontainer">
             <div>
                 <label id="verticalShiftLabel" for="verticalShift">Vertical Shift</label>
-                <input id="verticalShift" type="number" name="verticalShift" value="0" onchange="nudgeY()" min="-48" max="54" disabled>
+                <input id="verticalShift" type="number" name="verticalShift" value="0" onchange="nudgeY()" min="-48" max="54">
             </div>
             <div id="noisecontrol" hidden>
                 <label id="noiseThresholdLabel" for="noiseThreshold">Noise Threshold</label>
@@ -80,7 +80,11 @@
             </div>
             <div>
                 <label id="blockPerBeatLabel" for="blockPerBeat">Blocks per Beat</label>
-                <input id="blockPerBeat" type="number" name="blockPerBeat" value="0" min="1" max="16" oninput="pickBPB()" disabled>
+                <input id="blockPerBeat" type="number" name="blockPerBeat" value="0" min="1" max="16" oninput="pickBPB()">
+            </div>
+            <div>
+                <label id="pushbackLimitLabel" for="pushbackLimit">Level Pushback Limit</label>
+                <input id="pushbackLimit" type="number" name="pushbackLimit" value="10" min="0" onchange="setPushback()">
             </div>
             <!--<button id="bpbrecommend" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button>-->
         </div>
@@ -111,7 +115,7 @@
                 </div>
                 <div class="spacedcontainer">
                     <button id="setAsTransferTrackBtn" onclick="setSecondaryTrack()">Set as transfer track</button>
-                    <button id="deleteTrackBtn" onclick="triggerTrackDelete()">Delete track</button>
+                    <button id="deleteTrackBtn" onclick="triggerTrackDelete()" hidden>Delete track</button>
                 </div>
                 <div id="instrumentContainer" class="spacedcontainer">
                     <!-- To be populated with track instrument changes -->
@@ -174,6 +178,7 @@
         <script src="js/space/Cell.js" defer></script>
     </div>
     <div id="levelScripts">
+        <script src="js/level/variables.js" defer></script>
         <script src="js/level/methods.js" defer></script>
         <script src="js/level/Level.js" defer></script>
         <script src="js/level/Area.js" defer></script>

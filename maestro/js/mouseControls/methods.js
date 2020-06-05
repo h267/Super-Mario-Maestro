@@ -105,9 +105,6 @@ function handleMainMove(e) {
 }
 
 function handleMainWheel(e) {
-	if (noMouse) {
-		return;
-	} // Exit if the mouse is disabled
 	let tilePos = getMainMouseTilePos(e);
 
 	let change = Math.sign(e.deltaY); // +/- 1, depending on scroll direction

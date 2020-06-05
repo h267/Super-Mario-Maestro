@@ -76,17 +76,13 @@
     padding-right: 30px;
 }
 
-#verticalShift {
+#verticalShift, #blockPerBeat, #pushbackLimit {
     width: 50px;
 }
 
 #noiseThreshold {
     position: relative;
     top: 5px;
-}
-
-#blockPerBeat {
-    width: 50px;
 }
 
 #trackSettingParagraph {

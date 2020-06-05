@@ -146,36 +146,42 @@ class Level {
 
 		// resetSpatialData(false);
 		this.conflictCount = 0;
-		structures.forEach((struct) => { // Second pass: Check for unhandled conflicts
+		if (isBuildMode) {
+			let lowestX = 27;
+			structures.forEach((struct) => { // Second pass: Check for unhandled conflicts, etc after solver has finished
 			// TODO: Move structures back to an offset of 0 if possible, or any lesser offset
-			struct.checkForCollisions();
-			if (struct.conflictingStructures.length > 0 || !struct.checkForLegality()) {
-				this.markTile(struct.x, struct.y, 1);
-				this.conflictCount++;
-			}
-			if (struct.hasSemisolid) this.markTile(struct.x, struct.y, 3);
-		});
-		cells.forEach((cell) => cell.build());
-		cells.forEach((cell) => cell.members.forEach((struct) => {
-			struct.checkForCollisions();
-			if (struct.conflictingStructures.length > 0) {
-				this.markTile(struct.x, struct.y, 1);
-				this.conflictCount++;
-			}
-		}));
-		// console.log(cells);
+				struct.checkForCollisions();
+				if (struct.conflictingStructures.length > 0 || !struct.checkForLegality()) {
+					this.markTile(struct.x, struct.y, 1);
+					this.conflictCount++;
+				}
+				if (struct.hasSemisolid) this.markTile(struct.x, struct.y, 6);
+				lowestX = Math.min(lowestX, struct.x);
+			});
+			drawOffsetX = 27 - lowestX;
+			cells.forEach((cell) => cell.build());
+			cells.forEach((cell) => cell.members.forEach((struct) => {
+				struct.checkForCollisions();
+				if (struct.conflictingStructures.length > 0) {
+					this.markTile(struct.x, struct.y, 1);
+					this.conflictCount++;
+				}
+			}));
+			// console.log(cells);
 
-		structures.forEach((struct) => { // Third pass: Draw the structures
-			that.drawStructure(struct);
+			structures.forEach((struct) => { // Third pass: Draw the structures
+				that.drawStructure(struct);
 			// console.log(struct.id);
 			// console.log(struct);
-		});
+			});
 
-		forbiddenTiles.forEach((forbiddenTile) => {
-			let markX = forbiddenTile.x + marginWidth - ofsX;
-			let markY = forbiddenTile.y - 1 - ofsY;
-			this.markTile(markX, markY, 5);
-		});
+			forbiddenTiles.forEach((forbiddenTile) => {
+				let markX = forbiddenTile.x + marginWidth - ofsX;
+				let markY = forbiddenTile.y - 1 - ofsY;
+				this.markTile(markX, markY, 5);
+			});
+		}
+
 		console.log('---');
 	}
 

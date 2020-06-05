@@ -321,7 +321,9 @@ class NoteStructure extends Structure {
 		if (this.hasSemisolid) isLegal &= this.buildRules.canHaveSemisolid;
 		if (this.hasFall) isLegal &= (this.buildRules.canFallNextToWall && this.buildRules.canFreeFall);
 		if (this.hasParachute) isLegal &= this.buildRules.canParachute;
-		isLegal &= (this.getEntityPos().y < 27);
+		let thisEntityPos = this.getEntityPos();
+		isLegal &= (thisEntityPos.y < 27);
+		isLegal &= (thisEntityPos.x >= 27 - levelPushBackLimit);
 		return isLegal;
 	}
 
@@ -336,7 +338,7 @@ class NoteStructure extends Structure {
 
 	getEntityPos() {
 		let ePos = { x: 0, y: 0 };
-		ePos.x = this.x + this.entityPos[0].x + this.xOfs + this.x;
+		ePos.x = this.x + this.entityPos[0].x + this.xOfs;
 		ePos.y = this.y - this.entityPos[0].y - this.yOfs;
 		return ePos;
 	}

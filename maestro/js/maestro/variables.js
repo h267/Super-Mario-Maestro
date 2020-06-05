@@ -1,8 +1,12 @@
 // Super Mario Maestro v1.4
 // made by h267
 
-// FIXME: Playback breaks after clicking different tracks?
-// FIXME: Sometimes playback cannot be stopped
+// TODO:
+// - Establish and enforce push-back limit
+// - Add the option to change push-back limit
+// - Add mobile playback
+// - Polish the UI
+// - Release the public beta
 
 // TODO: Switch to original instrument when invalid instrument is switched to (adv settings toggle)
 // TODO: Finish replacing midi tracks with Maestro tracks
@@ -63,9 +67,10 @@ let defaultZoom = 1;
 let hasLoadedBuffers = false;
 let showUnbuildables = false;
 let canvasZoom = 1;
-let isBuildMode = false;
 let isSoloMode = false;
 let undoManager = new UndoManager();
+let drawOffsetX = 0;
+let levelPushBackLimit = 10;
 
 // getEquivalentBlocks(1.5);
 
