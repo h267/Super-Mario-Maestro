@@ -1580,7 +1580,19 @@ function setPlaybackWaitStatus(status) {
 
 function toggleBuildRestriction() {
 	showUnbuildables = document.getElementById('unsupportedEntities').checked;
+	if (!showUnbuildables) purgeUnbuildables(); // TODO: Change the instrument selector too
 	updateInstrumentContainer();
+}
+
+function purgeUnbuildables() {
+	for (let i = 0; i < tracks.length; i++) {
+		let thisTrack = tracks[i];
+		if (thisTrack.instrumentChanges.length === 0) continue;
+		if (!MM2Instruments[thisTrack.instrumentChanges[0]].isBuildable) {
+			changeInstrument(i, getMM2Instrument(midi.trks[i].usedInstruments[0]), thisTrack.origInstrument + 2);
+			thisTrack.instrumentChanges[0] = thisTrack.origInstrument;
+		}
+	}
 }
 
 function addNote(trkId, time, pitch) { // TODO: Log events
