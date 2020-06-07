@@ -13,7 +13,7 @@ const numBlockSubdivisions = 1;
 const soundSubframesPerSecond = 200;
 const setupErrorToleranceSeconds = 0.035;
 
-const showSetupLogs = true;
+const showSetupLogs = false;
 
 const MM2Tempos = [
 	{

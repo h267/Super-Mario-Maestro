@@ -49,7 +49,7 @@ function loadData(bytes) { // Load file from the file input element
 		}
 		tracks.push(new MaestroTrack(midiTrk));
 	});
-	console.log(tracks);
+	// console.log(tracks);
 	document.getElementById('advanceSettings').checked = false;
 	resetOffsets();
 	if (fileLoaded) {
@@ -117,6 +117,8 @@ function loadData(bytes) { // Load file from the file input element
 	}
 	refreshBlocks();
 	updateUI(false, true);
+	secondaryTrack = getFirstVisibleTrack();
+	updateTrackList();
 	togglePercussion();
 	isNewFile = false;
 	document.getElementById('tempotext').innerHTML = `Original: ${Math.round(songBPM)} bpm`;
@@ -139,58 +141,7 @@ function updateUI(limitedUpdate, reccTempo, doBPB = true) {
 	if (midi.firstTempo !== 0) {
 		songBPM = 60000000 / midi.firstTempo;
 	}
-	for (i = 0; i < tracks.length; i++) {
-		// Add checkbox with label for each track
-		if (!limitedUpdate) {
-			let div = document.createElement('div');
-			div.id = `item${i}`;
-			div.setAttribute('class', 'tracklistitem');
-			div.setAttribute('onclick', `selectTrack(${i});`);
-			div.style.borderRadius = '5px';
-			div.style.borderColor = 'mediumaquamarine';
-			div.style.borderWidth = '0px';
-			// Add a new track checkbox
-			let chkbox = document.createElement('input');
-			chkbox.id = `chk${i}`;
-			chkbox.type = 'checkbox';
-			chkbox.setAttribute('onchange', 'chkRefresh();');
-			chkbox.checked = level.noteGroups[i].isVisible;
-			div.appendChild(chkbox);
-			let rad = document.createElement('input');
-			rad.id = `rad${i}`;
-			rad.name = 'trkrad';
-			rad.type = 'radio';
-			rad.value = i;
-			rad.style = 'display:none';
-			// rad.setAttribute('onclick','selectTrack(this.value);');
-			let labl = document.createElement('label');
-			if ((tracks[i].notes.length === 0 && !tracks[i].isFromUser) || tracks[i].isHidden) { // Hide empty or hidden tracks
-				chkbox.style.display = 'none';
-				labl.style.display = 'none';
-			}
-			labl.appendChild(rad);
-			labl.innerHTML += tracks[i].label;
-			labl.setAttribute('for', rad.id);
-			labl.style.position = 'relative';
-			labl.style.bottom = '3px';
-			labl.id = `trklabl${i}`;
-			labl.setAttribute('class', 'tracklabel');
-			div.appendChild(labl);
-
-			document.getElementById('trackedItemsContainer').appendChild(div);
-			/* if(midi.hasNotes[i]){
-                        document.getElementById('trackedItemsContainer').appendChild(document.createElement('br'));
-                  } */
-
-			// Add a new track option
-			if (tracks[i].label.charAt(0) !== '[') {
-				let opt = document.createElement('option');
-				opt.value = i;
-				opt.innerHTML = tracks[i].label;
-				// document.getElementById('trkselect').appendChild(opt);
-			}
-		}
-	}
+	if (!limitedUpdate) updateTrackList();
 	if (reccTempo) {
 		refreshTempos(blocksPerBeat);
 		bpm = recommendTempo(songBPM, blocksPerBeat, true);
@@ -218,6 +169,60 @@ function updateUI(limitedUpdate, reccTempo, doBPB = true) {
 		softRefresh();
 	}
 	// console.log('Completed in '+((new Date).getTime()-t0)+' ms');
+}
+
+function updateTrackList() {
+	document.getElementById('trackedItemsContainer').innerHTML = '';
+	for (i = 0; i < tracks.length; i++) {
+		// Add checkbox with label for each track
+		let div = document.createElement('div');
+		div.id = `item${i}`;
+		div.setAttribute('class', 'tracklistitem');
+		div.setAttribute('onclick', `selectTrack(${i});`);
+		div.style.borderRadius = '5px';
+		div.style.borderColor = 'mediumaquamarine';
+		div.style.borderWidth = '0px';
+		// Add a new track checkbox
+		let chkbox = document.createElement('input');
+		chkbox.id = `chk${i}`;
+		chkbox.type = 'checkbox';
+		chkbox.setAttribute('onchange', 'chkRefresh();');
+		chkbox.checked = level.noteGroups[i].isVisible;
+		div.appendChild(chkbox);
+		let rad = document.createElement('input');
+		rad.id = `rad${i}`;
+		rad.name = 'trkrad';
+		rad.type = 'radio';
+		rad.value = i;
+		rad.style = 'display:none';
+		// rad.setAttribute('onclick','selectTrack(this.value);');
+		let labl = document.createElement('label');
+		if ((tracks[i].notes.length === 0 && !tracks[i].isFromUser) || tracks[i].isHidden) { // Hide empty or hidden tracks
+			chkbox.style.display = 'none';
+			labl.style.display = 'none';
+		}
+		labl.appendChild(rad);
+		labl.innerHTML += tracks[i].label;
+		labl.setAttribute('for', rad.id);
+		labl.style.position = 'relative';
+		labl.style.bottom = '3px';
+		labl.id = `trklabl${i}`;
+		labl.setAttribute('class', 'tracklabel');
+		div.appendChild(labl);
+
+		document.getElementById('trackedItemsContainer').appendChild(div);
+		/* if(midi.hasNotes[i]){
+                        document.getElementById('trackedItemsContainer').appendChild(document.createElement('br'));
+                  } */
+
+		// Add a new track option
+		if (tracks[i].label.charAt(0) !== '[') {
+			let opt = document.createElement('option');
+			opt.value = i;
+			opt.innerHTML = tracks[i].label;
+			// document.getElementById('trkselect').appendChild(opt);
+		}
+	}
 }
 
 /**
@@ -268,7 +273,6 @@ function drawLevel(redrawMini = false, noDOM = false) {
 					tracks[i].hasVisibleNotes = true;
 				}
 			}
-			// if(!isNewFile){
 			if (tracks[i].hasVisibleNotes) {
 				if (i === selectedTrack) {
 					document.getElementById(`trklabl${i}`).style.color = 'black';
@@ -280,7 +284,8 @@ function drawLevel(redrawMini = false, noDOM = false) {
 			} else {
 				document.getElementById(`trklabl${i}`).style.color = 'lightgray';
 			}
-			// }
+			if (i === secondaryTrack) document.getElementById(`trklabl${i}`).style.fontWeight = 'bold';
+			else document.getElementById(`trklabl${i}`).style.fontWeight = 'normal';
 		}
 	}
 	let x;
@@ -331,7 +336,7 @@ function drawLevel(redrawMini = false, noDOM = false) {
 				}
 				// Outline note blocks of the selected track
 				if (tile === 1 && level.isTrackOccupant[i][j][selectedTrack]) {
-					outlineTile(drawX, drawY, 2, 'rgb(102,205,170)');
+					outlineTile(drawX, drawY, 2, 'rgb(44, 153, 121)');
 				}
 			}
 			if (fgTile !== null) drawTile(bgs[2 + fgTile], drawX * 16, drawY * 16);
@@ -367,7 +372,7 @@ function drawLevel(redrawMini = false, noDOM = false) {
 			document.getElementById('QEtext').style.color = 'lime';
 		} else if (qeScore > 20) {
 			document.getElementById('QEtext').innerHTML = 'BPB Quality: Bad';
-			document.getElementById('QEtext').style.color = 'red';
+			document.getElementById('QEtext').style.color = 'tomato';
 		} else if (qeScore > 5) {
 			document.getElementById('QEtext').innerHTML = 'BPB Quality: Okay';
 			document.getElementById('QEtext').style.color = 'orange';
@@ -390,13 +395,13 @@ function drawLevel(redrawMini = false, noDOM = false) {
 		}
 
 		if (level.entityCount > 100) {
-			document.getElementById('ELtext').style.color = 'red';
+			document.getElementById('ELtext').style.color = 'tomato';
 		} else {
 			document.getElementById('ELtext').style.color = '';
 		}
 
 		if (level.powerupCount > 100) {
-			document.getElementById('PLtext').style.color = 'red';
+			document.getElementById('PLtext').style.color = 'tomato';
 		} else {
 			document.getElementById('PLtext').style.color = '';
 		}
@@ -814,14 +819,7 @@ function selectTrack(trkID) {
 	if (isPlaying && isContinuousPlayback) cancelPlayback();
 	let initSelect = (trkID === -1);
 	let trackID = trkID;
-	if (trackID === -1) {
-		for (let i = 0; i < tracks.length; i++) { // Find the first visible checkbox to select
-			trackID = i;
-			if (document.getElementById(`chk${i}`).style.display !== 'none') {
-				break;
-			}
-		}
-	}
+	if (trackID === -1) trackID = getFirstVisibleTrack();
 	// Check to see if the checkbox is about to update. If yes, return
 	if (document.getElementById(`chk${trackID}`)
 		.checked !== level.noteGroups[trackID].isVisible && !initSelect) {
@@ -862,6 +860,13 @@ function selectTrack(trkID) {
 	// if(!isNewFile){refreshOutlines();}
 	softRefresh(false);
 	updateInstrumentContainer();
+}
+
+function getFirstVisibleTrack() {
+	for (let i = 0; i < tracks.length; i++) { // Find the first visible checkbox to select
+		if (document.getElementById(`chk${i}`).style.display !== 'none') return i;
+	}
+	return -1;
 }
 
 /**
@@ -1020,13 +1025,13 @@ function updateOutOfBoundsNoteCounts() {
 	if (nasPercent === 0) nasText.style.color = 'lime';
 	else if (nasPercent <= 15) nasText.style.color = 'limegreen';
 	else if (nasPercent <= 30) nasText.style.color = 'orange';
-	else nasText.style.color = 'red';
+	else nasText.style.color = 'tomato';
 	let nbsPercent = Math.round((tracks[selectedTrack].numNotesOffscreen.below * 100) / denom);
 	nbsText.innerHTML = `Notes below screen: ${nbsPercent}%`;
 	if (nbsPercent === 0) nbsText.style.color = 'lime';
 	else if (nbsPercent <= 15) nbsText.style.color = 'limegreen';
 	else if (nbsPercent <= 30) nbsText.style.color = 'orange';
-	else nbsText.style.color = 'red';
+	else nbsText.style.color = 'tomato';
 }
 
 /**
@@ -1662,6 +1667,8 @@ function setIsBuildMode(isEnabled) {
 
 function setSecondaryTrack() {
 	secondaryTrack = selectedTrack;
+	updateTrackList();
+	selectTrack(selectedTrack);
 }
 
 function createNewTrack() {
@@ -1699,10 +1706,8 @@ function triggerTrackLabelChange() {
 
 function updateTrackLabel(trkId, newLabel) {
 	tracks[trkId].label = newLabel;
-	let lastTrk = selectedTrack;
-	updateUI(false, false, false);
-	selectTrack(lastTrk);
-	// document.getElementById('trackName').placeholder = tracks[selectedTrack].label;
+	updateTrackList();
+	selectTrack(selectedTrack);
 }
 
 function triggerTrackDelete() {

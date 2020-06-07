@@ -324,6 +324,7 @@ class NoteStructure extends Structure {
 		let thisEntityPos = this.getEntityPos();
 		isLegal &= (thisEntityPos.y < 27);
 		isLegal &= (thisEntityPos.x >= 27 - levelPushBackLimit);
+		isLegal &= (!this.hasSemisolid || this.y >= 2);
 		return isLegal;
 	}
 

@@ -221,7 +221,7 @@ function handleAllConflicts() { // TODO: Let either colliding structure move eac
 				entry.history.forEach((step) => step.struct.moveBySetup(step.setup));
 				let attempt = entry.struct.tryAllSetups();
 				if (attempt.success) {
-					if (nodeCount > 1) {
+					if (nodeCount > 1 && showSetupLogs) {
 						console.log(`success after ${nodeCount} attempts for struct ${struct.id}`);
 						for (let i = 0; i < entry.history.length; i++) {
 							console.log(`${i + 1}. Move ${entry.history[i].struct.id} to ${entry.history[i].setup.offset}`);
@@ -268,7 +268,7 @@ function handleAllConflicts() { // TODO: Let either colliding structure move eac
 			// if (!success) console.log(`out of options for struct ${struct.id}...`);
 		}
 	}
-	console.log('done');
+	if (showSetupLogs) console.log('done');
 }
 
 function isAlreadyUsed(history, blacklist, struct) {

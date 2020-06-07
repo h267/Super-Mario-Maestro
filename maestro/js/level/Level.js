@@ -58,7 +58,7 @@ class Level {
      * Refreshes the level overview by plotting values from the stored note groups.
      */
 	refresh() {
-		console.log('rf');
+		// console.log('rf');
 		this.overview = new Area(levelWidth * numBlockSubdivisions, levelHeight);
 		this.background = new Area(levelWidth * numBlockSubdivisions, levelHeight);
 		this.foreground = new Area(levelWidth * numBlockSubdivisions, levelHeight);
@@ -142,7 +142,9 @@ class Level {
 		structures.forEach((struct) => { // First pass: Handle conflicts
 			struct.checkForCollisions();
 		});
+		// let preSolveTime = new Date().getMilliseconds();
 		handleAllConflicts();
+		// if (isBuildMode) console.log(`Solver finished in ${new Date().getMilliseconds() - preSolveTime} ms`);
 
 		// resetSpatialData(false);
 		this.conflictCount = 0;
@@ -150,12 +152,12 @@ class Level {
 			let lowestX = 27;
 			structures.forEach((struct) => { // Second pass: Check for unhandled conflicts, etc after solver has finished
 			// TODO: Move structures back to an offset of 0 if possible, or any lesser offset
+				if (struct.hasSemisolid) this.markTile(struct.x, struct.y, 6);
 				struct.checkForCollisions();
 				if (struct.conflictingStructures.length > 0 || !struct.checkForLegality()) {
 					this.markTile(struct.x, struct.y, 1);
 					this.conflictCount++;
 				}
-				if (struct.hasSemisolid) this.markTile(struct.x, struct.y, 6);
 				lowestX = Math.min(lowestX, struct.x);
 			});
 			drawOffsetX = 27 - lowestX;
@@ -169,11 +171,12 @@ class Level {
 			}));
 			// console.log(cells);
 
+			let offsetCount = 0;
 			structures.forEach((struct) => { // Third pass: Draw the structures
-				that.drawStructure(struct);
-			// console.log(struct.id);
-			// console.log(struct);
+				if (struct.conflictingStructures.length === 0) that.drawStructure(struct);
+				if (struct.setup.offset !== 0) offsetCount++;
 			});
+			// console.log(`${offsetCount} offsets present`);
 
 			forbiddenTiles.forEach((forbiddenTile) => {
 				let markX = forbiddenTile.x + marginWidth - ofsX;
@@ -182,7 +185,7 @@ class Level {
 			});
 		}
 
-		console.log('---');
+		// console.log('---');
 	}
 
 	/* refreshStructures() {
@@ -207,7 +210,7 @@ class Level {
 			let x = (structure.x - structure.xOfs - structure.entityPos[i].x) * numBlockSubdivisions;
 			let y = structure.y - structure.yOfs - structure.entityPos[i].y;
 			this.overview.setTile(x, y, structure.entities[i]);
-			if (structure.entityProperties[0].parachute) this.foreground.setTile(x, y + 1, 0);
+			if (structure.entityProperties[0].parachute) this.foreground.setTile(x, y, 0);
 		}
 		// this.highlightCollisionBox(structure.collisionBox);
 	}
