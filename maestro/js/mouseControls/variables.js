@@ -30,6 +30,7 @@ const mouseTools = [
 		name: 'Info',
 		isVisible: false,
 		isHoldable: false,
+		isAvailableInBuildMode: true,
 		onLeftClick: () => infoTool(),
 		onRightClick: () => {
 		},
@@ -40,6 +41,7 @@ const mouseTools = [
 		name: 'Zoom',
 		isVisible: false,
 		isHoldable: false,
+		isAvailableInBuildMode: true,
 		onLeftClick: () => zoomInTool(),
 		onRightClick: () => zoomOutTool(),
 		close: () => {
@@ -49,6 +51,7 @@ const mouseTools = [
 		name: 'Ruler',
 		isVisible: true,
 		isHoldable: false,
+		isAvailableInBuildMode: true,
 		onLeftClick: () => rulerTool(),
 		onRightClick: () => {
 		},
@@ -60,6 +63,7 @@ const mouseTools = [
 		name: 'Add Note',
 		isVisible: true,
 		isHoldable: true,
+		isAvailableInBuildMode: false,
 		onLeftClick: () => addNoteTool(),
 		onRightClick: () => {
 		},
@@ -70,6 +74,7 @@ const mouseTools = [
 		name: 'Erase Note',
 		isVisible: true,
 		isHoldable: true,
+		isAvailableInBuildMode: false,
 		onLeftClick: () => eraseNoteTool(),
 		onRightClick: () => {
 		},
@@ -80,6 +85,7 @@ const mouseTools = [
 		name: 'Select Notes',
 		isVisible: false,
 		isHoldable: true,
+		isAvailableInBuildMode: false,
 		onLeftClick: () => {
 		},
 		onRightClick: () => {
@@ -91,6 +97,7 @@ const mouseTools = [
 		name: 'Change Track',
 		isVisible: true,
 		isHoldable: true,
+		isAvailableInBuildMode: false,
 		onLeftClick: () => changeTrackTool(),
 		onRightClick: () => {
 		},
@@ -101,15 +108,13 @@ const mouseTools = [
 		name: 'Forbid Tile',
 		isVisible: false,
 		isHoldable: true,
+		isAvailableInBuildMode: true,
 		onLeftClick: () => forbidTool(),
 		onRightClick: () => unforbidTool(),
 		close: () => {
 		}
 	}
 ];
-
-const MouseActions = []; // TODO: Fill out
-Object.freeze(MouseActions);
 
 minimap.onmousedown = (e) => {
 	handleMiniMouseDown(e);

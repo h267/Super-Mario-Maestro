@@ -42,6 +42,7 @@ function handleMainMouseDown(e) { // TODO: Distinguish left and right click
 	if (noMouse || e.button !== 0) {
 		return;
 	} // Exit if the mouse is disabled
+	if (!currentMouseTool.isAvailableInBuildMode && isBuildMode) return;
 	isMainMouseHolding = true;
 	processClick(e);
 }
@@ -64,6 +65,7 @@ function handleMainRightClick(e) {
 	if (noMouse) {
 		return;
 	} // Exit if the mouse is disabled
+	if (!currentMouseTool.isAvailableInBuildMode && isBuildMode) return;
 
 	lastClickedTile = getMainMouseLevelPos(e);
 	lastClickedLvlPos = getMainMouseLevelPos(e);

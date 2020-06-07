@@ -1661,8 +1661,6 @@ function toggleBuildMode() {
 function setIsBuildMode(isEnabled) {
 	isBuildMode = isEnabled;
 	drawOffsetX = 0;
-	if (isEnabled) disableMouse();
-	else enableMouse();
 }
 
 function setSecondaryTrack() {
