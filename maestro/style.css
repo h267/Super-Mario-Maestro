@@ -30,6 +30,13 @@
     font-weight: bold;
 }
 
+.titleText {
+    font-size: 15px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+
 .tracklistitem {
     transition: background-color 150ms, border 150ms;
 }
@@ -56,14 +63,6 @@
 }
 
 #tempotext {
-    position: relative;
-    left: 130px;
-    top: 2px;
-    font-size: 10px;
-    height: 0;
-    width: max-content;
-    margin-top: 0;
-    margin-bottom: 0;
 }
 
 #fstxt {
@@ -71,9 +70,9 @@
 }
 
 #tempoSelect {
-
     padding-left: 12px;
     padding-right: 30px;
+    grid-area: 4 / 1 / 5 / 3;
 }
 
 #verticalShift, #blockPerBeat, #pushbackLimit {
@@ -86,10 +85,6 @@
 }
 
 #trackSettingParagraph {
-    font-size: 15px;
-    margin-top: 4px;
-    margin-bottom: 8px;
-    font-weight: bold;
 }
 
 #octaveShift {
@@ -107,16 +102,9 @@
 #noteBelowScreenText {
 }
 
-#soloBox {
-    position: relative;
-    bottom: 3px;
-    right: 4px;
-}
-
-#unsupportedEntities, #advanceSettings, #showPercussion {
+#unsupportedEntities, #advanceSettings, #showPercussion, #soloBox {
     position: relative;
     top: 3px;
-    right: 4px;
 }
 
 

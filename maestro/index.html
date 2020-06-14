@@ -20,22 +20,22 @@
     </script>
 </head>
 <body>
-<div id="logoContainer">
-    <div>
-        <img src="icon/logo.png" alt="Maestro Logo">
-        <p>v1.4.0 Beta Build 2</p>
+<div id="topContainer">
+    <div id="logoContainer">
+        <div>
+            <img src="icon/logo.png" alt="Maestro Logo">
+        </div>
+        <div id="maestroTextContainer">
+            <p>v1.4.0 Beta Build 2</p>
+            <p>Made by h267</p>
+        </div>
+    </div>
+    <div id="discordLinkContainer">
+        <button id="discordBtn" onClick="handleDiscordPress();"></button>
     </div>
 </div>
 <div id="mainContainer">
     <div id="subMainContainer" class="smallspacedcontainer">
-        <div id="outsideToolbarContainer">
-            <div id="toolbarContainer">
-                <!-- To be populated with buttons -->
-            </div>
-            <button id="undoBtn" onclick="undoManager.undo()">
-                <img id="undoImg" src="icon/undo.png"></img>
-            </button>
-        </div>
         <div id="displayContainer" class="dispcontainer">
             <canvas id="canvas" width="3840" height="432"></canvas>
         </div>
@@ -47,58 +47,55 @@
                 <button id="playBtn" type="button" onclick="playBtn()" disabled>. . .</button>
                 <button id="stopBtn" type="button" onclick="cancelPlayback()" disabled>. . .</button>
             </div>
-            <select id="tempoSelect" class="dropdown" onchange="selectTempo()">
-                <optgroup id="comtempos" label="Common Tempos">
+            <div id="outsideToolbarContainer">
+                <div id="toolbarContainer">
+                    <!-- To be populated with buttons -->
+                </div>
+                <button id="undoBtn" onclick="undoManager.undo()">
+                    <img id="undoImg" src="icon/undo.png"></img>
+                </button>
+            </div>
+            <button id="buildBtn" class="btn-green" type="button" onclick="toggleBuildMode()">Auto-Build (Beta)</button>
+        </div>
+        
+        <p id="fstxt">File Scrubber</p>
+        <div id="minimapcontainer" class="dispcontainer">
+            <canvas id="minimap" width="100px" height="64"></canvas>
+        </div>
+        <div id="toolsContainer">
+            <div id="levelSettings" class="controlcontainer">
+                <label id="blockPerBeatLabel" for="blockPerBeat">Blocks per Beat</label>
+                <input id="blockPerBeat" type="number" name="blockPerBeat" value="0" min="1" max="16" oninput="pickBPB()">
+                <label id="pushbackLimitLabel" for="pushbackLimit">Auto-Build Pushback Limit</label>
+                <input id="pushbackLimit" type="number" name="pushbackLimit" value="10" min="0" onchange="setPushback()">
+                <p id="tempolabel">Tempo:</p>
+                <select id="tempoSelect" class="dropdown" onchange="selectTempo()">
+                    <optgroup id="comtempos" label="Common Tempos">
 
-                </optgroup>
-                <optgroup id="alltempos" label="All Tempos">
+                    </optgroup>
+                    <optgroup id="alltempos" label="All Tempos">
 
-                </optgroup>
-                <!-- To be populated with tempo options -->
-            </select>
-            <div id="informationContainer" class="controlcontainer spacedcontainer">
+                    </optgroup>
+                    <!-- To be populated with tempo options -->
+                </select>
+                <p id="tempotext">Original: -</p>
+            </div>
+            <div id="informationContainer" class="controlcontainer">
                 <p id="ELtext" class="displayText">Entities in Area: 0</p>
                 <p id="PLtext" class="displayText">Powerups in Area: 0</p>
                 <p id="QEtext" class="displayText">BPB Quality: -</p>
                 <p id="NCtext" class="displayText">Spatial Conflicts: -</p>
             </div>
-            <button id="buildBtn" class="btn-green" type="button" onclick="toggleBuildMode()">Build Mode (Beta)</button>
-            <button id="newTrackBtn" type="button" onclick="createNewTrack()">New Track</button>
-        </div>
-        <p id="tempotext">Original: -</p>
-        <p id="fstxt">File Scrubber</p>
-        <div id="minimapcontainer" class="dispcontainer">
-            <canvas id="minimap" width="100px" height="64"></canvas>
-        </div>
-        <div id="optionContainer" class="controlcontainer spacedcontainer">
-            <div>
-                <label id="verticalShiftLabel" for="verticalShift">Vertical Shift</label>
-                <input id="verticalShift" type="number" name="verticalShift" value="0" onchange="nudgeY()" min="-48" max="54">
-            </div>
-            <div id="noisecontrol" hidden>
-                <label id="noiseThresholdLabel" for="noiseThreshold">Noise Threshold</label>
-                <input id="noiseThreshold" type="range" min="0" max="127" value="0" onchange="changeNoiseThreshold()">
-            </div>
-            <div>
-                <label id="blockPerBeatLabel" for="blockPerBeat">Blocks per Beat</label>
-                <input id="blockPerBeat" type="number" name="blockPerBeat" value="0" min="1" max="16" oninput="pickBPB()">
-            </div>
-            <div>
-                <label id="pushbackLimitLabel" for="pushbackLimit">Level Pushback Limit</label>
-                <input id="pushbackLimit" type="number" name="pushbackLimit" value="10" min="0" onchange="setPushback()">
-            </div>
-            <!--<button id="bpbrecommend" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button>-->
-        </div>
-        <div id="toolsContainer">
-            <div id="leftToolsContainer">
+            <div id="trackList" class="controlcontainer">
+                <p id="trackListParagraph" class="titleText">Track List:</p>
                 <div id="trackedItemsContainer" class="controlcontainer">
                     <!-- To be populated with track checkboxes -->
                 </div>
             </div>
             <div id="rightToolsContainer" class="controlcontainer">
-                <p id="trackSettingParagraph">Track Settings:</p>
+                <p id="trackSettingParagraph" class="titleText">Track Settings:</p>
                 <div class="spacedcontainer">
-                    <label for="trackName">Track Name:</label>
+                    <label for="trackName">Track Name</label>
                     <input id="trackName" type="text" name="trackName" onchange="triggerTrackLabelChange()">
                 </div>
                 <div class="spacedcontainer">
@@ -114,33 +111,45 @@
                     <p id="noteBelowScreenText" class="displayText">Notes below screen: 0</p>
                     <button id="shiftBtn" onclick="shiftTrackIntoView()">Shift into View</button>
                 </div>
-                <div class="spacedcontainer">
-                    <button id="setAsTransferTrackBtn" onclick="setSecondaryTrack()">Set as transfer track</button>
-                    <button id="deleteTrackBtn" onclick="triggerTrackDelete()" hidden>Delete track</button>
-                </div>
                 <div id="instrumentContainer" class="spacedcontainer">
                     <!-- To be populated with track instrument changes -->
                 </div>
-                <div id="soloBoxContainer" class="spacedcontainer"><!--TODO use a toggle switch instead https://www.w3schools.com/howto/howto_css_switch.asp-->
-                    <label for="soloBox">Solo View</label>
+            </div>
+            <div id="trackEditor" class="controlcontainer">
+                <p id="trackEditorParagraph" class="titleText">Track Editor:</p>
+                <button id="newTrackBtn" type="button" onclick="createNewTrack()">New Track</button>
+                <button id="deleteTrackBtn" onclick="triggerTrackDelete()" hidden>Delete Track</button>
+                <button id="setAsTransferTrackBtn" onclick="setSecondaryTrack()">Set Transfer</button>
+            </div>
+            <div id="displayOptions" class="controlcontainer">
+                <p id="trackListParagraph" class="titleText">Track Display:</p>
+                <div id="soloBoxContainer">
                     <input id="soloBox" type="checkbox" name="soloBox" onchange="toggleSoloMode()">
+                    <label for="soloBox">Solo View</label>
+                </div>
+                <div>
+                    <input id="unsupportedEntities" type="checkbox" name="unsupportedEntities" onchange="toggleBuildRestriction()">
+                    <label for="unsupportedEntities">Allow Unsupported Entities</label>
+                </div>
+                <div>
+                    <input id="showPercussion" type="checkbox" name="showPercussion" onchange="togglePercussion()">
+                    <label for="showPercussion">Show Percussion</label>
+                </div>
+                <div>
+                    <input id="advanceSettings" type="checkbox" name="advanceSettings" onchange="toggleAdvancedMode()">
+                    <label for="advanceSettings">Advanced Settings</label>
                 </div>
             </div>
-        </div>
-        <div id="bottomCheckboxContainer" class="smallspacedcontainer">
-            <div>
-                <label for="unsupportedEntities">Allow Unsupported Entities</label>
-                <input id="unsupportedEntities" type="checkbox" name="unsupportedEntities" onchange="toggleBuildRestriction()">
-            </div>
-
-            <div>
-                <label for="advanceSettings">Advanced Settings</label>
-                <input id="advanceSettings" type="checkbox" name="advanceSettings" onchange="toggleAdvancedMode()">
-            </div>
-
-            <div>
-                <label for="showPercussion">Show Percussion</label>
-                <input id="showPercussion" type="checkbox" name="showPercussion" onchange="togglePercussion()">
+            <div id="optionContainer" class="controlcontainer spacedcontainer">
+                <div>
+                    <label id="verticalShiftLabel" for="verticalShift">Vertical Shift</label>
+                    <input id="verticalShift" type="number" name="verticalShift" value="0" onchange="nudgeY()" min="-48" max="54">
+                </div>
+                <div id="noisecontrol" hidden>
+                    <label id="noiseThresholdLabel" for="noiseThreshold">Noise Threshold</label>
+                    <input id="noiseThreshold" type="range" min="0" max="127" value="0" onchange="changeNoiseThreshold()">
+                </div>
+                <!--<button id="bpbrecommend" type="button" disabled="true" onclick="changeToRecommendedBPB()">Recommend BPB</button>-->
             </div>
         </div>
     </div>
@@ -149,13 +158,8 @@
         <p id="fileText" class="displayText">MIDI File:</p>
         <input id="fileInput" type="file" onchange="loadFileFromInput()">
         <button onclick="loadExample()">Load Example</button>
-        <button onclick="tutorialBtn()">Tutorial by Loup&Snoop</button>
+        <button onclick="tutorialBtn()">Tutorial</button>
     </div>    
-</div>
-
-<div id="discordLinkContainer">
-    <p>made by h267</p>
-    <button id="discordBtn" onClick="handleDiscordPress();"></button>
 </div>
 
 <div id="scripts">

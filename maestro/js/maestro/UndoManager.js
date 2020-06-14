@@ -26,6 +26,10 @@ class UndoManager {
 
 	updateButton() {
 		let undoButton = document.getElementById('undoBtn');
-		undoButton.hidden = (this.undoStack.length === 0);
+		if (this.undoStack.length === 0) {
+			undoButton.style.visibility = 'hidden';
+		} else {
+			undoButton.style.visibility = 'visible';
+		}
 	}
 }
