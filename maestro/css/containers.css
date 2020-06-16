@@ -13,8 +13,8 @@
 
 #logoContainer img {
     width: 100%;
+    max-width: 375px;
     height: auto;
-    max-height: 35px;
 }
 
 #logoContainer p {
