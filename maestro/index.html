@@ -22,20 +22,18 @@
 <body>
 <div id="topContainer">
     <div id="logoContainer">
-        <div>
+        <div id="imgContainer">
             <img src="icon/logo.png" alt="Maestro Logo">
         </div>
         <div id="maestroTextContainer">
             <p>v1.4.0 Beta Build 2</p>
             <p>Made by h267</p>
         </div>
-    </div>
-    <div id="discordLinkContainer">
         <button id="discordBtn" onClick="handleDiscordPress();"></button>
     </div>
 </div>
 <div id="mainContainer">
-    <div id="subMainContainer" class="smallspacedcontainer">
+    <div id="subMainContainer">
         <div id="displayContainer" class="dispcontainer">
             <canvas id="canvas" width="3840" height="432"></canvas>
         </div>
@@ -94,7 +92,7 @@
             </div>
             <div id="rightToolsContainer" class="controlcontainer">
                 <p id="trackSettingParagraph" class="titleText">Track Settings:</p>
-                <div class="spacedcontainer">
+                <div id="trackNameContainer" class="spacedcontainer">
                     <label for="trackName">Track Name</label>
                     <input id="trackName" type="text" name="trackName" onchange="triggerTrackLabelChange()">
                 </div>
@@ -122,7 +120,7 @@
                 <button id="setAsTransferTrackBtn" onclick="setSecondaryTrack()">Set Transfer</button>
             </div>
             <div id="displayOptions" class="controlcontainer">
-                <p id="trackListParagraph" class="titleText">Track Display:</p>
+                <p id="trackListParagraph" class="titleText">Display:</p>
                 <div id="soloBoxContainer">
                     <input id="soloBox" type="checkbox" name="soloBox" onchange="toggleSoloMode()">
                     <label for="soloBox">Solo View</label>
@@ -134,6 +132,11 @@
                 <div>
                     <input id="showPercussion" type="checkbox" name="showPercussion" onchange="togglePercussion()">
                     <label for="showPercussion">Show Percussion</label>
+                </div>
+                <br>
+                <div>
+                    <input id="editToolsToggle" type="checkbox" name="editToolsToggle" onchange="toggleEditTools()">
+                    <label for="editToolsToggle">Editing Tools</label>
                 </div>
                 <div>
                     <input id="advanceSettings" type="checkbox" name="advanceSettings" onchange="toggleAdvancedMode()">

@@ -82,6 +82,7 @@ async function renderBufferAtPlaybackRate(buffer, rate) {
 function applyReleaseEnvelope(bufferData, hasLongSustain) {
 	let multiplier;
 	let releasePos;
+	// Uncommenting this will turn long sustain back on
 	/* if(hasLongSustain) releasePos = LONG_RELEASE_POS;
       else */
 	releasePos = RELEASE_POS;

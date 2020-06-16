@@ -27,9 +27,7 @@ function getMainMouseLevelPos(e) {
 
 function getMainMouseTilePos(e) {
 	let canvasOfs = getOffset(e);
-	let div = document.getElementById('displayContainer');
-	let scrollOfs = { x: div.scrollLeft, y: div.scrollTop };
-	let offset = { x: (canvasOfs.x + scrollOfs.x) / canvasZoom, y: (canvasOfs.y + scrollOfs.y) / canvasZoom };
+	let offset = { x: canvasOfs.x / canvasZoom, y: canvasOfs.y / canvasZoom };
 	let tilePos = { x: Math.floor(offset.x / 16), y: (27 - Math.floor(offset.y / 16)) };
 	return tilePos;
 }
@@ -72,7 +70,7 @@ function handleMainRightClick(e) {
 
 	currentMouseTool.onRightClick();
 
-	e.preventDefault(); // Disable regular context menu
+	// e.preventDefault(); // Disable regular context menu
 }
 
 /**
@@ -248,18 +246,11 @@ function handleMiniMouseMove(e) {
  * @returns {Object} An object containing the x and y coordinates of the cursor.
  */
 function getOffset(evt) {
-	let el = evt.target;
-	let x = 0;
-	let y = 0;
+	let el = evt.currentTarget;
 
-	while (el && !Number.isNaN(el.offsetLeft) && !Number.isNaN(el.offsetTop)) {
-		x += el.offsetLeft - el.scrollLeft;
-		y += el.offsetTop - el.scrollTop;
-		el = el.offsetParent;
-	}
-
-	x = evt.clientX - x;
-	y = evt.clientY - y;
+	let rect = el.getBoundingClientRect();
+	let x = Math.floor(evt.clientX - rect.left);
+	let y = Math.floor(evt.clientY - rect.top);
 
 	return { x, y };
 }
@@ -275,10 +266,7 @@ function getRealMiniOfs(e) {
 		drawLevel();
 		return null;
 	}
-	let canvasOfs = getOffset(e);
-	let div = document.getElementById('minimapcontainer');
-	let scrollOfs = { x: div.scrollLeft, y: div.scrollTop };
-	let offset = { x: canvasOfs.x + scrollOfs.x, y: canvasOfs.y + scrollOfs.y };
+	let offset = getOffset(e);
 	return offset;
 }
 

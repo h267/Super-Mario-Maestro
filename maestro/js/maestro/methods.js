@@ -44,9 +44,6 @@ function loadData(bytes) { // Load file from the file input element
 	midi = new MIDIfile(bytes);
 	tracks = [];
 	midi.trks.forEach((midiTrk) => {
-		if (midiTrk.usedChannels.length > 1) {
-			console.log(midiTrk.label);
-		}
 		tracks.push(new MaestroTrack(midiTrk));
 	});
 	// console.log(tracks);
@@ -335,7 +332,7 @@ function drawLevel(redrawMini = false, noDOM = false) {
 					highlightTile(drawX, drawY, { style: 'rgba(255,0,0,0.4)' });
 				}
 				// Outline note blocks of the selected track
-				if (tile === 1 && level.isTrackOccupant[i][j][selectedTrack]) {
+				if (tile === 1 && level.isTrackOccupant[i][j][selectedTrack] && !isBuildMode) {
 					outlineTile(drawX, drawY, 2, 'rgb(44, 153, 121)');
 				}
 			}
@@ -1235,6 +1232,17 @@ function toggleAdvancedMode() {
 		lastBPB = blocksPerBeat;
 		changeBPB();
 	}
+}
+
+function toggleEditTools() {
+	let isOn = document.getElementById('editToolsToggle').checked;
+	let styleString;
+	if (isOn) styleString = '';
+	else styleString = 'none';
+	document.getElementById('outsideToolbarContainer').style.display = styleString;
+	document.getElementById('trackEditor').style.display = styleString;
+	document.getElementById('trackNameContainer').style.display = styleString;
+	if (!isOn) changeToolTo(2);
 }
 
 function togglePercussion() {

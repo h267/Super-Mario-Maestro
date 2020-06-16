@@ -141,6 +141,6 @@ canvas.onmouseup = (e) => {
 canvas.oncontextmenu = (e) => {
 	handleMainRightClick(e);
 };
-canvas.onwheel = (e) => {
+/* canvas.onwheel = (e) => {
 	handleMainWheel(e);
-};
+}; */

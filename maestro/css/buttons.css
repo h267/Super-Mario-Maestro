@@ -34,6 +34,7 @@
 
 
 #discordBtn {
+    margin-left: auto;
     outline: none;
     background-color: #7289da;
     border: 3px solid #7289da;

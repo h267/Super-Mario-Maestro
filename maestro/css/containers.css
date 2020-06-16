@@ -1,20 +1,29 @@
 #topContainer {
-    width: 100%;
+    width: 95%;
+    margin: 10px auto;
 }
 
 #logoContainer {
     display: flex;
+    flex-wrap: wrap;
 }
 
 #logoContainer div {
 }
 
 #logoContainer img {
-    height: 35px;
+    width: 100%;
+    height: auto;
+    max-height: 35px;
 }
 
 #logoContainer p {
     margin: 2px 0px;
+}
+
+#imgContainer {
+    margin-left: 4px;
+    margin-right: 10px;
 }
 
 
@@ -112,10 +121,14 @@
 
 #trackedItemsContainer {
     width: 220px;
+    max-height: 140px;
     overflow-y: auto;
 }
 
 #rightToolsContainer {
+}
+
+#trackNameContainer {
 }
 
 #displayOptions {
@@ -146,10 +159,6 @@
 
 /*Main container (end)*/
 
-
-#discordLinkContainer {
-    float: right;
-}
 
 
 /*CSS by class*/
