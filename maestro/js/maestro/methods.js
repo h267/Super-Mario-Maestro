@@ -117,6 +117,7 @@ function loadData(bytes) { // Load file from the file input element
 	secondaryTrack = getFirstVisibleTrack();
 	updateTrackList();
 	togglePercussion();
+	toggleEditTools();
 	isNewFile = false;
 	document.getElementById('tempotext').innerHTML = `Original: ${Math.round(songBPM)} bpm`;
 	document.getElementById('advanceSettings').checked = usingAdvSettings;

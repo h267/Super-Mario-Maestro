@@ -210,7 +210,7 @@ class Level {
 			let x = (structure.x - structure.xOfs - structure.entityPos[i].x) * numBlockSubdivisions;
 			let y = structure.y - structure.yOfs - structure.entityPos[i].y;
 			this.overview.setTile(x, y, structure.entities[i]);
-			if (structure.entityProperties[0].parachute) this.foreground.setTile(x, y, 0);
+			if (structure.entityProperties[0].parachute) this.foreground.setTile(x, y + 1, 0);
 		}
 		// this.highlightCollisionBox(structure.collisionBox);
 	}
