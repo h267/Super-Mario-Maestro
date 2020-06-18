@@ -1,20 +1,7 @@
 // Super Mario Maestro v1.4
 // made by h267
 
-// TODO:
-// - Establish and enforce push-back limit
-// - Add the option to change push-back limit
-// - Add mobile playback
-// - Polish the UI
-// - Release the public beta
-
-// TODO: Switch to original instrument when invalid instrument is switched to (adv settings toggle)
-// TODO: Finish replacing midi tracks with Maestro tracks
-// TODO: Eliminate instrument changes array, just use instrument of first note
-// TODO: Build mode restrictions, button disable
-
 // TODO: Re-enable gtag when releasing
-// TODO: Disable auto tool enable when releasing
 
 const discordInviteLink = 'https://discord.gg/KhmXzfp';
 const tutorialLink = 'https://docs.google.com/document/d/1UG-Y-2zbdcqE7ciMgPVT3HICWEZHP002HmukCuWctxg/edit';

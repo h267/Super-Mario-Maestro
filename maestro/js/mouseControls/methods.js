@@ -1,8 +1,13 @@
 function enableMouseTools() {
 	isHiddenToolsEnabled = true;
+	refreshMouseToolbar();
+	console.log('Hidden mouse tools enabled.');
+}
+
+function refreshMouseToolbar() {
 	document.getElementById('toolbarContainer').innerHTML = '';
 	setupToolbar();
-	console.log('Hidden mouse tools enabled.');
+	changeToolTo(2);
 }
 
 function setupToolIcons() {
@@ -270,18 +275,21 @@ function getRealMiniOfs(e) {
 	return offset;
 }
 
+function isVisibleMouseTool(id) {
+	return (mouseTools[id].isVisible && (mouseTools[id].isAvailableInBuildMode || !isBuildMode)) || isHiddenToolsEnabled;
+}
+
 function setupToolbar() {
 	toolIconFilenames.forEach((iconPath, i) => {
-		if (mouseTools[i].isVisible || isHiddenToolsEnabled) {
-			let newBtn = document.createElement('a');
-			let newImg = document.createElement('img');
-			newImg.setAttribute('src', `icon/${iconPath}.png`);
-			newBtn.setAttribute('id', `mousetool${i}`);
-			// newBtn.setAttribute('onclick', `() => { mouseToolId = ${i}; refreshMouseTool(); }`);
-			newBtn.setAttribute('onclick', `changeToolTo(${i})`);
-			newBtn.appendChild(newImg);
-			document.getElementById('toolbarContainer').appendChild(newBtn);
-		}
+		let newBtn = document.createElement('a');
+		let newImg = document.createElement('img');
+		newImg.setAttribute('src', `icon/${iconPath}.png`);
+		newBtn.setAttribute('id', `mousetool${i}`);
+		// newBtn.setAttribute('onclick', `() => { mouseToolId = ${i}; refreshMouseTool(); }`);
+		newBtn.setAttribute('onclick', `changeToolTo(${i})`);
+		newBtn.appendChild(newImg);
+		document.getElementById('toolbarContainer').appendChild(newBtn);
+		if (!isVisibleMouseTool(i)) newBtn.style.display = 'none';
 	});
 }
 

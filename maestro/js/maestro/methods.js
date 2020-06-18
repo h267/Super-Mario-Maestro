@@ -1679,7 +1679,20 @@ function findNote(track, time, pitch, doRound = true) { // TODO: Prevent time pr
 
 function toggleBuildMode() {
 	setIsBuildMode(!isBuildMode);
+	updateBuildButtons();
 	softRefresh(false, true);
+}
+
+function updateBuildButtons() {
+	let buildBtn = document.getElementById('buildBtn');
+	if (isBuildMode) {
+		buildBtn.setAttribute('class', '');
+		buildBtn.innerHTML = 'Normal View';
+	} else {
+		buildBtn.setAttribute('class', 'btn-green');
+		buildBtn.innerHTML = 'Auto-Build (Beta)';
+	}
+	refreshMouseToolbar();
 }
 
 function setIsBuildMode(isEnabled) {
