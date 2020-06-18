@@ -119,6 +119,7 @@ function loadData(bytes) { // Load file from the file input element
 	updateTrackList();
 	togglePercussion();
 	toggleEditTools();
+	updateBuildButtons();
 	isNewFile = false;
 	document.getElementById('tempotext').innerHTML = `Original: ${Math.round(songBPM)} bpm`;
 	document.getElementById('advanceSettings').checked = usingAdvSettings;
@@ -1685,12 +1686,15 @@ function toggleBuildMode() {
 
 function updateBuildButtons() {
 	let buildBtn = document.getElementById('buildBtn');
+	let ncText = document.getElementById('NCtext');
 	if (isBuildMode) {
 		buildBtn.setAttribute('class', '');
 		buildBtn.innerHTML = 'Normal View';
+		ncText.style.display = '';
 	} else {
 		buildBtn.setAttribute('class', 'btn-green');
 		buildBtn.innerHTML = 'Auto-Build (Beta)';
+		ncText.style.display = 'none';
 	}
 	refreshMouseToolbar();
 }
