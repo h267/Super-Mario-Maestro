@@ -16,9 +16,11 @@ function loadBuffers() {
 			if (!n.hasLongSustain) hasLongSustain = false;
 			else hasLongSustain = true;
 			await noteSchedule.addInstrument(i, `./wav/${n.file}.wav`, { baseNote, hasLongSustain });
-			for (let j = 0; j < levelHeight - 1; j++) {
-				// eslint-disable-next-line no-await-in-loop
-				await noteSchedule.instruments[i].generateBufferForNote(baseOfsY + j);
+			if (!isRealTimePlayback) {
+				for (let j = 0; j < levelHeight - 1; j++) {
+					// eslint-disable-next-line no-await-in-loop
+					await noteSchedule.instruments[i].generateBufferForNote(baseOfsY + j);
+				}
 			}
 			resolve();
 		})));
@@ -69,7 +71,8 @@ async function playLvl(midi, level, bpm, blocksPerBeat, ofsX, ofsY) {
 	while (pos < endBound - marginWidth + 1) {
 		advanceSchTime(PPQ / blocksPerBeat / numBlockSubdivisions);
 	}
-	prerenderAndPlay(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth), false);
+	if (isRealTimePlayback) playWithoutPrerender(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth), false);
+	else prerenderAndPlay(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth), false);
 }
 
 /**
@@ -108,6 +111,15 @@ function prerenderAndPlay(bpm = 120, bpb, maxX) {
 		if (isContinuousPlayback) animateContinuousPlayback((bpm * bpb) / 3600, 0);
 		else animatePlayback((bpm * bpb) / 3600, maxX + marginWidth + 2, 0);
 	});
+}
+
+function playWithoutPrerender(bpm = 120, bpb, maxX) {
+	pos = 0;
+	isPlaying = true;
+	noteSchedule.setBPM(bpm);
+	noteSchedule.playRealTime();
+	if (isContinuousPlayback) animateContinuousPlayback((bpm * bpb) / 3600, 0);
+	else animatePlayback((bpm * bpb) / 3600, maxX + marginWidth + 2, LOAD_DELAY);
 }
 
 /**

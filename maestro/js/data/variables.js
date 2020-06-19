@@ -659,3 +659,5 @@ const toolIconFilenames = [
 	'transfer',
 	'forbid'
 ];
+
+const isRealTimePlayback = true; // (navigator.userAgent.indexOf('Safari') !== -1);

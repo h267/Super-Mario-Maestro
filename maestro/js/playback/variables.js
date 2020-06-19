@@ -66,4 +66,4 @@ let noteSchedule = new NoteSchedule();
 let isRendering = false;
 let isPlaybackInterrupted = false;
 
-let restrictPitchRange = true; // Just change 3 lines of code Hermit smh my head
+let restrictPitchRange = true;

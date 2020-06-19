@@ -68,6 +68,16 @@ class NoteSchedule {
 		clearInterval(this.audioScheduleInterval);
 		this.audioScheduleIndex = 0;
 		if (this.playbackNode !== null) this.playbackNode.stop();
+		audioCtx.suspend();
+		audioCtx = new window.AudioContext();
+	}
+
+	playRealTime() {
+		this.schedule.forEach((thisNote, idx) => { // Second pass; play back each note at the correct duration
+			let time = this.ticksToSeconds(thisNote.ticks) + audioCtx.currentTime + LOAD_DELAY;
+			let inst = thisNote.instrument;
+			this.instruments[inst].playNoteRealTime(thisNote.value, time, 1, audioCtx);
+		});
 	}
 
 	/**

@@ -41,4 +41,9 @@ class Instrument {
 	playNote(note, time, duration, ctx = audioCtx) {
 		playBuffer(this.noteBuffers[note], time, duration, ctx);
 	}
+
+	playNoteRealTime(note, time, duration, ctx = audioCtx) {
+		let rate = midiNoteToFreq(note) / midiNoteToFreq(this.baseNote);
+		playBufferAtPlaybackRate(this.buffer, time, rate, duration, ctx);
+	}
 }
