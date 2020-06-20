@@ -57,7 +57,19 @@ class NoteSchedule {
      * * ticks: The time that the note is played.
      */
 	addNote(note) {
-		this.schedule.push({ instrument: note.instrument, value: note.value, ticks: note.time });
+		let prevNote = this.getLastNoteOfInstrument(note.instrument);
+		if (prevNote !== null) prevNote.duration = note.time - prevNote.ticks; // FIXME: Durations for polyphonic notes
+		this.schedule.push({
+			instrument: note.instrument, value: note.value, duration: Infinity, ticks: note.time
+		});
+	}
+
+	getLastNoteOfInstrument(instrument) {
+		for (let i = this.schedule.length - 1; i >= 0; i--) {
+			let thisNote = this.schedule[i];
+			if (thisNote.instrument === instrument) return thisNote;
+		}
+		return null;
 	}
 
 	/**
@@ -75,8 +87,9 @@ class NoteSchedule {
 	playRealTime() {
 		this.schedule.forEach((thisNote, idx) => { // Second pass; play back each note at the correct duration
 			let time = this.ticksToSeconds(thisNote.ticks) + audioCtx.currentTime + LOAD_DELAY;
+			let duration = this.ticksToSeconds(thisNote.duration);
 			let inst = thisNote.instrument;
-			this.instruments[inst].playNoteRealTime(thisNote.value, time, 1, audioCtx);
+			this.instruments[inst].playNoteRealTime(thisNote.value, time, this.instruments[inst].hasLongSustain, duration, audioCtx);
 		});
 	}
 

@@ -45,24 +45,26 @@ function playBuffer(buffer, time = 0, duration, ctx = audioCtx) {
 	return source;
 }
 
-function playBufferAtPlaybackRate(buffer, time = 0, rate, duration, ctx = audioCtx) {
-	let curTime = 0; // audioCtx.currentTime;
+function playBufferAtPlaybackRate(buffer, time = 0, rate, sustainTime, duration, ctx = audioCtx) {
+	// Release note at the end of the duration or at the normal time, whichever is sooner
+	let releaseTime = Math.min(time + duration, time + sustainTime);
+	let endTime = releaseTime + (RELEASE_DURATION / 44100);
+
 	let source = ctx.createBufferSource();
 	source.buffer = buffer;
 	source.playbackRate.value = rate;
+
 	let gainNode = ctx.createGain();
-	gainNode.gain.cancelScheduledValues(0);
-	gainNode.gain.setValueAtTime(MASTER_VOLUME, curTime + time);
-	gainNode.gain.linearRampToValueAtTime(MASTER_VOLUME, curTime + time + (RELEASE_POS / 44100));
-	gainNode.gain.linearRampToValueAtTime(0, curTime + time + (RELEASE_POS / 44100) + (RELEASE_DURATION / 44100));
-	// if (!Number.isNaN(duration)) gainNode.gain.setTargetAtTime(0, curTime + time + duration, 0.4);
-	// gainNode.gain.setValueAtTime(0, curTime + time + 0.1);
+	gainNode.gain.value = MASTER_VOLUME;
+	gainNode.gain.linearRampToValueAtTime(MASTER_VOLUME, releaseTime);
+	gainNode.gain.linearRampToValueAtTime(0, endTime);
 
 	source.connect(gainNode);
 	gainNode.connect(ctx.destination);
 
-	if (Number.isNaN(duration) || duration === 0) source.start(curTime + time);
-	else source.start(curTime + time, 0);
+	// if (Number.isNaN(duration) || duration === 0) source.start(time); // Play polyphonic notes
+	// else source.start(time, 0);
+	source.start(time, 0);
 	return source;
 }
 

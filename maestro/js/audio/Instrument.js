@@ -42,8 +42,11 @@ class Instrument {
 		playBuffer(this.noteBuffers[note], time, duration, ctx);
 	}
 
-	playNoteRealTime(note, time, duration, ctx = audioCtx) {
+	playNoteRealTime(note, time, isLongSustain, duration, ctx = audioCtx) {
 		let rate = midiNoteToFreq(note) / midiNoteToFreq(this.baseNote);
-		playBufferAtPlaybackRate(this.buffer, time, rate, duration, ctx);
+		let sustainTime;
+		if (!isLongSustain) sustainTime = RELEASE_POS / 44100;
+		else sustainTime = LONG_RELEASE_POS / 44100;
+		playBufferAtPlaybackRate(this.buffer, time, rate, sustainTime, duration, ctx);
 	}
 }
