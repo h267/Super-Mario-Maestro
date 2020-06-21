@@ -978,7 +978,8 @@ function updateInstrumentContainer() { // TODO: Refactor grouping code
 		let labl = document.createElement('label');
 		labl.id = `inspickerlabl${i}`;
 		labl.for = `inspicker${i}`;
-		labl.innerHTML = `${getMidiInstrumentName(midi.trks[selectedTrack].usedInstruments[i])} ➞ `;
+		if (tracks[selectedTrack].isFromUser) labl.innerHTML = 'Instrument ➞ ';
+		else labl.innerHTML = `${getMidiInstrumentName(midi.trks[selectedTrack].usedInstruments[i])} ➞ `;
 		div.appendChild(labl);
 		div.appendChild(picker);
 		if (hasOctaveRec) {
@@ -1719,12 +1720,7 @@ function createNewTrack() {
 	newTrk.lowestNote = null;
 	newTrk.isFromUser = true;
 
-	let labl;
-	if (newTrk.hasPercussion) {
-		labl = 'Percussion';
-	} else {
-		labl = getInstrumentLabel(newTrk.usedInstruments[0]);
-	}
+	let labl = 'New Track';
 	newTrk.label = `${labl} ${midi.getLabelNumber(labl)}`;
 
 	addTrack(newTrk);

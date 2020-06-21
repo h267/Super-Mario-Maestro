@@ -93,12 +93,11 @@ class NoteSchedule {
 		clearInterval(this.audioScheduleInterval);
 		this.audioScheduleIndex = 0;
 		if (this.playbackNode !== null) this.playbackNode.stop();
-		audioCtx.suspend();
+		audioCtx.close();
 		audioCtx = new window.AudioContext();
 	}
 
 	playRealTime() {
-		console.table(this.schedule);
 		this.schedule.forEach((thisNote, idx) => { // Second pass; play back each note at the correct duration
 			let time = this.ticksToSeconds(thisNote.ticks) + audioCtx.currentTime + LOAD_DELAY;
 			let duration = this.ticksToSeconds(thisNote.duration);
