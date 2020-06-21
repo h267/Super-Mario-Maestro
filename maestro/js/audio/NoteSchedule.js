@@ -57,19 +57,32 @@ class NoteSchedule {
      * * ticks: The time that the note is played.
      */
 	addNote(note) {
-		let prevNote = this.getLastNoteOfInstrument(note.instrument);
-		if (prevNote !== null) prevNote.duration = note.time - prevNote.ticks; // FIXME: Durations for polyphonic notes
+		let prevNotes = this.getLastNotesOfInstrument(note.instrument, note.time);
+		if (prevNotes.length > 0) {
+			// prevNotes.duration = note.time - prevNotes.ticks;
+			for (let i = 0; i < prevNotes.length; i++) {
+				prevNotes[i].duration = note.time - prevNotes[i].ticks;
+			}
+		}
 		this.schedule.push({
 			instrument: note.instrument, value: note.value, duration: Infinity, ticks: note.time
 		});
 	}
 
-	getLastNoteOfInstrument(instrument) {
+	getLastNotesOfInstrument(instrument, disallowedTicks = -1) {
+		// Get the last note played by the specified instruments whose ticks are not equal to disallowedTicks
+		let foundNotes = [];
+		let foundTicks = -1;
 		for (let i = this.schedule.length - 1; i >= 0; i--) {
 			let thisNote = this.schedule[i];
-			if (thisNote.instrument === instrument) return thisNote;
+			if (thisNote.instrument === instrument && thisNote.ticks !== disallowedTicks && foundTicks === -1) {
+				// Begin capturing all other notes that play at the same time as the found note
+				foundTicks = thisNote.ticks;
+			}
+			if (thisNote.ticks === foundTicks) foundNotes.push(thisNote);
+			else if (foundTicks !== -1) break; // Break when no other notes at the found time were detected
 		}
-		return null;
+		return foundNotes;
 	}
 
 	/**
@@ -85,6 +98,7 @@ class NoteSchedule {
 	}
 
 	playRealTime() {
+		console.table(this.schedule);
 		this.schedule.forEach((thisNote, idx) => { // Second pass; play back each note at the correct duration
 			let time = this.ticksToSeconds(thisNote.ticks) + audioCtx.currentTime + LOAD_DELAY;
 			let duration = this.ticksToSeconds(thisNote.duration);
