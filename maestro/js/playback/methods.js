@@ -71,8 +71,9 @@ async function playLvl(midi, level, bpm, blocksPerBeat, ofsX, ofsY) {
 	while (pos < endBound - marginWidth + 1) {
 		advanceSchTime(PPQ / blocksPerBeat / numBlockSubdivisions);
 	}
-	if (isRealTimePlayback) playWithoutPrerender(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth), false);
-	else prerenderAndPlay(bpm, blocksPerBeat, Math.min(levelWidth, level.maxWidth), false);
+	let maxX = Math.min(levelWidth, level.maxWidth + marginWidth);
+	if (isRealTimePlayback) playWithoutPrerender(bpm, blocksPerBeat, maxX, false);
+	else prerenderAndPlay(bpm, blocksPerBeat, maxX, false);
 }
 
 /**
@@ -119,7 +120,7 @@ function playWithoutPrerender(bpm = 120, bpb, maxX) {
 	noteSchedule.setBPM(bpm);
 	noteSchedule.playRealTime();
 	if (isContinuousPlayback) animateContinuousPlayback((bpm * bpb) / 3600, 0);
-	else animatePlayback((bpm * bpb) / 3600, maxX + marginWidth + 2, LOAD_DELAY);
+	else animatePlayback((bpm * bpb) / 3600, maxX, LOAD_DELAY); // FIXME: Make this right
 }
 
 /**

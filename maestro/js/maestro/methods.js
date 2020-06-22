@@ -336,7 +336,7 @@ function drawLevel(redrawMini = false, noDOM = false) {
 				}
 				// Outline note blocks of the selected track
 				if (tile === 1 && level.isTrackOccupant[i][j][selectedTrack] && !isBuildMode) {
-					outlineTile(drawX, drawY, 2, 'rgb(44, 153, 121)');
+					outlineTile(drawX, drawY, 2, 'rgb(15, 135, 104)');
 				}
 			}
 			if (fgTile !== null) drawTile(bgs[2 + fgTile], drawX * 16, drawY * 16);
