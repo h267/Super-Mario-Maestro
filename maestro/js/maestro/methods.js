@@ -1575,6 +1575,10 @@ function tutorialBtn() {
 	window.open(tutorialLink);
 }
 
+function creditsBtn() {
+	window.open(creditsLink);
+}
+
 /**
  * Sets the text and function in the playback controls depending on if audio is being rendered.
  * @param {boolean} status Whether the user is waiting for audio to be rendered.

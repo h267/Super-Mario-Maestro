@@ -26,8 +26,8 @@
             <img src="icon/logo.png" alt="Maestro Logo">
         </div>
         <div id="maestroTextContainer">
-            <p>v1.4.0 Beta Build 5</p>
-            <p>Made by h267 · Sprites by Sir Snivy</p>
+            <p>v1.4.0 Beta Build 6</p>
+            <p>Made by h267</p>
         </div>
         <button id="discordBtn" onClick="handleDiscordPress();"></button>
     </div>
@@ -63,7 +63,7 @@
         <div id="toolsContainer">
             <div id="levelSettings" class="controlcontainer">
                 <label id="blockPerBeatLabel" for="blockPerBeat">Blocks per Beat</label>
-                <input id="blockPerBeat" type="number" name="blockPerBeat" value="0" min="1" max="16" oninput="pickBPB()">
+                <input id="blockPerBeat" type="number" name="blockPerBeat" value="0" min="1" max="8" onchange="pickBPB()">
                 <label id="pushbackLimitLabel" for="pushbackLimit">Auto-Build Pushback Limit</label>
                 <input id="pushbackLimit" type="number" name="pushbackLimit" value="10" min="0" onchange="setPushback()">
                 <p id="tempolabel">Tempo:</p>
@@ -162,6 +162,7 @@
         <input id="fileInput" type="file" onchange="loadFileFromInput()">
         <button onclick="loadExample()">Load Example</button>
         <button onclick="tutorialBtn()">Tutorial</button>
+        <button onclick="creditsBtn()">Credits</button>
     </div>    
 </div>
 

@@ -5,6 +5,7 @@
 
 const discordInviteLink = 'https://discord.gg/KhmXzfp';
 const tutorialLink = 'https://docs.google.com/document/d/1UG-Y-2zbdcqE7ciMgPVT3HICWEZHP002HmukCuWctxg/edit';
+const creditsLink = './credits';
 const contPlayback = false; // Dev toggle for full map playback
 const numParts = 20;
 const autoShowRatio = 0.7;
