@@ -45,6 +45,10 @@
     transition: color 150ms;
 }
 
+.importantlabel {
+    font-weight: bold;
+}
+
 
 #fileText {
     float: left;

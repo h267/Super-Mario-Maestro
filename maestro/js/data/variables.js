@@ -114,7 +114,7 @@ MM2Tempos.forEach((thisTempo) => {
 		let setupBlocks = setup.timeDelay / timePerBlock;
 		let frac = setupBlocks - Math.round(setupBlocks);
 		let secondsError = (Math.abs(frac) * timePerBlock) / soundSubframesPerSecond;
-		if (secondsError < setupErrorToleranceSeconds) {
+		if (secondsError < setupErrorToleranceSeconds && Math.round(setupBlocks) < 30) {
 			if (showSetupLogs) {
 				console.log(`\nsetup: ${setup.structType}, semisolid: ${setup.usesSemisolid}`);
 				console.log(`approx. ${Math.round(setupBlocks)} blocks`);

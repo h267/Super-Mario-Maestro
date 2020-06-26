@@ -29,7 +29,7 @@ class NoteStructure extends Structure {
 		}
 		if (this.x === otherStruct.x && dists.ydist === 0) {
 			// Check for double hit exceptions
-			if (this.setup !== otherStruct.setup) return false;
+			if (this.setup.structType !== otherStruct.setup.structType) return false;
 
 			let bottomHeight;
 			if (this.y > otherStruct.y) bottomHeight = otherStruct.getEffectiveHeight();
