@@ -1247,7 +1247,7 @@ function toggleEditTools() {
 	else styleString = 'none';
 	document.getElementById('outsideToolbarContainer').style.display = styleString;
 	document.getElementById('trackEditor').style.display = styleString;
-	document.getElementById('trackNameContainer').style.display = styleString;
+	// document.getElementById('trackNameContainer').style.display = styleString;
 	if (!isOn) changeToolTo(2);
 }
 
