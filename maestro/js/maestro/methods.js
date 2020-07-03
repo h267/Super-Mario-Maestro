@@ -570,7 +570,7 @@ function getMM2Instrument(instrument) {
 		return 2;
 	} // Synth Effects
 	if (midiInstrument >= 105 && midiInstrument <= 112) {
-		return 14;
+		return 10;
 	} // Ethnic
 	if (midiInstrument >= 113 && midiInstrument <= 120) {
 		return 15;
@@ -1093,9 +1093,9 @@ function getPercussionInstrument(key) {
 	case 59:
 		return getInstrumentById('spring');
 	case 65:
-		return getInstrumentById('billblaster');
+		return getInstrumentById('pswitch'); // getInstrumentById('billblaster');
 	case 66:
-		return getInstrumentById('billblaster');
+		return getInstrumentById('pswitch'); // getInstrumentById('billblaster');
 	case 76:
 		return getInstrumentById('post');
 	case 77:
