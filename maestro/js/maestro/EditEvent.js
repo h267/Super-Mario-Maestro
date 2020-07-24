@@ -22,6 +22,7 @@ class EditEvent {
 			softRefresh();
 			break;
 		case 1: // FIXME: Change restored notes to correct instrument
+			this.data.note.instrument = tracks[this.track].instrumentChanges[0]; // Fix instrument smuggling
 			tracks[this.track].notes.splice(this.data.idx, 0, this.data.note);
 			midi.trks[this.track].notes.splice(this.data.idx, 0, this.data.note);
 			refreshBlocks();

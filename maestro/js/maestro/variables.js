@@ -3,8 +3,6 @@
 
 // TODO: Re-enable gtag when releasing
 
-// FIXME: Fix bugs
-
 const discordInviteLink = 'https://discord.gg/KhmXzfp';
 const tutorialLink = 'https://docs.google.com/document/d/1SLcyotcCUBIEIadiLBlqN1dIcH0eOKoGkSuBwHCo170/edit';
 const creditsLink = './credits';
