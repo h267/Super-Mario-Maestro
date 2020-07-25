@@ -1005,12 +1005,12 @@ function updateInstrumentContainer() { // TODO: Refactor grouping code
 function triggerInstrChange(selectedInstrument) {
 	let selectedInsIndex = alphabetizedInstruments[document.getElementById(`inspicker${selectedInstrument}`).value].pos;
 	// let selectedInsIndex = getInstrumentById(document.getElementById(`inspicker${selectedInstrument}`).value);
+	tracks[selectedTrack].instrumentChanges[selectedInstrument] = selectedInsIndex;
 	changeInstrument(
 		selectedTrack,
 		getMM2Instrument(midi.trks[selectedTrack].usedInstruments[selectedInstrument]),
 		selectedInsIndex + 2
 	);
-	tracks[selectedTrack].instrumentChanges[selectedInstrument] = selectedInsIndex;
 }
 
 /**
