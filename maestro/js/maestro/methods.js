@@ -332,7 +332,7 @@ function drawLevel(redrawMini = false, noDOM = false) {
 				drawTile(tiles[tile], drawX * 16, drawY * 16);
 				if (level.numberOfOccupants[i][j] > 1 && !isBuildMode) { // Highlight any overalapping tiles in red
 					conflictCount++;
-					highlightTile(drawX, drawY, { style: 'rgba(255,0,0,0.4)' });
+					highlightTile(drawX, drawY, { style: 'rgba(0,0,0,0.3)' });
 				}
 				// Outline note blocks of the selected track
 				if (tile === 1 && level.isTrackOccupant[i][j][selectedTrack] && !isBuildMode) {
